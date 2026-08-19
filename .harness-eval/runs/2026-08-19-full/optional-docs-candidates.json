@@ -1,0 +1,67 @@
+{
+  "policy": {
+    "agent_harness_refs": "always_include",
+    "adr_rfc_decision_records": "always_exclude",
+    "other_cited_docs": "opt_in_after_user_approval"
+  },
+  "excluded_decision_records": [],
+  "optional_by_type": {
+    ".opencode": [
+      ".opencode/command/init.md",
+      ".opencode/opencode.json",
+      ".opencode/skills/frontend-design/references/color-and-contrast.md",
+      ".opencode/skills/frontend-design/references/interaction-design.md",
+      ".opencode/skills/frontend-design/references/motion-design.md",
+      ".opencode/skills/frontend-design/references/responsive-design.md",
+      ".opencode/skills/frontend-design/references/spatial-design.md",
+      ".opencode/skills/frontend-design/references/typography.md",
+      ".opencode/skills/frontend-design/references/ux-writing.md",
+      ".opencode/skills/harness-eval/references/GLOSSARY.md",
+      ".opencode/skills/harness-eval/references/PROTOCOL.md",
+      ".opencode/skills/harness-eval/references/claims.schema.json",
+      ".opencode/skills/harness-eval/references/judge-prompts.md",
+      ".opencode/skills/tlc-spec-driven/references/code-analysis.md",
+      ".opencode/skills/tlc-spec-driven/references/coding-principles.md",
+      ".opencode/skills/tlc-spec-driven/references/context-limits.md",
+      ".opencode/skills/tlc-spec-driven/references/design.md",
+      ".opencode/skills/tlc-spec-driven/references/discuss.md",
+      ".opencode/skills/tlc-spec-driven/references/implement.md",
+      ".opencode/skills/tlc-spec-driven/references/lessons.md",
+      ".opencode/skills/tlc-spec-driven/references/memory.md",
+      ".opencode/skills/tlc-spec-driven/references/specify.md",
+      ".opencode/skills/tlc-spec-driven/references/sub-agents.md",
+      ".opencode/skills/tlc-spec-driven/references/tasks.md",
+      ".opencode/skills/tlc-spec-driven/references/validate.md"
+    ]
+  },
+  "included_optional_docs": [
+    ".opencode/command/init.md",
+    ".opencode/opencode.json",
+    ".opencode/skills/frontend-design/references/color-and-contrast.md",
+    ".opencode/skills/frontend-design/references/interaction-design.md",
+    ".opencode/skills/frontend-design/references/motion-design.md",
+    ".opencode/skills/frontend-design/references/responsive-design.md",
+    ".opencode/skills/frontend-design/references/spatial-design.md",
+    ".opencode/skills/frontend-design/references/typography.md",
+    ".opencode/skills/frontend-design/references/ux-writing.md",
+    ".opencode/skills/harness-eval/references/GLOSSARY.md",
+    ".opencode/skills/harness-eval/references/PROTOCOL.md",
+    ".opencode/skills/harness-eval/references/claims.schema.json",
+    ".opencode/skills/harness-eval/references/judge-prompts.md",
+    ".opencode/skills/tlc-spec-driven/references/code-analysis.md",
+    ".opencode/skills/tlc-spec-driven/references/coding-principles.md",
+    ".opencode/skills/tlc-spec-driven/references/context-limits.md",
+    ".opencode/skills/tlc-spec-driven/references/design.md",
+    ".opencode/skills/tlc-spec-driven/references/discuss.md",
+    ".opencode/skills/tlc-spec-driven/references/implement.md",
+    ".opencode/skills/tlc-spec-driven/references/lessons.md",
+    ".opencode/skills/tlc-spec-driven/references/memory.md",
+    ".opencode/skills/tlc-spec-driven/references/specify.md",
+    ".opencode/skills/tlc-spec-driven/references/sub-agents.md",
+    ".opencode/skills/tlc-spec-driven/references/tasks.md",
+    ".opencode/skills/tlc-spec-driven/references/validate.md"
+  ],
+  "included_doc_types": [
+    ".opencode"
+  ]
+}

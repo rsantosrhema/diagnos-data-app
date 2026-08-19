@@ -1,0 +1,82 @@
+[
+  {
+    "id": "A001",
+    "severity": "BROKEN",
+    "source": ".opencode/skills/harness-eval/SKILL.md",
+    "claim": "Path cite `.agents/skills`",
+    "reality": "File does not exist (case-sensitive check)",
+    "evidence": "E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.agents\\skills; E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.opencode\\skills\\harness-eval\\.agents\\skills"
+  },
+  {
+    "id": "A002",
+    "severity": "BROKEN",
+    "source": ".opencode/skills/harness-eval/SKILL.md",
+    "claim": "Path cite `.cursor/skills`",
+    "reality": "File does not exist (case-sensitive check)",
+    "evidence": "E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.cursor\\skills; E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.opencode\\skills\\harness-eval\\.cursor\\skills"
+  },
+  {
+    "id": "A003",
+    "severity": "BROKEN",
+    "source": ".opencode/skills/harness-eval/SKILL.md",
+    "claim": "Path cite `lib/...`",
+    "reality": "File does not exist (case-sensitive check)",
+    "evidence": "E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\lib\\...; E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.opencode\\skills\\harness-eval\\lib\\..."
+  },
+  {
+    "id": "A004",
+    "severity": "BROKEN",
+    "source": ".opencode/skills/harness-eval/SKILL.md",
+    "claim": "Path cite `test/...`",
+    "reality": "File does not exist (case-sensitive check)",
+    "evidence": "E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\test\\...; E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.opencode\\skills\\harness-eval\\test\\..."
+  },
+  {
+    "id": "A005",
+    "severity": "BROKEN",
+    "source": ".opencode/skills/harness-eval/SKILL.md",
+    "claim": "Path cite `.agents/...`",
+    "reality": "File does not exist (case-sensitive check)",
+    "evidence": "E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.agents\\...; E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.opencode\\skills\\harness-eval\\.agents\\..."
+  },
+  {
+    "id": "A007",
+    "severity": "BROKEN",
+    "source": ".opencode/skills/harness-eval/SKILL.md",
+    "claim": "Path cite `.agents/\u2026`",
+    "reality": "File does not exist (case-sensitive check)",
+    "evidence": "E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.agents\\\u2026; E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.opencode\\skills\\harness-eval\\.agents\\\u2026"
+  },
+  {
+    "id": "A008",
+    "severity": "BROKEN",
+    "source": ".opencode/skills/harness-eval/references/PROTOCOL.md",
+    "claim": "Path cite `.agents/skills`",
+    "reality": "File does not exist (case-sensitive check)",
+    "evidence": "E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.agents\\skills; E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.opencode\\skills\\harness-eval\\references\\.agents\\skills; E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.opencode\\skills\\harness-eval\\.agents\\skills"
+  },
+  {
+    "id": "A009",
+    "severity": "BROKEN",
+    "source": ".opencode/skills/harness-eval/references/PROTOCOL.md",
+    "claim": "Path cite `.cursor/skills`",
+    "reality": "File does not exist (case-sensitive check)",
+    "evidence": "E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.cursor\\skills; E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.opencode\\skills\\harness-eval\\references\\.cursor\\skills; E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.opencode\\skills\\harness-eval\\.cursor\\skills"
+  },
+  {
+    "id": "A010",
+    "severity": "BROKEN",
+    "source": ".opencode/skills/harness-eval/references/PROTOCOL.md",
+    "claim": "Path cite `bin/console`",
+    "reality": "File does not exist (case-sensitive check)",
+    "evidence": "E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\bin\\console; E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.opencode\\skills\\harness-eval\\references\\bin\\console; E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.opencode\\skills\\harness-eval\\bin\\console"
+  },
+  {
+    "id": "A011",
+    "severity": "BROKEN",
+    "source": ".opencode/skills/harness-eval/references/PROTOCOL.md",
+    "claim": "Path cite `references/view.md`",
+    "reality": "File does not exist (case-sensitive check)",
+    "evidence": "E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\references\\view.md; E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.opencode\\skills\\harness-eval\\references\\references\\view.md; E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.opencode\\skills\\harness-eval\\references\\view.md; E:\\OneDrive Rafael\\OneDrive\\Rhema Data\\Aplica\u00e7\u00f5es\\diagnos-data-app\\.agents\\skills\\harness-eval\\references\\view.md"
+  }
+]
