@@ -1,6 +1,7 @@
 import { ProviderError } from "../../core/errors";
 import type {
   OllamaChatRequest,
+  OllamaChatRequestInternal,
   OllamaChatResponse,
   OllamaConfig,
 } from "./types";
@@ -45,7 +46,7 @@ export class OllamaClient {
       headers.Authorization = `Bearer ${this.config.apiKey}`;
     }
 
-    const body: OllamaChatRequest = {
+    const body: OllamaChatRequestInternal = {
       ...request,
       model: this.config.model,
       stream: false,

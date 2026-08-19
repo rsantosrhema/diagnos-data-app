@@ -4,7 +4,6 @@ export interface OllamaChatMessage {
 }
 
 export interface OllamaChatRequest {
-  model: string;
   messages: OllamaChatMessage[];
   stream?: boolean;
   format?: "json";
@@ -12,6 +11,10 @@ export interface OllamaChatRequest {
     temperature?: number;
     top_p?: number;
   };
+}
+
+export interface OllamaChatRequestInternal extends OllamaChatRequest {
+  model: string;
 }
 
 export interface OllamaChatResponse {
