@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase/server";
 import { requireManager, unauthorized } from "@/lib/auth/guard";
 import { generateToken, hashToken } from "@/lib/auth/token";
+import { verifyInternalApiKey } from "@/lib/auth/internal-key";
 
 interface Params {
   params: { id: string };
@@ -11,6 +12,9 @@ const TOKEN_TTL_MS = 20 * 60 * 1000;
 const MAX_GENERATE_ATTEMPTS = 5;
 
 export async function POST(req: Request, { params }: Params) {
+  if (!verifyInternalApiKey(req)) {
+    return NextResponse.json({ error: "Chave interna inválida" }, { status: 401 });
+  }
   const manager = await requireManager(req);
   if (!manager) return unauthorized();
 

@@ -3,6 +3,7 @@ import { getServiceClient } from "@/lib/supabase/server";
 import { validateTokenSchema } from "@/lib/schemas/token";
 import { hashToken, isValidTokenFormat, createSessionToken, hashSessionToken } from "@/lib/auth/token";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { verifyInternalApiKey } from "@/lib/auth/internal-key";
 
 function getClientIp(req: Request): string {
   const fwd = req.headers.get("x-forwarded-for");
@@ -11,6 +12,10 @@ function getClientIp(req: Request): string {
 }
 
 export async function POST(req: Request) {
+  if (!verifyInternalApiKey(req)) {
+    return NextResponse.json({ error: "Chave interna inválida" }, { status: 401 });
+  }
+
   const ip = getClientIp(req);
   const rl = checkRateLimit(`validate:${ip}`, 10, 10 * 60 * 1000);
   if (!rl.allowed) {

@@ -3,11 +3,15 @@ import { getServiceClient } from "@/lib/supabase/server";
 import { generateTokenSchema } from "@/lib/schemas/token";
 import { generateToken, hashToken } from "@/lib/auth/token";
 import { requireManager, unauthorized } from "@/lib/auth/guard";
+import { verifyInternalApiKey } from "@/lib/auth/internal-key";
 
 const TOKEN_TTL_MS = 20 * 60 * 1000;
 const MAX_GENERATE_ATTEMPTS = 5;
 
 export async function POST(req: Request) {
+  if (!verifyInternalApiKey(req)) {
+    return NextResponse.json({ error: "Chave interna inválida" }, { status: 401 });
+  }
   const manager = await requireManager(req);
   if (!manager) return unauthorized();
 
