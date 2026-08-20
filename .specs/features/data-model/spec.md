@@ -120,7 +120,7 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | --- | --- | --- | --- |
 | DM-01 | P1: Tabela diagnostics (colunas/tipos) | Design | Implementing |
 | DM-02 | P1: Tabela diagnostics (FK + unique + check + RLS) | Design | Implementing |
-| DM-03 | P1: Documentação viva com diagrama | Design | Pending |
+| DM-03 | P1: Documentação viva com diagrama | Design | Implementing |
 | DM-04 | P1: Seed de dados de teste | Design | Pending |
 | DM-05 | P1: Script de validação de relacionamentos/constraints | Design | Pending |
 

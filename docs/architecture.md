@@ -49,9 +49,13 @@ Submit → POST /api/evaluate → harness.runDiagnostic → PDF + resultado
 
 ## Modelo de Dados (Supabase/PostgreSQL)
 
+> **Documento vivo:** o modelo completo, com diagrama Mermaid e referência de todas as tabelas, está em [data-model.md](data-model.md). Atualize-o no mesmo commit de qualquer mudança de schema.
+
 - **leads** — `id`, `name`, `email`, `company`, `industry`, `size`, `status`, `created_at`
 - **access_tokens** — `id`, `token_hash` (SHA-256, nunca texto puro), `lead_id`, `status` (unused/used/expired), `expires_at`, `used_at`
-- **diagnostics** — `id`, `lead_id`, `overall_score`, `overall_level`, `dimension_scores` (jsonb), `narrative` (jsonb), `chart_data` (jsonb), `pdf_path`, `created_at`
+- **sessions** — sessão do cliente (2h), `token_hash`, `lead_id`, `expires_at`
+- **session_drafts** — rascunho do formulário, `lead_id` (1:1), `answers` (jsonb)
+- **diagnostics** — `id`, `lead_id` (1:1), `overall_score`, `overall_level`, `dimension_scores` (jsonb), `narrative` (jsonb), `chart_data` (jsonb), `pdf_path`, `created_at`
 
 ## Integrações
 
