@@ -118,17 +118,17 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| DM-01 | P1: Tabela diagnostics (colunas/tipos) | Design | Implementing |
-| DM-02 | P1: Tabela diagnostics (FK + unique + check + RLS) | Design | Implementing |
-| DM-03 | P1: Documentação viva com diagrama | Design | Implementing |
-| DM-04 | P1: Seed de dados de teste | Design | Implementing |
-| DM-05 | P1: Script de validação de relacionamentos/constraints | Design | Implementing |
+| DM-01 | P1: Tabela diagnostics (colunas/tipos) | Design | Verified |
+| DM-02 | P1: Tabela diagnostics (FK + unique + check + RLS) | Design | Verified |
+| DM-03 | P1: Documentação viva com diagrama | Design | Verified |
+| DM-04 | P1: Seed de dados de teste | Design | Verified |
+| DM-05 | P1: Script de validação de relacionamentos/constraints | Design | Verified |
 
 **ID format:** `DM-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 5 total, 0 mapped, 5 unmapped ⚠️
+**Coverage:** 5 total, 5 mapped, 0 unmapped ✅
 
 ---
 
