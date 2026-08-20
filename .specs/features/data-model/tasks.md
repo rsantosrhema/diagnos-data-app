@@ -11,7 +11,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 **Design**: `.specs/features/data-model/design.md`
 **Status**: In Progress
 
-**Task status**: T1 ✅ | T2 ✅ | T3 ✅ | T4 ✅ | T5 ⬜ | T6 ⬜ | T7 ⬜ | T8 ⬜
+**Task status**: T1 ✅ | T2 ✅ | T3 ✅ | T4 ✅ | T5 ✅ | T6 ✅ | T7 ⬜ | T8 ⬜
 
 ---
 
