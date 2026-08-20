@@ -179,6 +179,27 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 ---
 
+### P1: Autenticação mútua cliente-servidor (internal API key) ⭐ MVP
+
+**User Story**: As a operador, I want que toda chamada à API (incluindo as do cliente) exija uma chave interna conhecida apenas pelo backend so that a URL do Next.js não seja suficiente para sondar o sistema.
+
+**Why P1**: Camada extra de segurança — quem souber a URL não consegue chamar APIs sem a chave; o frontend precisa passar pelo proxy, que adiciona a chave server-side.
+
+**Acceptance Criteria**:
+
+1. WHEN qualquer API (pública ou admin) recebe uma requisição THEN the sistema SHALL exigir o header `X-Internal-Api-Key` e responder HTTP 401 com `{ error: "Chave interna inválida" }` se o header estiver ausente ou não casar em tempo constante com `INTERNAL_API_KEY`.
+2. The sistema SHALL comparar a chave usando `crypto.timingSafeEqual` (constant-time), sem early-return por diferença de comprimento após o hashing.
+3. IF `INTERNAL_API_KEY` não estiver configurada ou tiver menos de 32 caracteres THEN the sistema SHALL falhar fechado (todas as APIs respondem 401).
+4. WHEN o navegador chama uma API THEN the sistema SHALL passar pelo proxy em `/api/public-proxy/*` ou `/api/admin-proxy/*` que adiciona o header `X-Internal-Api-Key` server-side e repassa o body, método, content-type e Authorization.
+5. The sistema SHALL NUNCA expor `INTERNAL_API_KEY` ao bundle do cliente — apenas a env var pública `NEXT_PUBLIC_INERT_API_KEY` (valor dummy) pode existir no front; o proxy ignora o valor do browser e usa o do servidor.
+6. IF o proxy recebe `Authorization` do navegador THEN the sistema SHALL repassar para a API final sem modificação (Bearer do gerente segue válido).
+7. IF o backend alvo responde com erro (4xx/5xx) THEN the proxy SHALL propagar o status code e o body sem alterá-los (apenas remove `content-encoding`/`content-length`/`transfer-encoding` que o Next gerencia).
+8. IF o `fetch` server-to-server do proxy falha (ex.: ECONNREFUSED) THEN the proxy SHALL responder 502 com `{ error: "Falha ao chamar API interna" }`.
+
+**Independent Test**: Chamar `/api/leads` direto sem header → 401; chamar `/api/public-proxy/leads` (que adiciona o header server-side) → sucesso; chamar admin direto sem header → 401; chamar via `/api/admin-proxy/*` → sucesso; garantir que `INTERNAL_API_KEY` não aparece em nenhum bundle `.next/static/*`.
+
+---
+
 ## Edge Cases
 
 Edge cases are usually unwanted-behavior (IF/THEN) or boundary (WHEN) criteria:
@@ -211,12 +232,13 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | AUTH-10 | P2: Rascunho do formulário | Design | Pending |
 | AUTH-11 | P3: Notificação de novo cadastro | - | Pending |
 | AUTH-12 | Segurança (hash, sem cache, HTTPS, rate limit) | Design | Pending |
+| AUTH-13 | P1: Internal API key + proxy | Implementing → Verified |
 
 **ID format:** `AUTH-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 12 total, 0 mapped to tasks, 12 unmapped ⚠️
+**Coverage:** 13 total, 1 mapped (AUTH-13 implementado), 12 unmapped ⚠️
 
 ---
 

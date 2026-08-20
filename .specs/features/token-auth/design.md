@@ -282,6 +282,43 @@ Gerenciados pelo **Supabase Auth** (tabela `auth.users`), sem tabela própria �
 | Auth do gerente | Supabase Auth (email/senha) | Não reinventar; unicidade de email nativa |
 | Design system | Tailwind + paleta roxo profundo/branco, Poppins (títulos) + Inter (texto) | Requisito do usuário; frontend-design skill |
 | Harness | **Intocado** — feature vive toda em `src/**` | Preserva pureza do harness (ADR-005) |
+| Autenticação de chamadas à API | Internal API Key + proxy backend | Evita que a URL do Next.js seja suficiente para sondar APIs; chave real nunca chega ao browser |
+| Onde guardar `INTERNAL_API_KEY` | Env var server-only + proxy que adiciona o header | Chave real fica só no servidor; `NEXT_PUBLIC_INERT_API_KEY` (dummy) é a única env pública |
+| Comparação da chave | `crypto.timingSafeEqual` sobre SHA-256 | Constant-time; sem early-return por comprimento |
+| Quem exige a chave | **Todas** as APIs (públicas + admin) | Decisão do usuário: cliente também passa pelo proxy |
+| Repasse de Authorization no proxy | Repassa o Bearer do gerente sem modificação | Compatível com Supabase Auth |
+
+---
+
+## Internal API Key (mTLS-light)
+
+```mermaid
+sequenceDiagram
+  participant B as Browser
+  participant P as /api/public-proxy/* ou /api/admin-proxy/*
+  participant A as /api/leads ou /api/admin/*
+
+  B->>P: fetch com body + Authorization (Bearer)
+  P->>P: lê INTERNAL_API_KEY do env
+  P->>A: fetch server-to-server com X-Internal-Api-Key + Authorization
+  A->>A: verifyInternalApiKey() constant-time
+  A->>A: regra de negócio (Supabase, RLS, etc.)
+  A-->>P: status + body
+  P-->>B: propaga status + body
+```
+
+**Comportamento:**
+
+- Toda API rejeita sem `X-Internal-Api-Key` válido (status 401).
+- O navegador nunca conhece `INTERNAL_API_KEY` — passa por `/api/*-proxy/*` que adiciona o header.
+- `Authorization` (Bearer do gerente) é repassado sem alteração.
+- Erros do backend (4xx/5xx) são propagados com mesmo status e body; falha de rede → 502.
+
+**Mitigações:**
+
+- Chave vazada → rotacionar `INTERNAL_API_KEY` no env e redeploy (janela de ~5min até o browser recarregar a chave dummy, que não tem valor real).
+- A chave dummy (`NEXT_PUBLIC_INERT_API_KEY`) é pública mas inútil: o proxy a ignora e usa a do servidor.
+- Constant-time evita timing attack para adivinhar a chave caractere por caractere.
 
 ---
 
