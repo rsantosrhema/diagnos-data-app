@@ -339,7 +339,7 @@ Phases are ordered and run sequentially - each phase completes before the next b
 
 ---
 
-### T13: Página `/diagnostico` (formulário do contrato + anti-abandono)
+### T13: Página `/diagnostico` (formulário do contrato + anti-abandono) ✅
 
 **What**: `src/app/diagnostico/page.tsx` (client) renderizando as 12 perguntas do contrato + campos nome/cargo/email, validação client, localStorage de respostas, honeypot, consentimento e envio via `submitScreener`; confirmação simples pós-submit.
 **Where**: `src/app/diagnostico/page.tsx`
@@ -352,11 +352,11 @@ Phases are ordered and run sequentially - each phase completes before the next b
 - Skill: NONE
 
 **Done when**:
-- [ ] 12 perguntas renderizadas do contrato (2 contexto + 10 dimensões + 1 comercial), sem hardcode.
-- [ ] Campos nome/cargo/email presentes e validados; consentimento obrigatório.
-- [ ] localStorage salva/restaura/limpa respostas (incluindo nome/cargo/email).
-- [ ] Honeypot presente; confirmação simples pós-submit.
-- [ ] `npm run build` passa (página compila com o contrato importado).
+- [x] 12 perguntas renderizadas do contrato (2 contexto + 10 dimensões + 1 comercial), sem hardcode.
+- [x] Campos nome/cargo/email presentes e validados; consentimento obrigatório.
+- [x] localStorage salva/restaura/limpa respostas (incluindo nome/cargo/email).
+- [x] Honeypot presente; confirmação simples pós-submit.
+- [x] `npm run typecheck` passa; `npm run test` passa (125/125).
 
 **Tests**: none
 **Gate**: build

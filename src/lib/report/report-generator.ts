@@ -214,7 +214,7 @@ export async function generateScreenerPdf(
   input: GeneratePdfInput,
 ): Promise<{ pdf: Buffer; filename: string }> {
   const element = React.createElement(ScreenerReport, { input });
-  const buffer = await renderToBuffer(element);
+  const buffer = await renderToBuffer(element as never);
 
   const filename = `diagnostico-${input.respondentName
     .toLowerCase()

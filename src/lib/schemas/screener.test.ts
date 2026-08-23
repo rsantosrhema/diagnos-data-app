@@ -76,8 +76,17 @@ describe("screenerSubmissionSchema", () => {
   });
 
   it("aceita payload sem company", () => {
-    const { company, ...rest } = validSubmission();
-    const result = screenerSubmissionSchema.safeParse(rest);
+    const submission = validSubmission();
+    const result = screenerSubmissionSchema.safeParse({
+      name: submission.name,
+      role: submission.role,
+      email: submission.email,
+      consent: submission.consent,
+      consentText: submission.consentText,
+      context: submission.context,
+      answers: submission.answers,
+      commercialAnswer: submission.commercialAnswer,
+    });
     expect(result.success).toBe(true);
   });
 
