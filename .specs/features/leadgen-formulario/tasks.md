@@ -96,7 +96,7 @@ Phases are ordered and run sequentially - each phase completes before the next b
 
 ---
 
-### T2: Implementar ScoringEngine (scoring determinístico)
+### T2: Implementar ScoringEngine (scoring determinístico) ✅
 
 **What**: Função pura `computeScores(contract, answers, context)` que calcula `soma(nivel*peso)/100`, mapeia para faixa, identifica menor dimensão, desequilíbrio > 3 e C-level.
 **Where**: `src/lib/screener/scoring.ts`
@@ -109,10 +109,10 @@ Phases are ordered and run sequentially - each phase completes before the next b
 - Skill: NONE
 
 **Done when**:
-- [ ] Score calculado como `soma(nivel*peso)/100`.
-- [ ] Faixa mapeada de `scoring.faixas` (`[min,max)`, última inclui max); erro tipado se o score não cair em faixa alguma.
-- [ ] Menor dimensão = risco; desequilíbrio > 3 sinalizado; C-level marcado.
-- [ ] `npm run test` passa (testes do scoring cobrindo os casos do spec).
+- [x] Score calculado como `soma(nivel*peso)/100`.
+- [x] Faixa mapeada de `scoring.faixas` (`[min,max)`, última inclui max); erro tipado se o score não cair em faixa alguma.
+- [x] Menor dimensão = risco; desequilíbrio > 3 sinalizado; C-level marcado.
+- [x] `npm run test` passa (19/19).
 
 **Tests**: unit
 **Gate**: quick
