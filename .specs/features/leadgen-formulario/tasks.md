@@ -253,7 +253,7 @@ Phases are ordered and run sequentially - each phase completes before the next b
 
 ---
 
-### T9: EmailService (envio do PDF ao comercial)
+### T9: EmailService (envio do PDF ao comercial) ✅
 
 **What**: `src/lib/email/send-report.ts` com `sendReportEmail` enviando o PDF como anexo para `MANAGER_NOTIFICATION_EMAIL`.
 **Where**: `src/lib/email/send-report.ts`
@@ -266,9 +266,9 @@ Phases are ordered and run sequentially - each phase completes before the next b
 - Skill: NONE
 
 **Done when**:
-- [ ] Envia para `MANAGER_NOTIFICATION_EMAIL` com anexo PDF e subject/HTML do diagnóstico.
-- [ ] Falha → lança erro tipado (o service mapeia para 502).
-- [ ] Teste unit com mock do Resend.
+- [x] Envia para `MANAGER_NOTIFICATION_EMAIL` com anexo PDF e subject/HTML do diagnóstico.
+- [x] Falha → lança erro tipado (o service mapeia para 502).
+- [x] Teste unit com mock do Resend.
 
 **Tests**: unit
 **Gate**: quick
