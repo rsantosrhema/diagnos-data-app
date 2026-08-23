@@ -141,7 +141,7 @@ Phases are ordered and run sequentially - each phase completes before the next b
 
 ---
 
-### T4: Criar schemas Zod (contrato + submissão + agent_payload)
+### T4: Criar schemas Zod (contrato + submissão + agent_payload) ✅
 
 **What**: `screenerContractSchema`, `screenerSubmissionSchema` (name, role, email, context, answers, commercialAnswer, consent, company, consentText, honeypot) e `agentPayloadSchema` com validação de que as 10 dimensões estão respondidas.
 **Where**: `src/lib/schemas/screener.ts`
@@ -154,9 +154,9 @@ Phases are ordered and run sequentially - each phase completes before the next b
 - Skill: NONE
 
 **Done when**:
-- [ ] Payload validado (name/role com ≥2 chars, email, consent, answers com dimensionId/nivel válidos).
-- [ ] Rejeita resposta incompleta (dimensão faltando) e nível fora de 1–5.
-- [ ] `npm run test` passa (testes do schema).
+- [x] Payload validado (name/role com ≥2 chars, email, consent, answers com dimensionId/nivel válidos).
+- [x] Rejeita resposta incompleta (dimensão faltando) e nível fora de 1–5.
+- [x] `npm run test` passa (11/11).
 
 **Tests**: unit
 **Gate**: quick
