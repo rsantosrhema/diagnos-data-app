@@ -119,7 +119,7 @@ Phases are ordered and run sequentially - each phase completes before the next b
 
 ---
 
-### T3: Criar AgentPayloadBuilder (documento JSON para o agente)
+### T3: Criar AgentPayloadBuilder (documento JSON para o agente) ✅
 
 **What**: Função pura `buildAgentPayload` que monta o documento JSON estruturado (`solicitante {nome,cargo}`, contexto, respostas pontuadas, comercial, score/faixa, risco, desequilíbrio) pronto para envio ao agente de análise.
 **Where**: `src/lib/screener/agent-payload.ts`
@@ -132,9 +132,9 @@ Phases are ordered and run sequentially - each phase completes before the next b
 - Skill: NONE
 
 **Done when**:
-- [ ] `buildAgentPayload` monta o documento com solicitante (nome/cargo), contexto, respostas pontuadas, comercial, score/faixa, risco e desequilíbrio.
-- [ ] Saída validada por `agentPayloadSchema` (Zod).
-- [ ] `npm run test` passa (testes do builder).
+- [x] `buildAgentPayload` monta o documento com solicitante (nome/cargo), contexto, respostas pontuadas, comercial, score/faixa, risco e desequilíbrio.
+- [x] Saída validada por `agentPayloadSchema` (Zod) — schema em T4.
+- [x] `npm run test` passa (12/12).
 
 **Tests**: unit
 **Gate**: quick
