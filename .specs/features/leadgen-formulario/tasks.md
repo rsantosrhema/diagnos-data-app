@@ -207,7 +207,7 @@ Phases are ordered and run sequentially - each phase completes before the next b
 
 ---
 
-### T7: ScreenService (orquestração: scoring + agent_payload + persistência + PDF + email)
+### T7: ScreenService (orquestração: scoring + agent_payload + persistência + PDF + email) ✅
 
 **What**: `createScreenService` que recebe o contrato, valida, calcula, monta `agent_payload`, persiste (lead + responses + diagnostic), gera PDF e envia email; retorna `{ ok: true }`.
 **Where**: `src/lib/service/screen-service.ts`
@@ -220,11 +220,11 @@ Phases are ordered and run sequentially - each phase completes before the next b
 - Skill: NONE
 
 **Done when**:
-- [ ] Orquestra: dedup de email pendente (409), consent obrigatório (400), dimensões completas (400), persistência, PDF, email.
-- [ ] Cria lead com name/role/email + consent/consent_at; persiste `agent_payload`.
-- [ ] Persistência falha → 500 sem email; email falha → 502 com log.
-- [ ] Honeypot descartado (não processa).
-- [ ] Testes unit com mocks (todas as branches + edge cases do spec).
+- [x] Orquestra: dedup de email pendente (409), consent obrigatório (400), dimensões completas (400), persistência, PDF, email.
+- [x] Cria lead com name/role/email + consent/consent_at; persiste `agent_payload`.
+- [x] Persistência falha → 500 sem email; email falha → 502 com log.
+- [x] Honeypot descartado (não processa).
+- [x] Testes unit com mocks (todas as branches + edge cases do spec).
 
 **Tests**: unit
 **Gate**: quick
