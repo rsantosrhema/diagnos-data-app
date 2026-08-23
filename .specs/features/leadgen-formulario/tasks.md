@@ -185,7 +185,7 @@ Phases are ordered and run sequentially - each phase completes before the next b
 
 ---
 
-### T6: AssessmentRepository (persistência de respostas + diagnóstico)
+### T6: AssessmentRepository (persistência de respostas + diagnóstico) ✅
 
 **What**: `createAssessmentRepository` com `createAssessmentResponse` (inclui `agent_payload`) e `createDiagnostic` (inserções em `assessment_responses` e `diagnostics`).
 **Where**: `src/lib/repository/assessment-repo.ts`
@@ -198,9 +198,9 @@ Phases are ordered and run sequentially - each phase completes before the next b
 - Skill: NONE
 
 **Done when**:
-- [ ] Métodos de domínio `createAssessmentResponse` (com `agent_payload`) e `createDiagnostic` (jsonb).
-- [ ] Usa `getServiceClient()` injetado.
-- [ ] Testes unit com mock do client (key paths + error handling).
+- [x] Métodos de domínio `createAssessmentResponse` (com `agent_payload`) e `createDiagnostic` (jsonb).
+- [x] Usa `getServiceClient()` injetado.
+- [x] Testes unit com mock do client (key paths + error handling).
 
 **Tests**: integration
 **Gate**: full
