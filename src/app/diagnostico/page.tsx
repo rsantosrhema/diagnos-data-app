@@ -125,7 +125,16 @@ export default function DiagnosticoPage() {
     return Object.keys(e).length === 0;
   }
 
-  function validateContext(): boolean {
+  function validateCurrentContext(): boolean {
+    const ctxId = CONTEXT_IDS[step.kind === "context" ? step.index : 0];
+    if (!form.context[ctxId]) {
+      setErrors({ [`ctx_${ctxId}`]: "Selecione uma opção" });
+      return false;
+    }
+    return true;
+  }
+
+  function validateAllContext(): boolean {
     const e: Record<string, string> = {};
     for (const id of CONTEXT_IDS) {
       if (!form.context[id]) e[`ctx_${id}`] = "Selecione uma opção";
@@ -153,7 +162,7 @@ export default function DiagnosticoPage() {
       if (!validateInfo()) return;
       setStep({ kind: "context", index: 0 });
     } else if (step.kind === "context") {
-      if (!validateContext()) return;
+      if (!validateCurrentContext()) return;
       if (step.index < CONTEXT_IDS.length - 1) {
         setStep({ kind: "context", index: step.index + 1 });
       } else {
