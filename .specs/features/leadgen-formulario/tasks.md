@@ -297,7 +297,7 @@ Phases are ordered and run sequentially - each phase completes before the next b
 
 ---
 
-### T11: Rota pública proxy `/api/public-proxy/screener`
+### T11: Rota pública proxy `/api/public-proxy/screener` ✅
 
 **What**: `src/app/api/public-proxy/screener/route.ts` delegando via `proxyToInternal`.
 **Where**: `src/app/api/public-proxy/screener/route.ts`
@@ -310,8 +310,8 @@ Phases are ordered and run sequentially - each phase completes before the next b
 - Skill: NONE
 
 **Done when**:
-- [ ] Proxy público criado (target `screener`).
-- [ ] Teste e2e do proxy (repassa método, status de erro, 502 em fetch falho).
+- [x] Proxy público criado (target `screener`).
+- [x] Teste e2e do proxy (repassa método, status de erro, 502 em fetch falho).
 
 **Tests**: e2e
 **Gate**: full
