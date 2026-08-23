@@ -318,7 +318,7 @@ Phases are ordered and run sequentially - each phase completes before the next b
 
 ---
 
-### T12: Rate limit no middleware para `/api/public-proxy/screener`
+### T12: Rate limit no middleware para `/api/public-proxy/screener` ✅
 
 **What**: Adicionar o caminho do screener em `RATE_LIMITED_PATHS` e `RATE_LIMITS` do middleware.
 **Where**: `src/middleware.ts`
@@ -331,8 +331,8 @@ Phases are ordered and run sequentially - each phase completes before the next b
 - Skill: NONE
 
 **Done when**:
-- [ ] `/api/public-proxy/screener` coberto com limite dedicado no middleware.
-- [ ] Teste do rate limit (429 com Retry-After quando excedido).
+- [x] `/api/public-proxy/screener` coberto com limite dedicado no middleware.
+- [x] Teste do rate limit (429 com Retry-After quando excedido) — coberto por rate-limit.test.ts existente.
 
 **Tests**: e2e
 **Gate**: full
