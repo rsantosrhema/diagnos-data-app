@@ -231,7 +231,7 @@ Phases are ordered and run sequentially - each phase completes before the next b
 
 ---
 
-### T8: ReportGenerator (PDF via @react-pdf/renderer)
+### T8: ReportGenerator (PDF via @react-pdf/renderer) ✅
 
 **What**: `src/lib/report/report-generator.ts` com gerador que produz PDF com identidade Rhema Data (empresa, respondente, faixa, dimensões, risco, desequilíbrio, comercial).
 **Where**: `src/lib/report/report-generator.ts`
@@ -244,9 +244,9 @@ Phases are ordered and run sequentially - each phase completes before the next b
 - Skill: NONE
 
 **Done when**:
-- [ ] `@react-pdf/renderer` instalado (`npm i @react-pdf/renderer`).
-- [ ] Gerador retorna `{ pdf: Buffer, filename }` com conteúdo da identidade Rhema Data.
-- [ ] Teste unit (renderToBuffer não-vazio; nome de arquivo sanitizado).
+- [x] `@react-pdf/renderer` instalado (`npm i @react-pdf/renderer`).
+- [x] Gerador retorna `{ pdf: Buffer, filename }` com conteúdo da identidade Rhema Data.
+- [x] Teste unit (renderToBuffer não-vazio; nome de arquivo sanitizado).
 
 **Tests**: unit
 **Gate**: quick
