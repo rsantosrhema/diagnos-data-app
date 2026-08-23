@@ -363,7 +363,7 @@ Phases are ordered and run sequentially - each phase completes before the next b
 
 ---
 
-### T14: Cliente API `submitScreener`
+### T14: Cliente API `submitScreener` ✅
 
 **What**: `src/lib/api/client.ts` — adicionar `submitScreener` (POST `/api/public-proxy/screener`).
 **Where**: `src/lib/api/client.ts` (modify)
@@ -376,8 +376,8 @@ Phases are ordered and run sequentially - each phase completes before the next b
 - Skill: NONE
 
 **Done when**:
-- [ ] `submitScreener` posta para `/api/public-proxy/screener` e lança `ApiError` em falha.
-- [ ] `npm run test` passa.
+- [x] `submitScreener` posta para `/api/public-proxy/screener` e lança `ApiError` em falha.
+- [x] `npm run test` passa.
 
 **Tests**: unit
 **Gate**: quick
