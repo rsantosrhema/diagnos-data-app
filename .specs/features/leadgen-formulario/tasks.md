@@ -163,7 +163,7 @@ Phases are ordered and run sequentially - each phase completes before the next b
 
 ---
 
-### T5: Migration — ajustar `leads` + criar `assessment_responses`
+### T5: Migration — ajustar `leads` + criar `assessment_responses` ✅
 
 **What**: Migration SQL commitada: `leads.company/phone` nullable + `consent`/`consent_at`; tabela `assessment_responses` (jsonb incl. `agent_payload`, 1:1 lead). `docs/data-model.md` atualizado no mesmo commit.
 **Where**: `supabase/migrations/0005_screener_responses.sql`
@@ -176,9 +176,9 @@ Phases are ordered and run sequentially - each phase completes before the next b
 - Skill: NONE
 
 **Done when**:
-- [ ] Migration aplicada via supabase-mcp.
-- [ ] `docs/data-model.md` atualizado no mesmo commit (nova tabela + colunas + diagrama) — regra do doc vivo.
-- [ ] RLS habilitado sem policies (service-role only) nas novas colunas/tabela.
+- [x] Migration aplicada via supabase-mcp.
+- [x] `docs/data-model.md` atualizado no mesmo commit (nova tabela + colunas + diagrama) — regra do doc vivo.
+- [x] RLS habilitado sem policies (service-role only) nas novas colunas/tabela.
 
 **Tests**: none
 **Gate**: build

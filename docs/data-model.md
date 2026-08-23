@@ -10,15 +10,18 @@ erDiagram
     leads ||--o| sessions : "tem"
     leads ||--o| session_drafts : "tem"
     leads ||--o| diagnostics : "tem"
+    leads ||--o| assessment_responses : "tem"
 
     leads {
         uuid id PK
         text name
-        text company
-        text phone
+        text company "nullable"
+        text phone "nullable"
         citext email UK
         text role
         text status
+        boolean consent
+        timestamptz consent_at "nullable"
         timestamptz created_at
     }
     access_tokens {
@@ -54,6 +57,16 @@ erDiagram
         text pdf_path
         timestamptz created_at
     }
+    assessment_responses {
+        uuid id PK
+        uuid lead_id FK UK
+        jsonb context
+        jsonb answers
+        jsonb commercial_answer
+        jsonb consent
+        jsonb agent_payload
+        timestamptz created_at
+    }
 ```
 
 ## Visão Geral
@@ -64,6 +77,7 @@ O modelo gira em torno de **`leads`** (o cliente). Cada lead pode ter:
 - **Uma `session`** — sessão ativa do cliente (2h).
 - **Um `session_draft`** — rascunho do formulário (1:1).
 - **Um `diagnostic`** — resultado do diagnóstico (1:1).
+- **Um `assessment_response`** — respostas completas da autoavaliação pública + `agent_payload` para o agente de análise (1:1).
 
 Todas as tabelas têm **RLS habilitado sem policies** para `anon`/`authenticated` — o acesso é feito apenas via **service-role** (server-side). Gerentes são gerenciados pelo **Supabase Auth** (`auth.users`), sem tabela própria.
 
@@ -77,11 +91,13 @@ Todas as tabelas têm **RLS habilitado sem policies** para `anon`/`authenticated
 | --- | --- | --- |
 | `id` | `uuid` | PK, default `gen_random_uuid()` |
 | `name` | `text` | not null |
-| `company` | `text` | not null |
-| `phone` | `text` | not null |
+| `company` | `text` | nullable (fluxo público não coleta) |
+| `phone` | `text` | nullable (fluxo público não coleta) |
 | `email` | `citext` | not null, **unique** (case-insensitive) |
 | `role` | `text` | not null |
 | `status` | `text` | not null, default `'pendente'`, **check** in (`pendente`,`token_gerado`,`concluido`) |
+| `consent` | `boolean` | not null, default `false` |
+| `consent_at` | `timestamptz` | nullable |
 | `created_at` | `timestamptz` | not null, default `now()` |
 
 **RLS**: habilitado, sem policies (service-role only).
@@ -142,6 +158,23 @@ Todas as tabelas têm **RLS habilitado sem policies** para `anon`/`authenticated
 | `created_at` | `timestamptz` | not null, default `now()` |
 
 **Índices**: `diagnostics_lead_id_idx`.
+
+**RLS**: habilitado, sem policies (service-role only).
+
+### `assessment_responses`
+
+| Coluna | Tipo | Constraints |
+| --- | --- | --- |
+| `id` | `uuid` | PK, default `gen_random_uuid()` |
+| `lead_id` | `uuid` | not null, **FK** → `leads(id)` `on delete cascade`, **unique** (1:1) |
+| `context` | `jsonb` | not null |
+| `answers` | `jsonb` | not null |
+| `commercial_answer` | `jsonb` | not null |
+| `consent` | `jsonb` | not null |
+| `agent_payload` | `jsonb` | not null |
+| `created_at` | `timestamptz` | not null, default `now()` |
+
+**Índices**: `assessment_responses_lead_id_idx`.
 
 **RLS**: habilitado, sem policies (service-role only).
 
