@@ -275,7 +275,7 @@ Phases are ordered and run sequentially - each phase completes before the next b
 
 ---
 
-### T10: Rota interna `/api/screener`
+### T10: Rota interna `/api/screener` ✅
 
 **What**: `src/app/api/screener/route.ts` — verifyInternalApiKey → Zod → service → DTO; map de erros tipados.
 **Where**: `src/app/api/screener/route.ts`
@@ -288,9 +288,9 @@ Phases are ordered and run sequentially - each phase completes before the next b
 - Skill: NONE
 
 **Done when**:
-- [ ] 401 sem internal key; 400 payload inválido; 409 lead duplicado; 500/502 erros internos.
-- [ ] Sem regra de negócio no handler (só valida + delega).
-- [ ] Teste e2e com mocks (happy + edge + error).
+- [x] 401 sem internal key; 400 payload inválido; 409 lead duplicado; 500/502 erros internos.
+- [x] Sem regra de negócio no handler (só valida + delega).
+- [x] Teste e2e com mocks (happy + edge + error).
 
 **Tests**: e2e
 **Gate**: full
