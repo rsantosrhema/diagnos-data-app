@@ -13,9 +13,20 @@ export interface AssessmentResponseRow {
 
 export function createAssessmentRepository(supabase: SupabaseClient) {
   return {
+    async existsForLead(leadId: string): Promise<boolean> {
+      const { data, error } = await supabase
+        .from("assessment_responses")
+        .select("id")
+        .eq("lead_id", leadId)
+        .maybeSingle();
+      if (error) throw error;
+      return data !== null;
+    },
+
     async createAssessmentResponse(params: {
       leadId: string;
       context: Record<string, string>;
+      profile: Record<string, string>;
       answers: unknown;
       commercialAnswer: unknown;
       consent: unknown;
@@ -29,6 +40,29 @@ export function createAssessmentRepository(supabase: SupabaseClient) {
         consent: params.consent,
         agent_payload: params.agentPayload,
       });
+      if (error) throw error;
+    },
+
+    async upsertAssessmentResponse(params: {
+      leadId: string;
+      context: Record<string, string>;
+      profile: Record<string, string>;
+      answers: unknown;
+      commercialAnswer: unknown;
+      consent: unknown;
+      agentPayload: unknown;
+    }): Promise<void> {
+      const { error } = await supabase.from("assessment_responses").upsert(
+        {
+          lead_id: params.leadId,
+          context: params.context,
+          answers: params.answers,
+          commercial_answer: params.commercialAnswer,
+          consent: params.consent,
+          agent_payload: params.agentPayload,
+        },
+        { onConflict: "lead_id" },
+      );
       if (error) throw error;
     },
 
@@ -48,6 +82,28 @@ export function createAssessmentRepository(supabase: SupabaseClient) {
         narrative: params.narrative,
         chart_data: params.chartData,
       });
+      if (error) throw error;
+    },
+
+    async upsertDiagnostic(params: {
+      leadId: string;
+      overallScore: number;
+      overallLevel: number;
+      dimensionScores: unknown;
+      narrative: unknown;
+      chartData: unknown;
+    }): Promise<void> {
+      const { error } = await supabase.from("diagnostics").upsert(
+        {
+          lead_id: params.leadId,
+          overall_score: params.overallScore,
+          overall_level: params.overallLevel,
+          dimension_scores: params.dimensionScores,
+          narrative: params.narrative,
+          chart_data: params.chartData,
+        },
+        { onConflict: "lead_id" },
+      );
       if (error) throw error;
     },
 

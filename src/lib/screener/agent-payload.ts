@@ -7,6 +7,7 @@ export interface AgentPayloadInput {
   contract: ScreenerContract;
   respondent: { name: string; role: string };
   company?: { name?: string; size?: string };
+  profileAnswers?: Record<string, string>;
   contextAnswers: Record<string, string>;
   dimensionAnswers: { dimensionId: string; nivel: number }[];
   commercialAnswer: string;
@@ -17,8 +18,15 @@ export interface AgentPayloadInput {
 export interface AgentPayload {
   versao: string;
   solicitante: { nome: string; cargo: string };
-  empresa: { nome: string | null; porte: string | null };
+  empresa: {
+    nome: string | null;
+    porte: string | null;
+    segmento: string | null;
+    funcionarios: string | null;
+    faturamento: string | null;
+  };
   contexto: Record<string, string>;
+  perfil_empresa: Record<string, string>;
   respostas: {
     dimensao_id: string;
     dimensao: string;
@@ -41,6 +49,7 @@ export function buildAgentPayload(input: AgentPayloadInput): AgentPayload {
     contract,
     respondent,
     company,
+    profileAnswers,
     contextAnswers,
     dimensionAnswers,
     commercialAnswer,
@@ -61,14 +70,20 @@ export function buildAgentPayload(input: AgentPayloadInput): AgentPayload {
     };
   });
 
+  const profileAnswersFlat = profileAnswers ?? {};
+
   return {
     versao: "1.0",
     solicitante: { nome: respondent.name, cargo: respondent.role },
     empresa: {
       nome: company?.name ?? null,
       porte: company?.size ?? null,
+      segmento: profileAnswersFlat.perfil_01 ?? null,
+      funcionarios: profileAnswersFlat.perfil_02 ?? null,
+      faturamento: profileAnswersFlat.perfil_03 ?? null,
     },
     contexto: { ...contextAnswers },
+    perfil_empresa: { ...profileAnswersFlat },
     respostas,
     resposta_comercial: {
       pergunta: contract.pergunta_comercial.pergunta,

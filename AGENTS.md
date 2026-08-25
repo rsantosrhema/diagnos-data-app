@@ -1,19 +1,21 @@
 # AGENTS.md — Diagnos Data App
 
-This file is the **system prompt** for any code agent (OpenCode, Claude Code, Cursor, etc.) working on this repository. Read it fully before making changes. It defines the product, the architecture, the harness contract, and the conventions every agent must follow.
+This file is the **system prompt** for any code agent (OpenCode, Claude Code, Cursor, etc.) working on this repository. Read it fully before making changes. It defines the product, the architecture, and the conventions every agent must follow.
 
 ---
 
 ## 1. Project Overview
 
-**Diagnos Data App** is a Next.js web application that runs a **data maturity diagnostic** for companies.
+**Diagnos Data App** is a Next.js web application that runs a **data maturity diagnostic** used as a **lead-generation screener**.
 
 The product flow is:
 
-1. **Chatbot questionnaire** — The user answers **8 to 12 questions** presented as a conversational chat form. Questions assess data management & governance maturity, modeled on the **DAMA-DMBOK** framework and other leading data governance/management frameworks.
-2. **Harness processing** — The answers are sent to a well-defined **agent harness** that orchestrates an LLM evaluation.
-3. **LLM inference** — The harness calls **Ollama Cloud** via its HTTP API to run the evaluation.
-4. **PDF report** — The harness produces a **PDF report** with diagnostic analysis, charts, metrics, and an overall data maturity assessment for the company.
+1. **Multi-step form** — a visitor answers a contract-driven questionnaire (2 context questions + 10 DAMA-DMBOK dimensions + 1 commercial question + consent). Each dimension has 5 levels (CMMI-like).
+2. **Deterministic scoring** — the answers are scored with a fixed formula (weighted aggregate), producing a score band and per-dimension levels. No LLM is involved in the screener.
+3. **Persistence** — the lead, the raw answers, and the computed diagnostic are stored in **Supabase**.
+4. **PDF report** — a **PDF report** is generated server-side (`@react-pdf/renderer`) and emailed to the **commercial team** (Resend). The visitor sees a success screen.
+
+The questionnaire content is data-driven: it lives in `docs/snapshot-maturidade-dados.json` and is typed/loaded via a Zod-validated contract in `src/lib/screener/contract.ts`. Changing questions, weights, or score bands is a data change, not a redeploy.
 
 ---
 
@@ -24,15 +26,12 @@ The product flow is:
 | Framework | **Next.js** (App Router) |
 | Language | **TypeScript** (strict) |
 | UI | React + Tailwind CSS |
-| Chat UI | Custom conversational form (no heavy chatbot SDK unless justified) |
-| LLM provider | **Ollama Cloud** (HTTP API) |
+| Form UI | Custom multi-step form (no heavy chatbot/metadata SDK) |
+| Scoring | Deterministic engine (`src/lib/screener/scoring.ts`) from a JSON contract |
 | Report generation | PDF (server-side) via **@react-pdf/renderer** |
-| Charts | SVG rendered into the PDF via `@react-pdf/renderer` |
-| Database + Storage | **Supabase** (PostgreSQL gerenciado, `pgvector` para futura RAG) |
+| Database + Storage | **Supabase** (PostgreSQL gerenciado) |
 | Email | **Resend** (envio do PDF ao time comercial) |
-| Auth | **Token de acesso único** (hash SHA-256, consumido no primeiro uso) |
-
-> **Note:** The PDF library (`@react-pdf/renderer`) is React-based. To preserve harness purity, the concrete PDF implementation lives in `src/lib/report/` and is injected into the pipeline via the `ReportGenerator` interface — `harness/**` never imports React/Next. See `docs/decisions/`.
+| Auth | **Token de acesso único** (hash SHA-256, consumido no primeiro uso) + **`INTERNAL_API_KEY`** para o proxy |
 
 ---
 
@@ -41,49 +40,46 @@ The product flow is:
 ```
 diagnos-data-app/
 ├── AGENTS.md                     # This file — agent system prompt
-├── .opencode/                    # OpenCode harness configuration
+├── .opencode/                    # OpenCode configuration
 │   ├── opencode.json             # OpenCode project config
-│   └── command/init.md           # /init command (scaffold + bootstrap)
-├── harness/                      # The agent harness (framework-agnostic core)
-│   ├── README.md                 # Harness documentation
-│   ├── config/
-│   │   ├── questionnaire.ts      # Question definitions (8–12 items)
-│   │   └── maturity-model.ts     # DAMA-DMBOK scoring model & levels
-│   ├── prompts/
-│   │   ├── system.ts             # System prompt for the evaluator LLM
-│   │   └── user.ts               # User prompt builder (injects answers)
-│   ├── core/
-│   │   ├── types.ts              # Shared domain types (Question, Answer, Result…)
-│   │   ├── schema.ts             # Zod schemas for validation
-│   │   ├── pipeline.ts           # Orchestrates: validate → evaluate → report
-│   │   └── errors.ts             # Typed error classes
-│   ├── providers/
-│   │   └── ollama/
-│   │       ├── client.ts         # Ollama Cloud HTTP client
-│   │       └── types.ts          # Ollama API request/response types
-│   ├── evaluator/
-│   │   └── evaluator.ts          # Runs the LLM evaluation, parses structured output
-│   ├── report/
-│   │   ├── generator.ts          # Builds the PDF report
-│   │   └── charts.ts             # Chart data preparation
-│   └── index.ts                  # Public harness API (single entry point)
-├── src/                          # Next.js application
-│   ├── app/
-│   │   ├── page.tsx              # Landing / start screen
-│   │   ├── access/               # Token validation route
-│   │   ├── chat/                # Chatbot questionnaire route
-│   │   │   └── page.tsx
-│   │   └── api/
-│   │       └── evaluate/route.ts # POST answers → harness → report
-│   ├── components/               # React components (chat, question, report)
-│   ├── lib/
-│   │   ├── report/               # Concrete PDF generator (@react-pdf/renderer)
-│   │   ├── email/                # Resend email sending
-│   │   └── supabase/             # Supabase client + data access
-│   └── styles/
+│   └── command/init.md           # /init command (bootstrap/onboard)
 ├── docs/
 │   ├── decisions/                # ADRs (Architecture Decision Records)
+│   ├── rules/                    # Detailed development rules
+│   │   ├── security.md           # Security rules (token, auth, env vars, Supabase)
+│   │   ├── validation.md         # Validation rules (Zod patterns, boundaries)
+│   │   └── architecture.md       # Architecture rules (layers, server/client)
+│   ├── snapshot-maturidade-dados.json  # Single source of truth for the questionnaire
 │   └── architecture.md           # High-level architecture notes
+├── src/                          # Next.js application
+│   ├── app/
+│   │   ├── page.tsx              # Landing / lead request form
+│   │   ├── access/               # Token validation route
+│   │   ├── diagnostico/          # Multi-step screener form
+│   │   │   ├── page.tsx
+│   │   │   └── page.test.tsx
+│   │   ├── admin/                # Admin token/lead management
+│   │   └── api/
+│   │       ├── leads/            # (internal) create lead
+│   │       ├── screener/         # (internal) screener submission
+│   │       ├── tokens/           # (internal) token validation
+│   │       ├── public-proxy/     # proxy routes (screener, leads, tokens/validate)
+│   │       ├── admin/            # admin internal routes
+│   │       └── admin-proxy/      # admin proxy routes
+│   ├── components/               # shared React components (logo, wave divider)
+│   ├── lib/
+│   │   ├── api/                  # typed client functions (submitLead, submitScreener, ...)
+│   │   ├── auth/                 # token/session hashing, internal-key verification, proxy
+│   │   ├── dto/                  # safe response shapes
+│   │   ├── email/                # Resend email sending (token, report)
+│   │   ├── http/                 # client IP helpers
+│   │   ├── report/               # concrete PDF generator (@react-pdf/renderer)
+│   │   ├── repository/           # Supabase data access (lead, token, session, assessment)
+│   │   ├── schemas/              # Zod schemas (boundaries)
+│   │   ├── screener/             # contract type; scoring; agent payload builder
+│   │   ├── service/              # business logic (token, lead, screen, admin)
+│   │   └── supabase/             # server/client Supabase clients
+│   └── middleware.ts             # rate limiting for public-proxy endpoints
 ├── .env.example                  # Environment variable template
 ├── package.json
 └── tsconfig.json
@@ -91,79 +87,78 @@ diagnos-data-app/
 
 ---
 
-## 4. The Harness Contract
+## 4. The Screener Flow
 
-The **harness** is the heart of the system. It is **framework-agnostic** (pure TypeScript, no React/Next imports) so it can be tested and reused independently. The Next.js app only calls the harness through its public API.
+The screener is the heart of the system. It is fully deterministic and lives under `src/lib/screener/` + `src/app/diagnostico/`.
 
-### 4.1 Public API (`harness/index.ts`)
+### 4.1 Contract-driven questionnaire
 
-```ts
-export async function runDiagnostic(input: DiagnosticInput): Promise<DiagnosticResult>
-```
+- **Source of truth:** `docs/snapshot-maturidade-dados.json`
+- **Typed loading:** `src/lib/screener/contract.ts` validates it with Zod at module load (`screenerContractSchema`) and exports `SCREENER_CONTRACT`, `DIMENSION_IDS`, `CONTEXT_IDS`.
+- Content: 2 context questions, 10 dimensions (each with `id`, `nome`, `peso`, `area_dmbok`, `pergunta`, 5 `opcoes`), 1 commercial question, and a scoring config with score bands.
 
-- `DiagnosticInput` — validated questionnaire answers + company context.
-- `DiagnosticResult` — the full evaluation: per-dimension scores, overall maturity level, narrative analysis, and chart data.
+### 4.2 Public entry (`src/app/diagnostico/page.tsx`)
 
-### 4.2 Pipeline stages (`harness/core/pipeline.ts`)
+- Multi-step wizard: info (name/role/email) → context (2) → dimensions (10) → commercial (1) → consent.
+- Draft is persisted to `localStorage` (anti-abandonment).
+- On submit it calls `submitScreener` (`src/lib/api/client.ts`) which POSTs to `/api/public-proxy/screener`.
 
-1. **Validate** — validate `DiagnosticInput` against Zod schemas.
-2. **Evaluate** — call the evaluator (LLM via Ollama) to score dimensions and produce narrative.
-3. **Report** — generate the PDF report from the structured result.
-
-### 4.3 Data flow
+### 4.3 Submission pipeline (`src/app/api/screener/route.ts` + `src/lib/service/screen-service.ts`)
 
 ```
-Next.js (src/app/api/evaluate/route.ts)
-        │  POST { answers, company }
-        ▼
-harness.runDiagnostic(input)
-        │
-        ├─ core/pipeline.ts  (validate → evaluate → report)
-        │        │
-        │        ├─ providers/ollama/client.ts  (HTTP → Ollama Cloud)
-        │        │
-        │        └─ report/generator.ts  (PDF)
-        ▼
-DiagnosticResult  →  PDF file + JSON payload returned to the client
+client → /api/public-proxy/screener → (injects x-internal-api-key) → /api/screener
+  → validate body (screenerSubmissionSchema, Zod)
+  → screenService.submitScreener:
+      1. honeypot check   (website filled → silently ok)
+      2. duplicate pending lead?  → 409
+      3. create lead (Supabase)
+      4. compute scores (src/lib/screener/scoring.ts)
+      5. build agent payload (src/lib/screener/agent-payload.ts)   [reserved for future LLM]
+      6. persist assessment response + diagnostic (Supabase)
+      7. generate PDF (src/lib/report/report-generator.ts)
+      8. email PDF to commercial team (src/lib/email/send-report.ts, Resend)
+      → { ok: true }
 ```
+
+### 4.4 Auth / token flow
+
+- Visitor requests access on `/` → creates a lead (status `pendente`).
+- Commercial generates a one-time token (`src/lib/service/token-service.ts`), stored hashed (SHA-256), sent via email (`src/lib/email/send-token.ts`).
+- Visitor enters the token on `/access` → `/api/public-proxy/tokens/validate` → validates, marks token `usado`, creates a 2h session cookie `diagnos_session`, redirects to **`/diagnostico`**.
 
 ---
 
 ## 5. Domain Model (DAMA-DMBOK)
 
-Maturity is assessed across **DAMA-DMBOK knowledge areas** (dimensions). The model lives in `harness/config/maturity-model.ts`.
+Maturity is assessed across **10 dimensions** defined in `docs/snapshot-maturidade-dados.json` (mapped to DAMA-DMBOK knowledge areas / DCAM / DMBOK), e.g.: Governança e Responsabilidade, Arquitetura e Integração, Qualidade de Dados, Metadados e Rastreabilidade, Dados Mestres e Cadastros, Segurança e Conformidade (LGPD), Consumo e Autonomia Analítica, IA/Modelos/Analytics Avançado, Time e Capacidade.
 
-- **Dimensions** (subset of DAMA-DMBOK knowledge areas): Data Governance, Data Architecture, Data Quality, Data Modeling & Design, Data Storage & Operations, Data Security, Data Integration & Interoperability, Data & Analytics, Metadata, Reference & Master Data.
-- **Maturity levels** (0–5, CMMI-style):
-  - `0` Non-existent
-  - `1` Initial / Ad hoc
-  - `2` Repeatable
-  - `3` Defined
-  - `4` Managed
-  - `5` Optimized
-- **Overall maturity** = weighted aggregate of dimension scores.
-
-The questionnaire (`harness/config/questionnaire.ts`) maps each question to a dimension and a weight. Keep the question count between **8 and 12**.
+- **Levels** per dimension (1–5, CMMI-like): Inexistente → Ad hoc → Definido → Gerenciado → Otimizado (labels defined per question in the JSON).
+- **Score**: `score_final = Σ(nivel_dimensão × peso_dimensão) / 100` (weights in the JSON).
+- **Bands** (from `scoring.faixas`): Inicial, Emergente, Estruturado, Gerenciado, Otimizado.
+- **Reporting rules**: report the band not a precise decimal; highlight the lowest dimension as the top risk; flag imbalance when >3 levels separate max vs min; flag C-level optimism internally.
 
 ---
 
-## 6. Ollama Cloud Integration
+## 6. Environment Variables
 
-- Provider client: `harness/providers/ollama/client.ts`.
-- Base URL and model are configured via environment variables (see `.env.example`).
-- The client must:
-  - Send the system + user prompts (from `harness/prompts/`).
-  - Request **structured JSON output** (the evaluator parses it).
-  - Handle timeouts, retries, and non-2xx responses with typed errors.
-- **Never hardcode secrets.** Read them from `process.env`.
-
-### Environment variables
+See `.env.example`. Key variables:
 
 ```
-OLLAMA_BASE_URL=https://ollama.example.com/api
-OLLAMA_MODEL=your-model-name
-OLLAMA_API_KEY=your-api-key
+# Supabase (only src/lib/supabase/server.ts & repositories access secrets)
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Resend
+RESEND_API_KEY=
+RESEND_FROM_EMAIL=Diagnos <no-reply@your-domain.com>
+MANAGER_NOTIFICATION_EMAIL=comercial@example.com
+
+# Internal key (server-only) used by the proxy to authenticate internal calls. 32+ random chars. NEVER expose to client.
+INTERNAL_API_KEY=
 ```
+
+`NEXT_PUBLIC_*` vars are bundled into client JS — NEVER put secrets there.
 
 ---
 
@@ -173,49 +168,189 @@ OLLAMA_API_KEY=your-api-key
 - **TypeScript strict mode.** No `any` unless explicitly justified.
 - **No comments unless they explain *why*.** Prefer self-documenting code.
 - Use **named exports** for functions/types; default exports only for React pages/components.
+- Use `import type` for type-only imports.
+- Prefer `satisfies` over type assertions.
 - Follow existing patterns in the file you are editing.
 
-### Harness purity
-- `harness/**` must **not** import from `src/**` or any React/Next module.
-- All I/O (HTTP, filesystem, PDF) happens inside the harness's own modules, behind clear boundaries.
-- The concrete PDF generator (`@react-pdf/renderer`) lives in `src/lib/report/` and is injected into the pipeline via the `ReportGenerator` interface (`PipelineDeps`). `harness/**` only defines the interface and contract.
+### Layered backend (ADR-007)
+- **Route (thin)** → **Service (logic)** → **Repository (data)** → **DTO (safe shape)**.
+- Routes: auth, validation, error mapping only. No business logic.
+- Services: business logic, orchestration, throw typed errors.
+- Repositories: Supabase data access with explicit column selection.
+- DTOs: safe shapes returned to client. Never raw DB rows.
 
 ### Validation
-- Use **Zod** for all runtime validation (request bodies, LLM output, config).
-- Validate at the boundary: API route → harness input; LLM output → structured result.
+- Use **Zod** for all runtime validation (request bodies, config, contract).
+- Validate at the boundary: API route → service input.
+- Use `.strict()` on all boundary Zod schemas to reject unknown keys.
+- Prefer `safeParse` over `parse` at boundaries (you control the HTTP response).
+- Infer types from schemas (`z.infer<typeof schema>`), never define types manually that should come from a schema.
 
 ### Errors
-- Use the typed errors in `harness/core/errors.ts` (`ValidationError`, `ProviderError`, `ReportError`).
+- Services throw typed errors (e.g. `TokenServiceError`, `ScreenServiceError`, `LeadServiceError`) carrying an HTTP status.
 - Map errors to proper HTTP status codes in the API route.
+- Never leak stack traces or internal messages to the client — return generic messages (`{ error: "Erro interno" }`).
 
 ### Testing
-- Unit tests for the harness core (pipeline, evaluator parsing, scoring).
-- Mock the Ollama client in tests — never hit the real API.
-- Run tests with the project's test runner (add one if not present; document it).
+- Unit tests for services, scoring, contract, schemas in `*.test.ts`.
+- Component tests for the screener page in `*.test.tsx` (Vitest + Testing Library).
+- Mock external calls (Supabase, email) in tests — never hit real services.
+- Run tests with `npm run test` (Vitest).
 
 ### Commands
 - `npm run dev` — start Next.js dev server.
 - `npm run build` — production build.
-- `npm run lint` — lint (add ESLint config if missing).
-- `npm run test` — run tests (add a runner if missing).
+- `npm run lint` — lint.
+- `npm run test` — run tests.
+- `npm run typecheck` — run `tsc --noEmit`.
 
 ---
 
-## 8. Working with OpenCode
+## 8. Security Rules
+
+> Full details: `docs/rules/security.md`
+
+### 8.1 Auth Verification — Every Route, Every Action
+
+Every API route and Server Action MUST verify authentication before any operation. Never rely solely on middleware/proxy.ts for auth — re-verify at the data boundary (middleware can be bypassed: GHSA-267c-6grr-h53f, CVE-2025-29927).
+
+```typescript
+// ✅ GOOD
+export async function POST(req: Request) {
+  const session = await verifySession(req);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const result = CreateSchema.safeParse(await req.json());
+  if (!result.success) return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
+  // ... proceed
+}
+
+// ❌ BAD: no auth check
+export async function POST(req: Request) {
+  const body = await req.json();
+  await db.insert(body);
+}
+```
+
+### 8.2 Token Security
+
+- NEVER store tokens in plaintext in the database — hash with SHA-256 before storage.
+- NEVER send tokens in URL query strings (visible in logs, referrer headers).
+- NEVER expose tokens via `console.log`, error messages, or analytics events.
+- Session cookies MUST have `httpOnly: true`, `secure: true`, `sameSite: "lax"`, and `expires`.
+- Use `crypto.timingSafeEqual` for comparing secret values. Never use `===`.
+- On logout: delete the session from the database AND clear the cookie. Both.
+
+### 8.3 Frontend Never Handles Auth Directly
+
+- Frontend calls ONLY proxy routes (`/api/public-proxy/*`, `/api/admin-proxy/*`).
+- Frontend NEVER stores, reads, or manipulates `INTERNAL_API_KEY`.
+- Frontend NEVER calls internal `/api/*` routes directly.
+- The proxy injects the internal key server-side.
+
+### 8.4 Environment Variables
+
+- `NEXT_PUBLIC_*` vars are bundled into client JS — NEVER put secrets there.
+- Only `src/lib/supabase/server.ts` and repository modules access `process.env` for secrets.
+- Validate env vars at startup with Zod (fail fast if misconfigured).
+
+### 8.5 Error Handling — Never Leak Internals
+
+- NEVER return stack traces, internal error messages, or `String(err)` to the client.
+- Log detailed errors server-side with correlation IDs.
+- Return generic messages: `{ error: "Erro interno" }`.
+- Map typed errors to HTTP status codes (→ 400, 401, 409, 500, 502, …).
+
+### 8.6 Supabase Security
+
+- Service role client ONLY in server-side modules. Add `import "server-only"` to enforce.
+- Use `supabase.auth.getUser()` (server-verified), NEVER `supabase.auth.getSession()` (client-parsed).
+- Never use user-provided IDs as privileged query params — always use the session's userId.
+- RLS enabled on all tables as defense-in-depth.
+
+---
+
+## 9. Data Validation Rules
+
+> Full details: `docs/rules/validation.md`
+
+### 9.1 Zod at Every Trust Boundary
+
+Every point where untrusted data enters the application MUST be validated with Zod:
+
+- API route bodies → `safeParse` before any logic.
+- Config/contract JSON → `parse` at module load (fail fast).
+- Environment variables → `parse` at module load (fail fast).
+- External API responses → `safeParse` before consuming.
+
+### 9.2 Schema Conventions
+
+- Define schemas in `src/lib/schemas/` (app) or in `src/lib/screener/contract.ts` (contract).
+- Infer types from schemas: `type MyType = z.infer<typeof mySchema>;`
+- Use `.strict()` on all boundary schemas to reject unknown keys (prevents mass-assignment).
+- Use `safeParse` (returns result) not `parse` (throws) at boundaries.
+
+### 9.3 Validation Error Responses
+
+- Return 400 for validation failures with structured errors.
+- Format: `{ error: "Dados inválidos", issues: { field: [...] } }`
+- Use `error.flatten()` or `error.issues` for structured output.
+- Never expose raw `ZodError` to client — flatten first.
+
+---
+
+## 10. Architecture Enforcement
+
+> Full details: `docs/rules/architecture.md`
+
+### 10.1 Layered Backend (ADR-007)
+
+```
+Route (thin) → Service (logic) → Repository (data) → DTO (safe shape)
+```
+
+- **Routes**: auth, validation, error mapping only. No business logic.
+- **Services**: business logic, orchestration. Throw typed errors.
+- **Repositories**: data access via Supabase client. Explicit column selection.
+- **DTOs**: safe data shapes returned to client. Never raw DB rows.
+
+### 10.2 Server/Client Boundary
+
+- Default: Server Component. Add `"use client"` only for interactivity/hooks/browser APIs.
+- Never import server-only modules (`supabase/server.ts`, `process.env` secrets) into client components.
+- Use `import "server-only"` on modules that must never reach the browser.
+- Props passed to Client Components must be serializable — no functions, no secrets.
+
+### 10.3 Proxy Pattern (ADR-007)
+
+- Client → `/api/public-proxy/*` → (injects `INTERNAL_API_KEY`) → `/api/*`
+- Adding a new endpoint: internal route → proxy route → client function → rate limiting.
+
+---
+
+## 11. Working with OpenCode
 
 - OpenCode config lives in `.opencode/opencode.json`.
-- The `/init` command (`.opencode/command/init.md`) scaffolds the harness and bootstraps the project. Run it when starting fresh.
+- The `/init` command (`.opencode/command/init.md`) bootstraps and onboards the project. Run it when starting fresh.
 - After editing any `.opencode/**` file, **restart OpenCode** for changes to take effect.
 
 ---
 
-## 9. Definition of Done
+## 12. Definition of Done
 
 A task is done when:
 - [ ] Code follows the conventions in section 7.
-- [ ] Harness purity is preserved (`harness/**` has no app imports).
-- [ ] Inputs and LLM output are validated with Zod.
+- [ ] Inputs and config are validated with Zod at the boundary.
+- [ ] Zod schemas use `.strict()` at boundaries.
+- [ ] Types inferred from schemas, not manually duplicated.
+- [ ] Business logic lives in services behind the layered backend (Route → Service → Repository → DTO).
 - [ ] Errors are typed and mapped to HTTP status codes.
+- [ ] Error responses never leak stack traces or internal details.
+- [ ] Auth/`INTERNAL_API_KEY` verified in every API route (per section 8.1).
+- [ ] No `NEXT_PUBLIC_*` prefix on secret env vars.
+- [ ] Rate limiting on new public-facing endpoints.
+- [ ] `import "server-only"` on server-only modules.
+- [ ] Session cookies have `httpOnly`, `secure`, `sameSite`, `expires`.
+- [ ] The questionnaire source of truth (`docs/snapshot-maturidade-dados.json`) + contract are in sync.
 - [ ] Tests pass (if tests exist for the touched area).
 - [ ] `npm run lint` and `npm run build` pass.
 - [ ] No secrets are committed; env vars are documented in `.env.example`.

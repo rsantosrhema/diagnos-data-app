@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase/server";
 import { requireManager, unauthorized } from "@/lib/auth/guard";
-import { generateToken, hashToken } from "@/lib/auth/token";
 import { verifyInternalApiKey } from "@/lib/auth/internal-key";
+import { createTokenRepository } from "@/lib/repository/token-repo";
+import { createLeadRepository } from "@/lib/repository/lead-repo";
+import { createSessionRepository } from "@/lib/repository/session-repo";
+import { createTokenService, TokenServiceError } from "@/lib/service/token-service";
 
 interface Params {
   params: { id: string };
 }
-
-const TOKEN_TTL_MS = 20 * 60 * 1000;
-const MAX_GENERATE_ATTEMPTS = 5;
 
 export async function POST(req: Request, { params }: Params) {
   if (!verifyInternalApiKey(req)) {
@@ -19,47 +19,19 @@ export async function POST(req: Request, { params }: Params) {
   if (!manager) return unauthorized();
 
   const supabase = getServiceClient();
+  const tokenService = createTokenService({
+    tokenRepo: createTokenRepository(supabase),
+    leadRepo: createLeadRepository(supabase),
+    sessionRepo: createSessionRepository(supabase),
+  });
 
-  const { data: tokenRow, error: tokenError } = await supabase
-    .from("access_tokens")
-    .select("id, lead_id")
-    .eq("id", params.id)
-    .maybeSingle();
-
-  if (tokenError) return NextResponse.json({ error: "Erro ao buscar token" }, { status: 500 });
-  if (!tokenRow) return NextResponse.json({ error: "Token não encontrado" }, { status: 404 });
-
-  // invalida qualquer token ativo do mesmo lead
-  await supabase
-    .from("access_tokens")
-    .update({ status: "cancelado" })
-    .eq("lead_id", tokenRow.lead_id)
-    .eq("status", "disponivel");
-
-  for (let attempt = 0; attempt < MAX_GENERATE_ATTEMPTS; attempt++) {
-    const token = generateToken();
-    const tokenHash = hashToken(token);
-    const expiresAt = new Date(Date.now() + TOKEN_TTL_MS).toISOString();
-
-    const { data, error } = await supabase
-      .from("access_tokens")
-      .insert({
-        lead_id: tokenRow.lead_id,
-        token_hash: tokenHash,
-        status: "disponivel",
-        expires_at: expiresAt,
-      })
-      .select("id")
-      .single();
-
-    if (!error && data) {
-      return NextResponse.json({ id: data.id, token }, { status: 201 });
+  try {
+    const result = await tokenService.regenerate(params.id);
+    return NextResponse.json(result, { status: 201 });
+  } catch (err) {
+    if (err instanceof TokenServiceError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
     }
-
-    if (error?.code !== "23505") {
-      return NextResponse.json({ error: "Erro ao regerar token" }, { status: 500 });
-    }
+    return NextResponse.json({ error: "Erro ao regerar token" }, { status: 500 });
   }
-
-  return NextResponse.json({ error: "Não foi possível regerar um token único" }, { status: 500 });
 }

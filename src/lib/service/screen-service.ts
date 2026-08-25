@@ -41,6 +41,7 @@ export function createScreenService(deps: {
   return {
     async submitScreener(
       submission: ScreenerSubmission,
+      options?: { isMaster?: boolean },
     ): Promise<{ ok: true }> {
       // 1. Honeypot: discard silently
       if (submission.website && submission.website.trim() !== "") {
@@ -48,41 +49,42 @@ export function createScreenService(deps: {
       }
 
       const email = submission.email.trim().toLowerCase();
+      const role = submission.role ?? "";
+      const profile = submission.profile ?? {};
 
-      // 2. Duplicate pending lead
-      const existing = await leadRepo.findByEmailAndStatus(email, "pendente");
-      if (existing) {
-        throw new ScreenServiceError(
-          "Já existe uma solicitação pendente para este email.",
-          409,
-        );
+      // 2. Resolve o lead: via leadId (sessão) ou fallback por email
+      let leadId: string;
+      if (submission.leadId) {
+        const lead = await leadRepo.findById(submission.leadId);
+        if (!lead) {
+          throw new ScreenServiceError("Sessão inválida", 401);
+        }
+        leadId = lead.id;
+      } else {
+        // Fallback (fluxo legado): tenta reutilizar lead existente não-concluído
+        const existing = await leadRepo.findByEmail(email);
+        if (existing && existing.status !== "concluido") {
+          leadId = existing.id;
+        } else {
+          leadId = await createLeadWithRepo({
+            leadRepo,
+            name: submission.name,
+            company: submission.company?.name ?? "",
+            email,
+            role,
+          });
+        }
       }
 
-      // 3. Create lead
-      let leadId: string;
-      try {
-        await leadRepo.create({
-          name: submission.name,
-          company: submission.company?.name ?? "",
-          phone: "",
-          email,
-          role: submission.role,
-        });
-        const created = await leadRepo.findByEmailAndStatus(email, "pendente");
-        if (!created) {
-          throw new ScreenServiceError("Erro ao criar lead", 500);
-        }
-        leadId = created.id;
-      } catch (err: unknown) {
-        if (err instanceof ScreenServiceError) throw err;
-        const pgError = err as { code?: string };
-        if (pgError.code === "23505") {
+      // 3. Bloqueia reenvio (master sessions podem reenviar)
+      if (!options?.isMaster) {
+        const alreadyDone = await assessmentRepo.existsForLead(leadId);
+        if (alreadyDone) {
           throw new ScreenServiceError(
-            "Já existe uma solicitação pendente para este email.",
+            "Este diagnóstico já foi enviado. Caso precise de ajustes, entre em contato conosco.",
             409,
           );
         }
-        throw new ScreenServiceError("Erro ao salvar cadastro", 500);
       }
 
       // 4. Compute scores
@@ -94,13 +96,15 @@ export function createScreenService(deps: {
         contract,
         dimensionAnswers,
         submission.context,
+        role,
       );
 
       // 5. Build agent payload
       const agentPayload = buildAgentPayload({
         contract,
-        respondent: { name: submission.name, role: submission.role },
+        respondent: { name: submission.name, role },
         company: submission.company,
+        profileAnswers: profile,
         contextAnswers: submission.context,
         dimensionAnswers,
         commercialAnswer: submission.commercialAnswer,
@@ -114,9 +118,14 @@ export function createScreenService(deps: {
 
       // 6. Persist assessment response + diagnostic
       try {
-        await assessmentRepo.createAssessmentResponse({
+        const persistFn = options?.isMaster
+          ? assessmentRepo.upsertAssessmentResponse.bind(assessmentRepo)
+          : assessmentRepo.createAssessmentResponse.bind(assessmentRepo);
+
+        await persistFn({
           leadId,
           context: submission.context,
+          profile,
           answers: submission.answers,
           commercialAnswer: submission.commercialAnswer,
           consent: {
@@ -127,7 +136,11 @@ export function createScreenService(deps: {
           agentPayload,
         });
 
-        await assessmentRepo.createDiagnostic({
+        const persistDiagnosticFn = options?.isMaster
+          ? assessmentRepo.upsertDiagnostic.bind(assessmentRepo)
+          : assessmentRepo.createDiagnostic.bind(assessmentRepo);
+
+        await persistDiagnosticFn({
           leadId,
           overallScore: result.score,
           overallLevel: result.band.rotulo === "Inicial" ? 1
@@ -148,6 +161,8 @@ export function createScreenService(deps: {
             score: d.nivel,
           })),
         });
+
+        await leadRepo.updateStatus(leadId, "concluido");
       } catch {
         throw new ScreenServiceError("Erro ao salvar diagnóstico", 500);
       }
@@ -174,7 +189,7 @@ export function createScreenService(deps: {
         await sendEmail({
           to: managerEmail,
           subject: `Diagnóstico de Maturidade — ${submission.name}`,
-          html: `<p>Novo diagnóstico recebido de <strong>${escapeHtml(submission.name)}</strong> (${escapeHtml(submission.role)}).</p><p>Faixa: <strong>${escapeHtml(result.band.rotulo)}</strong></p>`,
+          html: `<p>Novo diagnóstico recebido de <strong>${escapeHtml(submission.name)}</strong> (${escapeHtml(role)}).</p><p>Faixa: <strong>${escapeHtml(result.band.rotulo)}</strong></p>`,
           attachment: {
             filename: pdfResult.filename,
             content: pdfResult.pdf,
@@ -187,6 +202,40 @@ export function createScreenService(deps: {
       return { ok: true };
     },
   };
+}
+
+async function createLeadWithRepo(params: {
+  leadRepo: LeadRepository;
+  name: string;
+  company: string;
+  email: string;
+  role: string;
+}): Promise<string> {
+  const { leadRepo, name, company, email, role } = params;
+  try {
+    await leadRepo.create({
+      name,
+      company,
+      phone: "",
+      email,
+      role,
+    });
+    const created = await leadRepo.findByEmail(email);
+    if (!created) {
+      throw new ScreenServiceError("Erro ao criar lead", 500);
+    }
+    return created.id;
+  } catch (err: unknown) {
+    if (err instanceof ScreenServiceError) throw err;
+    const pgError = err as { code?: string };
+    if (pgError.code === "23505") {
+      throw new ScreenServiceError(
+        "Já existe uma solicitação para este email. Verifique seu e-mail ou entre em contato.",
+        409,
+      );
+    }
+    throw new ScreenServiceError("Erro ao salvar cadastro", 500);
+  }
 }
 
 function escapeHtml(value: string): string {

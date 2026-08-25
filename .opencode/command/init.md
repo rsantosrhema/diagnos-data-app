@@ -1,38 +1,34 @@
 ---
-description: Scaffold the harness and bootstrap the Diagnos Data App project.
+description: Bootstrap and document the Diagnos Data App project.
 agent: build
 ---
 
-You are bootstrapping the **Diagnos Data App** project. Follow the conventions in `AGENTS.md` strictly.
+You are bootstrapping/onboarding for the **Diagnos Data App** project. Follow the conventions in `AGENTS.md` strictly.
 
 ## Goal
 
-Scaffold the framework-agnostic **harness** and bootstrap the Next.js application so the project is ready for iterative development.
+Bootstrap an understanding of the project so it is ready for iterative development. The product is a **data maturity diagnostic** run as a lead-gen screener: a contract-driven questionnaire plus deterministic scoring, persisted to Supabase, with a PDF report emailed to the commercial team.
 
 ## Steps
 
 1. **Read `AGENTS.md`** and the existing repository layout. Do not overwrite `AGENTS.md` or `.opencode/**`.
 
-2. **Scaffold the harness** (pure TypeScript, no React/Next imports). Create these files if they do not exist:
-   - `harness/index.ts` — public API: `runDiagnostic(input: DiagnosticInput): Promise<DiagnosticResult>`.
-   - `harness/core/types.ts` — domain types (`Question`, `Answer`, `DiagnosticInput`, `DiagnosticResult`, `DimensionScore`, `MaturityLevel`).
-   - `harness/core/schema.ts` — Zod schemas for `DiagnosticInput` and the LLM structured output.
-   - `harness/core/errors.ts` — `ValidationError`, `ProviderError`, `ReportError`.
-   - `harness/core/pipeline.ts` — orchestrates validate → evaluate → report.
-   - `harness/config/questionnaire.ts` — 8–12 questions mapped to DAMA-DMBOK dimensions with weights.
-   - `harness/config/maturity-model.ts` — dimensions, maturity levels (0–5), weighted aggregate.
-   - `harness/prompts/system.ts` and `harness/prompts/user.ts` — evaluator prompts.
-   - `harness/providers/ollama/client.ts` and `harness/providers/ollama/types.ts` — Ollama Cloud HTTP client (env-driven, typed errors, timeout/retry).
-   - `harness/evaluator/evaluator.ts` — runs the LLM evaluation and parses structured JSON output.
-   - `harness/report/generator.ts` and `harness/report/charts.ts` — PDF report + chart data prep (stub the PDF library; document the choice).
-   - `harness/README.md` — harness documentation.
+2. **Understand the screener flow** (the current implementation lives under `src/`):
+   - `src/lib/screener/contract.ts` — typed contract loaded from `docs/snapshot-maturidade-dados.json` (questions, dimensions, weights, score bands). This is the single source of truth for the questionnaire.
+   - `src/lib/screener/scoring.ts` — deterministic scoring engine.
+   - `src/lib/screener/agent-payload.ts` — builds a payload for a future LLM agent.
+   - `src/app/diagnostico/page.tsx` — the public multi-step form (info → context → dimensions → commercial → consent).
+   - `src/app/api/screener/route.ts` (internal) and `src/app/api/public-proxy/screener/route.ts` (proxy) — submission endpoints.
+   - `src/lib/service/screen-service.ts` — orchestrates lead creation, scoring, persistence, PDF generation, and email.
+   - `src/lib/report/report-generator.ts` — PDF generator using `@react-pdf/renderer`.
+   - `src/lib/email/send-report.ts` — sends the PDF to the commercial team via Resend.
 
-3. **Bootstrap the Next.js app** (App Router, TypeScript strict, Tailwind):
-   - `src/app/page.tsx` (landing), `src/app/chat/page.tsx` (chatbot questionnaire), `src/app/api/evaluate/route.ts` (POST → harness → report).
-   - `src/components/` for chat/question/report components.
-   - `package.json`, `tsconfig.json`, `next.config.*`, Tailwind config, `.env.example`, `.gitignore`.
+3. **Know the auth & token flow**:
+   - `src/app/access/page.tsx` — token entry that validates and redirects to `/diagnostico`.
+   - `src/app/api/tokens/validate/route.ts` + `src/lib/service/token-service.ts` — one-time SHA-256-hashed tokens, creates a 2h session cookie.
+   - `src/lib/auth/proxy.ts` — proxies public routes to internal routes, injecting `INTERNAL_API_KEY` server-side.
 
-4. **Add a test runner** (e.g. Vitest) and unit tests for the harness core (pipeline, evaluator parsing, scoring). Mock the Ollama client — never hit the real API.
+4. **Add a test runner** (currently Vitest) and keep unit tests for services, scoring, and the contract. Mock external calls (email, Supabase) in tests — never hit real services.
 
 5. **Verify**:
    - `npm install`
@@ -40,10 +36,10 @@ Scaffold the framework-agnostic **harness** and bootstrap the Next.js applicatio
    - `npm run build`
    - `npm run test`
 
-6. **Report** a concise summary of what was created, the PDF/chart library chosen (and why), and any env vars the user must set in `.env`.
+6. **Report** a concise summary of the flow, and any env vars the user must set in `.env` (see `.env.example`).
 
 ## Constraints
 
-- `harness/**` must never import from `src/**` or any React/Next module.
+- Follow the layered backend (Route → Service → Repository → DTO) as in AGENTS.md.
 - No `any` unless justified. No secrets committed. All env vars documented in `.env.example`.
-- Keep the questionnaire between 8 and 12 questions.
+- Keep the questionnaire (in `docs/snapshot-maturidade-dados.json`) to 10 dimensions.

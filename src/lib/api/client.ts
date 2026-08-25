@@ -64,12 +64,14 @@ export async function submitLead(input: LeadInput): Promise<{ ok: boolean }> {
 }
 
 export interface ScreenerInput {
+  leadId?: string;
   name: string;
-  role: string;
+  role?: string;
   email: string;
   consent: boolean;
   consentText: string;
   context: Record<string, string>;
+  profile?: Record<string, string>;
   answers: { dimensionId: string; nivel: number }[];
   commercialAnswer?: string;
   company?: { name?: string; size?: string };
@@ -78,6 +80,24 @@ export interface ScreenerInput {
 
 export async function submitScreener(input: ScreenerInput): Promise<{ ok: true }> {
   return apiFetch("/public-proxy/screener", { method: "POST", body: input });
+}
+
+export async function logoutSession(): Promise<{ ok: boolean }> {
+  return apiFetch("/public-proxy/sessions/logout", { method: "POST" });
+}
+
+export interface ScreenerProfile {
+  id: string;
+  name: string;
+  email: string;
+  company: string;
+  role: string;
+  status: string;
+  isMaster: boolean;
+}
+
+export async function getScreenerProfile(): Promise<ScreenerProfile> {
+  return apiFetch("/public-proxy/screener/profile", { method: "GET" });
 }
 
 export async function validateToken(

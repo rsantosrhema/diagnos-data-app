@@ -1,0 +1,239 @@
+{
+  "meta": {
+    "nome": "Diagnóstico de maturidade de dados",
+    "versao": "1.1",
+    "autor": "Rhema Data",
+    "tipo": "self-assessment",
+    "escala": "1 a 5 (CMMI-like: Inexistente, Ad-hoc, Definido, Gerenciado, Otimizado)",
+    "aviso_metodologico": "Instrumento de triagem baseado em autoavaliação. Não substitui diagnóstico com evidência documental. Resultado deve ser reportado como faixa, não como número exato.",
+    "tempo_estimado_min": 5
+  },
+
+  "cargos": [
+    "C-level (CEO, CTO, CFO, CIO)",
+    "Diretoria ou gerência de TI/Dados",
+    "Coordenação ou liderança técnica",
+    "Analista, engenheiro ou especialista",
+    "Área de negócio (não-TI)"
+  ],
+
+  "perfil_empresa": [
+    {
+      "id": "perfil_01",
+      "pergunta": "Qual o segmento/área de atuação da empresa?",
+      "tipo": "single_select",
+      "pontuada": false,
+      "uso": "segmentação e benchmark futuro",
+      "opcoes": [
+        "Indústria",
+        "Varejo",
+        "Serviços",
+        "Saúde",
+        "Finanças/Fintech",
+        "Educação",
+        "Governo",
+        "Agronegócio",
+        "Outro"
+      ]
+    },
+    {
+      "id": "perfil_02",
+      "pergunta": "Quantas pessoas trabalham na empresa?",
+      "tipo": "single_select",
+      "pontuada": false,
+      "uso": "segmentação por porte",
+      "opcoes": ["Até 50", "51 a 200", "201 a 1.000", "1.001 a 5.000", "Mais de 5.000"]
+    },
+    {
+      "id": "perfil_03",
+      "pergunta": "Qual o faturamento médio anual da empresa?",
+      "tipo": "single_select",
+      "pontuada": false,
+      "uso": "qualificação comercial e calibração de expectativa",
+      "opcoes": [
+        "Até R$ 5 milhões",
+        "R$ 5 a 50 milhões",
+        "R$ 50 a 250 milhões",
+        "R$ 250 milhões a 1 bilhão",
+        "Acima de R$ 1 bilhão"
+      ]
+    }
+  ],
+
+  "perguntas_contexto": [],
+
+  "dimensoes": [
+    {
+      "id": "d01",
+      "nome": "Governança e Responsabilidade",
+      "peso": 12,
+      "area_dmbok": "Data Governance",
+      "pergunta": "Quem é o dono dos dados críticos da empresa?",
+      "opcoes": [
+        { "nivel": 1, "texto": "Não há dono definido — quem está disponível resolve" },
+        { "nivel": 2, "texto": "TI assume tudo, mesmo quando o problema é da área de negócio" },
+        { "nivel": 3, "texto": "Há responsáveis reconhecidos, mas sem papel formal" },
+        { "nivel": 4, "texto": "Donos designados por domínio, com papéis documentados" },
+        { "nivel": 5, "texto": "Comitê de dados ativo com priorização e resolução de conflitos" }
+      ]
+    },
+    {
+      "id": "d02",
+      "nome": "Patrocínio Executivo e Business Case",
+      "peso": 12,
+      "area_dmbok": "DCAM — Data Management Strategy & Business Case",
+      "pergunta": "Iniciativas de dados têm orçamento e patrocínio executivo?",
+      "opcoes": [
+        { "nivel": 1, "texto": "Sem orçamento — dados são sobra de projetos de TI" },
+        { "nivel": 2, "texto": "Aprovação reativa, caso a caso" },
+        { "nivel": 3, "texto": "Orçamento anual existe, mas sem business case formal" },
+        { "nivel": 4, "texto": "Estratégia escrita com patrocinador e orçamento plurianual" },
+        { "nivel": 5, "texto": "ROI medido após entrega e revisado periodicamente" }
+      ]
+    },
+    {
+      "id": "d03",
+      "nome": "Arquitetura e Integração",
+      "peso": 12,
+      "area_dmbok": "Data Architecture / Data Integration",
+      "pergunta": "Como dados de sistemas diferentes se integram?",
+      "opcoes": [
+        { "nivel": 1, "texto": "Exportamos planilhas e cruzamos manualmente" },
+        { "nivel": 2, "texto": "Integrações sob demanda, cada uma com tecnologia diferente" },
+        { "nivel": 3, "texto": "Repositório central existe, mas sem padrão único" },
+        { "nivel": 4, "texto": "Plataforma unificada com pipelines versionados" },
+        { "nivel": 5, "texto": "Dados como produtos, com contratos de interface" }
+      ]
+    },
+    {
+      "id": "d04",
+      "nome": "Qualidade de Dados",
+      "peso": 12,
+      "area_dmbok": "Data Quality",
+      "pergunta": "Como a empresa garante que os dados estão corretos?",
+      "opcoes": [
+        { "nivel": 1, "texto": "Erros só aparecem quando alguém reclama" },
+        { "nivel": 2, "texto": "Correção manual, sem registro" },
+        { "nivel": 3, "texto": "Conferência periódica, sem automação" },
+        { "nivel": 4, "texto": "Testes automatizados alertam antes do dado chegar ao usuário" },
+        { "nivel": 5, "texto": "Indicadores de qualidade acompanhados como KPI" }
+      ]
+    },
+    {
+      "id": "d05",
+      "nome": "Metadados e Rastreabilidade",
+      "peso": 10,
+      "area_dmbok": "Metadata Management",
+      "pergunta": "A empresa sabe de onde vem e o que significa cada dado?",
+      "opcoes": [
+        { "nivel": 1, "texto": "Ninguém sabe a origem com segurança" },
+        { "nivel": 2, "texto": "Dá para descobrir, mas leva dias" },
+        { "nivel": 3, "texto": "Documentação existe, mas está desatualizada" },
+        { "nivel": 4, "texto": "Catálogo com glossário de negócio mantido ativamente" },
+        { "nivel": 5, "texto": "Linhagem automática da origem ao consumo" }
+      ]
+    },
+    {
+      "id": "d06",
+      "nome": "Dados Mestres e Cadastros",
+      "peso": 8,
+      "area_dmbok": "Reference & Master Data",
+      "pergunta": "Cadastros (cliente, produto, fornecedor) são únicos e consistentes?",
+      "opcoes": [
+        { "nivel": 1, "texto": "Cada sistema tem seu próprio cadastro" },
+        { "nivel": 2, "texto": "Tabelas de-para mantidas manualmente" },
+        { "nivel": 3, "texto": "Existe sistema fonte da verdade, sem sincronização formal" },
+        { "nivel": 4, "texto": "MDM implantado em ao menos um domínio crítico" },
+        { "nivel": 5, "texto": "MDM com governança e regras de sobrevivência" }
+      ]
+    },
+    {
+      "id": "d07",
+      "nome": "Segurança e Conformidade (LGPD)",
+      "peso": 10,
+      "area_dmbok": "Data Security",
+      "pergunta": "Dados pessoais e sensíveis são protegidos adequadamente?",
+      "opcoes": [
+        { "nivel": 1, "texto": "Sem mapeamento — assumimos que está tudo nos sistemas" },
+        { "nivel": 2, "texto": "Conhecemos os sistemas principais, mas não planilhas paralelas" },
+        { "nivel": 3, "texto": "Inventário existe, mas atualizado esporadicamente" },
+        { "nivel": 4, "texto": "Dados classificados com controle de acesso e auditoria" },
+        { "nivel": 5, "texto": "Classificação automatizada com mascaramento e revisão periódica" }
+      ]
+    },
+    {
+      "id": "d08",
+      "nome": "Consumo e Autonomia Analítica",
+      "peso": 10,
+      "area_dmbok": "Data Warehousing & BI",
+      "pergunta": "Áreas de negócio conseguem acessar dados para análises?",
+      "opcoes": [
+        { "nivel": 1, "texto": "Toda análise entra em fila com TI" },
+        { "nivel": 2, "texto": "Cada área monta sua própria planilha" },
+        { "nivel": 3, "texto": "Dashboards prontos existem, mas recortes novos dependem de TI" },
+        { "nivel": 4, "texto": "Self-service com dados confiáveis" },
+        { "nivel": 5, "texto": "Self-service com governança, catálogo e métricas certificadas" }
+      ]
+    },
+    {
+      "id": "d09",
+      "nome": "IA, Modelos e Analytics Avançado",
+      "peso": 6,
+      "area_dmbok": "DCAM — Analytics Management",
+      "pergunta": "A empresa usa IA ou modelos de machine learning?",
+      "opcoes": [
+        { "nivel": 1, "texto": "Sem uso de IA conectada aos dados" },
+        { "nivel": 2, "texto": "Experimentos isolados, sem processo" },
+        { "nivel": 3, "texto": "Modelos em produção, sem monitoramento formal" },
+        { "nivel": 4, "texto": "Modelos versionados e monitorados com retreino definido" },
+        { "nivel": 5, "texto": "Governança formal com aprovação, documentação e auditabilidade" }
+      ]
+    },
+    {
+      "id": "d10",
+      "nome": "Time e Capacidade",
+      "peso": 8,
+      "area_dmbok": "DMBOK — Organization & Cultural Change",
+      "pergunta": "Como está estruturado o time de dados?",
+      "opcoes": [
+        { "nivel": 1, "texto": "Responsabilidade acumulada de quem cuida de sistemas" },
+        { "nivel": 2, "texto": "Uma ou duas pessoas fazem tudo" },
+        { "nivel": 3, "texto": "Time dedicado com papéis pouco definidos" },
+        { "nivel": 4, "texto": "Papéis claros (engenharia, análise, governança)" },
+        { "nivel": 5, "texto": "Time estruturado com plano de capacitação e sucessão" }
+      ]
+    }
+  ],
+
+  "pergunta_comercial": {
+    "id": "cta_01",
+    "pontuada": false,
+    "aviso": "NÃO entra no score. É gancho comercial e qualificação de dor, não medição de maturidade.",
+    "pergunta": "Nos últimos 12 meses, quanto você estima que problemas com dados custaram a empresa (retrabalho, decisão errada, multa, perda de oportunidade)?",
+    "opcoes": [
+      "Difícil estimar, mas incômoda",
+      "Até R$ 50 mil",
+      "Entre R$ 50 mil e R$ 250 mil",
+      "Entre R$ 250 mil e R$ 1 milhão",
+      "Acima de R$ 1 milhão"
+    ]
+  },
+
+  "scoring": {
+    "formula": "score_final = soma(nivel_dimensao * peso_dimensao) / 100",
+    "aviso": "Pesos são hipóteses de negócio, não validados estatisticamente. Revisar após 50+ respostas.",
+    "faixas": [
+      { "min": 1.0, "max": 1.8, "rotulo": "Inicial", "descricao": "Dados são tratados de forma reativa. Risco alto de decisão baseada em número errado." },
+      { "min": 1.8, "max": 2.6, "rotulo": "Emergente", "descricao": "Existem iniciativas isoladas, mas dependentes de pessoas específicas." },
+      { "min": 2.6, "max": 3.4, "rotulo": "Estruturado", "descricao": "Base técnica existe. O gargalo costuma ser governança e processo, não tecnologia." },
+      { "min": 3.4, "max": 4.2, "rotulo": "Gerenciado", "descricao": "Dados são ativo gerenciado. Ganhos vêm de escala e automação." },
+      { "min": 4.2, "max": 5.0, "rotulo": "Otimizado", "descricao": "Maturidade alta. Foco em melhoria contínua e casos avançados." }
+    ],
+    "regras_de_relatorio": [
+      "Reportar SEMPRE a faixa, nunca o número com decimal como se fosse preciso.",
+      "Destacar a dimensão de MENOR nível como principal exposição de risco.",
+      "Se houver mais de 3 níveis de diferença entre a maior e a menor dimensão, sinalizar desequilíbrio — é mais acionável que o score médio.",
+      "Se o respondente for C-level, sinalizar internamente que o score tende a ser otimista."
+    ]
+  }
+}

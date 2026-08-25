@@ -5,6 +5,16 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 vi.mock("@/lib/api/client", () => ({
   submitScreener: vi.fn().mockResolvedValue({ ok: true }),
+  getScreenerProfile: vi.fn().mockResolvedValue({
+    id: "lead-1",
+    name: "João Silva",
+    email: "joao@corp.com",
+    company: "Corp LTDA",
+    role: "CTO",
+    status: "token_gerado",
+    isMaster: false,
+  }),
+  logoutSession: vi.fn().mockResolvedValue({ ok: true }),
   ApiError: class ApiError extends Error {
     status: number;
     constructor(message: string, status: number) {
@@ -25,9 +35,11 @@ vi.mock("../components/WaveDivider", () => ({
 vi.mock("@/lib/screener/contract", () => ({
   SCREENER_CONTRACT: {
     meta: { aviso_metodologico: "Aviso metodológico de teste." },
-    perguntas_contexto: [
-      { id: "ctx_01", pergunta: "Qual o seu papel?", opcoes: ["C-level", "Analista"] },
-      { id: "ctx_02", pergunta: "Quantas pessoas?", opcoes: ["Até 50", "51 a 200"] },
+    perguntas_contexto: [],
+    perfil_empresa: [
+      { id: "perfil_01", pergunta: "Qual o segmento?", opcoes: ["Indústria", "Varejo"] },
+      { id: "perfil_02", pergunta: "Quantas pessoas?", opcoes: ["Até 50", "51 a 200"] },
+      { id: "perfil_03", pergunta: "Qual o faturamento?", opcoes: ["Até R$ 5 mi", "R$ 5 a 50 mi"] },
     ],
     dimensoes: Array.from({ length: 10 }, (_, i) => ({
       id: `d${String(i + 1).padStart(2, "0")}`,
@@ -35,11 +47,11 @@ vi.mock("@/lib/screener/contract", () => ({
       peso: 10,
       pergunta: `Pergunta dimensão ${i + 1}?`,
       opcoes: [
-        { nivel: 1, texto: "Nível 1" },
-        { nivel: 2, texto: "Nível 2" },
-        { nivel: 3, texto: "Nível 3" },
-        { nivel: 4, texto: "Nível 4" },
-        { nivel: 5, texto: "Nível 5" },
+        { nivel: 1, texto: "Não fazemos: sem prática" },
+        { nivel: 2, texto: "Pontual: isolado" },
+        { nivel: 3, texto: "Definido: documentado" },
+        { nivel: 4, texto: "Gerenciado: medido" },
+        { nivel: 5, texto: "Otimizado: automatizado" },
       ],
     })),
     pergunta_comercial: {
@@ -58,7 +70,7 @@ vi.mock("@/lib/screener/contract", () => ({
     },
   },
   DIMENSION_IDS: Array.from({ length: 10 }, (_, i) => `d${String(i + 1).padStart(2, "0")}`),
-  CONTEXT_IDS: ["ctx_01", "ctx_02"],
+  PERFIL_IDS: ["perfil_01", "perfil_02", "perfil_03"],
   COMMERCIAL_ID: "cta_01",
 }));
 
@@ -70,18 +82,6 @@ beforeEach(async () => {
   const mod = await import("./page");
   DiagnosticoPage = mod.default;
 });
-
-function fillInfo() {
-  fireEvent.change(screen.getByLabelText(/nome completo/i), {
-    target: { value: "João Silva" },
-  });
-  fireEvent.change(screen.getByLabelText(/cargo/i), {
-    target: { value: "CTO" },
-  });
-  fireEvent.change(screen.getByLabelText(/email/i), {
-    target: { value: "joao@corp.com" },
-  });
-}
 
 function clickNext() {
   fireEvent.click(screen.getByText(/próxima/i));
@@ -99,15 +99,24 @@ function selectSecondOption() {
   else if (optionButtons.length >= 1) fireEvent.click(optionButtons[0]);
 }
 
-async function advanceThroughAllSteps() {
-  fillInfo();
-  clickNext();
-
-  // 2 context questions
-  for (let i = 0; i < 2; i++) {
-    await waitFor(() => selectSecondOption());
-    clickNext();
+function selectDropdownOption(labelPattern: string, optionIndex: number) {
+  const select = screen.getByLabelText(new RegExp(labelPattern, "i")) as HTMLSelectElement;
+  const options = select.querySelectorAll("option");
+  const enabledOptions = Array.from(options).filter((o) => !o.disabled);
+  if (enabledOptions[optionIndex]) {
+    fireEvent.change(select, { target: { value: enabledOptions[optionIndex].value } });
   }
+}
+
+async function advanceThroughAllSteps() {
+  // info step - greeting + 3 profile dropdowns
+  await waitFor(() => {
+    expect(screen.getByText(/olá, joão silva/i)).toBeTruthy();
+  });
+  selectDropdownOption("segmento", 0);
+  selectDropdownOption("pessoas", 0);
+  selectDropdownOption("faturamento", 0);
+  clickNext();
 
   // 10 dimension questions
   for (let i = 0; i < 10; i++) {
@@ -127,31 +136,47 @@ async function advanceThroughAllSteps() {
 }
 
 describe("DiagnosticoPage", () => {
-  it("renderiza o primeiro step com campos de info", () => {
+  it("renderiza o primeiro step com saudação e dropdowns de perfil", async () => {
     render(React.createElement(DiagnosticoPage));
-    expect(screen.getByLabelText(/nome completo/i)).toBeTruthy();
-    expect(screen.getByLabelText(/cargo/i)).toBeTruthy();
-    expect(screen.getByLabelText(/email/i)).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText(/olá, joão silva/i)).toBeTruthy();
+      expect(screen.getByText(/corp ltda/i)).toBeTruthy();
+    });
+    expect(screen.getByLabelText(/segmento/i)).toBeTruthy();
+    expect(screen.getByLabelText(/pessoas/i)).toBeTruthy();
+    expect(screen.getByLabelText(/faturamento/i)).toBeTruthy();
   });
 
-  it("mostra erro ao tentar avançar sem preencher", () => {
+  it("avança para dimensões após preencher perfil", async () => {
     render(React.createElement(DiagnosticoPage));
-    clickNext();
-    expect(screen.getByText(/informe seu nome/i)).toBeTruthy();
-  });
-
-  it("avança para contexto após preencher info", async () => {
-    render(React.createElement(DiagnosticoPage));
-    fillInfo();
+    await waitFor(() => {
+      expect(screen.getByText(/olá, joão silva/i)).toBeTruthy();
+    });
+    selectDropdownOption("segmento", 0);
+    selectDropdownOption("pessoas", 0);
+    selectDropdownOption("faturamento", 0);
     clickNext();
     await waitFor(() => {
-      expect(screen.getByText(/contexto/i)).toBeTruthy();
+      expect(screen.getAllByText(/dimensão 1/i).length).toBeGreaterThan(0);
+    });
+  });
+
+  it("mostra erro ao tentar avançar sem selecionar perfil", async () => {
+    render(React.createElement(DiagnosticoPage));
+    await waitFor(() => {
+      expect(screen.getByText(/olá, joão silva/i)).toBeTruthy();
+    });
+    clickNext();
+    await waitFor(() => {
+      expect(screen.getAllByText(/selecione uma opção/i).length).toBeGreaterThan(0);
     });
   });
 
   it("salva dados no localStorage", async () => {
     render(React.createElement(DiagnosticoPage));
-    fillInfo();
+    await waitFor(() => {
+      expect(screen.getByText(/olá, joão silva/i)).toBeTruthy();
+    });
     await waitFor(() => {
       const draft = JSON.parse(
         localStorage.getItem("diagnos_screener_draft") || "{}",
@@ -182,7 +207,9 @@ describe("DiagnosticoPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText(/diagnóstico enviado/i)).toBeTruthy();
-      expect(submitScreener).toHaveBeenCalled();
+      expect(submitScreener).toHaveBeenCalledWith(
+        expect.objectContaining({ leadId: "lead-1", name: "João Silva" }),
+      );
     });
   });
 
@@ -204,9 +231,9 @@ describe("DiagnosticoPage", () => {
     });
   });
 
-  it("mostra progresso atualizado", () => {
+  it("mostra progresso atualizado (13 steps no total)", async () => {
     render(React.createElement(DiagnosticoPage));
-    expect(screen.getByText(/1 de 15/i)).toBeTruthy();
+    expect(screen.getByText(/1 de 13/i)).toBeTruthy();
   });
 
   it("botão anterior desabilitado no primeiro step", () => {

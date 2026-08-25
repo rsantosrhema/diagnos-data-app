@@ -38,6 +38,7 @@ erDiagram
         text token_hash PK
         uuid lead_id FK
         timestamptz expires_at
+        boolean is_master
         timestamptz created_at
     }
     session_drafts {
@@ -126,6 +127,7 @@ Todas as tabelas têm **RLS habilitado sem policies** para `anon`/`authenticated
 | `token_hash` | `text` | **PK** (hash do token de sessão opaco) |
 | `lead_id` | `uuid` | not null, **FK** → `leads(id)` `on delete cascade` |
 | `expires_at` | `timestamptz` | not null |
+| `is_master` | `boolean` | not null, default `false` |
 | `created_at` | `timestamptz` | not null, default `now()` |
 
 **Índices**: `sessions_lead_id_idx`, `sessions_expires_at_idx`.

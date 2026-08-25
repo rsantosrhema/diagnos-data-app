@@ -8,15 +8,17 @@ const DIMS = SCREENER_CONTRACT.dimensoes;
 
 function makeInput(overrides: Partial<AgentPayloadInput> = {}): AgentPayloadInput {
   const dimensionAnswers = DIMS.map((d) => ({ dimensionId: d.id, nivel: 3 }));
-  const result = computeScores(SCREENER_CONTRACT, dimensionAnswers, {
-    ctx_01: "C-level (CEO, CTO, CFO, CIO)",
-    ctx_02: "51 a 200",
-  });
+  const result = computeScores(SCREENER_CONTRACT, dimensionAnswers, {});
   return {
     contract: SCREENER_CONTRACT,
     respondent: { name: "João Silva", role: "CTO" },
     company: { name: "Corp LTDA", size: "51 a 200" },
-    contextAnswers: { ctx_01: "C-level (CEO, CTO, CFO, CIO)", ctx_02: "51 a 200" },
+    profileAnswers: {
+      perfil_01: "Indústria",
+      perfil_02: "51 a 200",
+      perfil_03: "R$ 5 a 50 milhões",
+    },
+    contextAnswers: {},
     dimensionAnswers,
     commercialAnswer: "Entre R$ 50 mil e R$ 250 mil",
     result,
@@ -41,22 +43,29 @@ describe("buildAgentPayload", () => {
     expect(payload.solicitante.cargo).toBe("CTO");
   });
 
-  it("contém empresa com nome e porte", () => {
+  it("contém empresa com nome, porte, segmento, funcionarios e faturamento", () => {
     const payload = buildAgentPayload(makeInput());
     expect(payload.empresa.nome).toBe("Corp LTDA");
     expect(payload.empresa.porte).toBe("51 a 200");
+    expect(payload.empresa.segmento).toBe("Indústria");
+    expect(payload.empresa.funcionarios).toBe("51 a 200");
+    expect(payload.empresa.faturamento).toBe("R$ 5 a 50 milhões");
   });
 
   it("empresa nula quando não fornecida", () => {
-    const payload = buildAgentPayload(makeInput({ company: undefined }));
+    const payload = buildAgentPayload(makeInput({ company: undefined, profileAnswers: undefined }));
     expect(payload.empresa.nome).toBeNull();
     expect(payload.empresa.porte).toBeNull();
+    expect(payload.empresa.segmento).toBeNull();
+    expect(payload.empresa.funcionarios).toBeNull();
+    expect(payload.empresa.faturamento).toBeNull();
   });
 
-  it("contém contexto das perguntas de contexto", () => {
+  it("contém perfil da empresa nas respostas de perfil", () => {
     const payload = buildAgentPayload(makeInput());
-    expect(payload.contexto.ctx_01).toBe("C-level (CEO, CTO, CFO, CIO)");
-    expect(payload.contexto.ctx_02).toBe("51 a 200");
+    expect(payload.perfil_empresa.perfil_01).toBe("Indústria");
+    expect(payload.perfil_empresa.perfil_02).toBe("51 a 200");
+    expect(payload.perfil_empresa.perfil_03).toBe("R$ 5 a 50 milhões");
   });
 
   it("contém 10 respostas pontuadas", () => {

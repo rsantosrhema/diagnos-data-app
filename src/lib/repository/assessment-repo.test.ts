@@ -24,6 +24,7 @@ describe("AssessmentRepository", () => {
       await repo.createAssessmentResponse({
         leadId: "lead-1",
         context: { ctx_01: "C-level", ctx_02: "51 a 200" },
+        profile: { perfil_01: "Indústria", perfil_02: "51 a 200" },
         answers: [],
         commercialAnswer: "Até R$ 50 mil",
         consent: { accepted: true },
@@ -47,6 +48,7 @@ describe("AssessmentRepository", () => {
         repo.createAssessmentResponse({
           leadId: "lead-1",
           context: {},
+          profile: {},
           answers: [],
           commercialAnswer: "",
           consent: {},

@@ -71,25 +71,27 @@ describe("computeScores", () => {
     expect(result.imbalance).toBe(false);
   });
 
-  it("detecta C-level a partir de ctx_01", () => {
+  it("detecta C-level a partir do cargo", () => {
     const result = computeScores(
       SCREENER_CONTRACT,
       allAnswers(3),
-      { ctx_01: "C-level (CEO, CTO, CFO, CIO)" },
+      {},
+      "C-level (CEO, CTO, CFO, CIO)",
     );
     expect(result.cLevel).toBe(true);
   });
 
-  it("não marca C-level para resposta não-C-level", () => {
+  it("não marca C-level para cargo não-C-level", () => {
     const result = computeScores(
       SCREENER_CONTRACT,
       allAnswers(3),
-      { ctx_01: "Analista, engenheiro ou especialista" },
+      {},
+      "Analista, engenheiro ou especialista",
     );
     expect(result.cLevel).toBe(false);
   });
 
-  it("não marca C-level quando ctx_01 não respondido", () => {
+  it("não marca C-level quando cargo ausente", () => {
     const result = computeScores(SCREENER_CONTRACT, allAnswers(3), {});
     expect(result.cLevel).toBe(false);
   });

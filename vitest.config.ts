@@ -8,11 +8,11 @@ export default defineConfig({
     },
   },
   oxc: {
-    jsx: "react-jsx",
+    jsx: { runtime: "automatic" },
   },
   test: {
     globals: true,
     environment: "node",
-    include: ["src/**/*.test.ts", "src/**/*.test.tsx", "harness/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
   },
 });

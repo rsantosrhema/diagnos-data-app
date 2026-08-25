@@ -46,6 +46,9 @@ export async function proxyToInternal(req: Request, opts: ProxyOptions): Promise
   const auth = req.headers.get("authorization");
   if (auth) headers.set("authorization", auth);
 
+  const cookie = req.headers.get("cookie");
+  if (cookie) headers.set("cookie", cookie);
+
   const body = await readBody(req);
   const method = (opts.method ?? req.method).toUpperCase();
   const bodyArg: BodyInit | undefined =

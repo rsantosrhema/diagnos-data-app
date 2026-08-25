@@ -51,12 +51,13 @@ const DIMS = [
 
 function validBody() {
   return {
+    leadId: "c0b1f2e3-4a5b-6c7d-8e9f-0a1b2c3d4e5f",
     name: "João Silva",
-    role: "CTO",
     email: "joao@corp.com",
     consent: true,
     consentText: "Autorizo",
-    context: { ctx_01: "C-level", ctx_02: "51 a 200" },
+    context: {},
+    profile: { perfil_01: "Indústria", perfil_02: "51 a 200", perfil_03: "R$ 5 a 50 milhões" },
     answers: DIMS.map((id) => ({ dimensionId: id, nivel: 3 })),
     commercialAnswer: "Até R$ 50 mil",
   };

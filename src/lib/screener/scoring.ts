@@ -5,8 +5,6 @@ import {
   type ScoreBand,
 } from "./contract";
 
-// --- Types ---
-
 export interface DimensionAnswer {
   dimensionId: string;
   nivel: number; // 1–5
@@ -40,6 +38,7 @@ export function computeScores(
   contract: ScreenerContract,
   answers: DimensionAnswer[],
   contextAnswers: Record<string, string>,
+  role?: string,
 ): ScreenerResult {
   if (answers.length !== contract.dimensoes.length) {
     throw new ScoringError(
@@ -83,7 +82,7 @@ export function computeScores(
 
   const imbalance = highest.nivel - lowest.nivel > 3;
 
-  const cLevel = detectCLevel(contract, contextAnswers);
+  const cLevel = detectCLevel(role);
 
   return { score, band, riskDimension, imbalance, cLevel, dimensionScores };
 }
@@ -103,13 +102,7 @@ function mapToBand(contract: ScreenerContract, score: number): ScoreBand {
   );
 }
 
-function detectCLevel(
-  contract: ScreenerContract,
-  contextAnswers: Record<string, string>,
-): boolean {
-  const ctx01 = contract.perguntas_contexto.find((q) => q.id === "ctx_01");
-  if (!ctx01) return false;
-  const answer = contextAnswers["ctx_01"];
-  if (!answer) return false;
-  return answer.toLowerCase().includes("c-level");
+function detectCLevel(role?: string): boolean {
+  if (!role) return false;
+  return role.toLowerCase().includes("c-level");
 }

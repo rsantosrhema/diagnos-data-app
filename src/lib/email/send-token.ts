@@ -19,7 +19,7 @@ export interface SendTokenEmailInput {
 export async function sendTokenEmail(input: SendTokenEmailInput): Promise<void> {
   const accessUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/access`;
   await getResend().emails.send({
-    from: "Diagnos <no-reply@diagnos.app>",
+    from: process.env.RESEND_FROM_EMAIL ?? "Diagnos <no-reply@rhemadata.com>",
     to: input.to,
     subject: "Seu acesso ao Diagnóstico de Maturidade de Dados",
     html: `

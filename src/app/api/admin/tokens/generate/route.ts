@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase/server";
 import { generateTokenSchema } from "@/lib/schemas/token";
-import { generateToken, hashToken } from "@/lib/auth/token";
 import { requireManager, unauthorized } from "@/lib/auth/guard";
 import { verifyInternalApiKey } from "@/lib/auth/internal-key";
-
-const TOKEN_TTL_MS = 20 * 60 * 1000;
-const MAX_GENERATE_ATTEMPTS = 5;
+import { createTokenRepository } from "@/lib/repository/token-repo";
+import { createLeadRepository } from "@/lib/repository/lead-repo";
+import { createSessionRepository } from "@/lib/repository/session-repo";
+import { createTokenService, TokenServiceError } from "@/lib/service/token-service";
 
 export async function POST(req: Request) {
   if (!verifyInternalApiKey(req)) {
@@ -28,46 +28,19 @@ export async function POST(req: Request) {
   }
 
   const supabase = getServiceClient();
-  const { leadId } = parsed.data;
+  const tokenService = createTokenService({
+    tokenRepo: createTokenRepository(supabase),
+    leadRepo: createLeadRepository(supabase),
+    sessionRepo: createSessionRepository(supabase),
+  });
 
-  const { data: lead, error: leadError } = await supabase
-    .from("leads")
-    .select("id, email, name, status")
-    .eq("id", leadId)
-    .maybeSingle();
-
-  if (leadError) return NextResponse.json({ error: "Erro ao buscar cliente" }, { status: 500 });
-  if (!lead) return NextResponse.json({ error: "Cliente não encontrado" }, { status: 404 });
-
-  // invalida tokens ativos anteriores (um token ativo por lead)
-  await supabase
-    .from("access_tokens")
-    .update({ status: "cancelado" })
-    .eq("lead_id", leadId)
-    .eq("status", "disponivel");
-
-  for (let attempt = 0; attempt < MAX_GENERATE_ATTEMPTS; attempt++) {
-    const token = generateToken();
-    const tokenHash = hashToken(token);
-    const expiresAt = new Date(Date.now() + TOKEN_TTL_MS).toISOString();
-
-    const { data, error } = await supabase
-      .from("access_tokens")
-      .insert({ lead_id: leadId, token_hash: tokenHash, status: "disponivel", expires_at: expiresAt })
-      .select("id")
-      .single();
-
-    if (!error && data) {
-      await supabase.from("leads").update({ status: "token_gerado" }).eq("id", leadId);
-      // token em texto puro só é retornado aqui, uma única vez
-      return NextResponse.json({ id: data.id, token }, { status: 201 });
+  try {
+    const result = await tokenService.generateForLead(parsed.data.leadId);
+    return NextResponse.json(result, { status: 201 });
+  } catch (err) {
+    if (err instanceof TokenServiceError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
     }
-
-    // 23505 = unique violation (colisão de hash) → tenta regerar
-    if (error?.code !== "23505") {
-      return NextResponse.json({ error: "Erro ao gerar token" }, { status: 500 });
-    }
+    return NextResponse.json({ error: "Erro ao gerar token" }, { status: 500 });
   }
-
-  return NextResponse.json({ error: "Não foi possível gerar um token único" }, { status: 500 });
 }

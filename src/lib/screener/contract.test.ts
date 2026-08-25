@@ -3,10 +3,11 @@ import {
   SCREENER_CONTRACT,
   screenerContractSchema,
   DIMENSION_IDS,
-  CONTEXT_IDS,
+  CARGOS,
+  PERFIL_IDS,
   COMMERCIAL_ID,
   getDimensionById,
-  getContextQuestionById,
+  getProfileQuestionById,
 } from "./contract";
 import snapshotJson from "../../../docs/snapshot-maturidade-dados.json";
 
@@ -16,8 +17,16 @@ describe("SCREENER_CONTRACT", () => {
     expect(result.success).toBe(true);
   });
 
-  it("tem 2 perguntas de contexto", () => {
-    expect(SCREENER_CONTRACT.perguntas_contexto).toHaveLength(2);
+  it("tem lista de cargos não vazia", () => {
+    expect(CARGOS.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("não tem perguntas de contexto (cargo movido para o lead)", () => {
+    expect(SCREENER_CONTRACT.perguntas_contexto).toHaveLength(0);
+  });
+
+  it("tem 3 perguntas de perfil da empresa", () => {
+    expect(SCREENER_CONTRACT.perfil_empresa).toHaveLength(3);
   });
 
   it("tem 10 dimensões", () => {
@@ -62,6 +71,15 @@ describe("SCREENER_CONTRACT", () => {
   it("regras_de_relatorio tem pelo menos 1 regra", () => {
     expect(SCREENER_CONTRACT.scoring.regras_de_relatorio.length).toBeGreaterThanOrEqual(1);
   });
+
+  it("cada dimensão tem 5 opções com nivel 1-5", () => {
+    for (const dim of SCREENER_CONTRACT.dimensoes) {
+      for (let i = 0; i < 5; i++) {
+        expect(dim.opcoes[i].nivel).toBe(i + 1);
+        expect(dim.opcoes[i].texto.length).toBeGreaterThan(0);
+      }
+    }
+  });
 });
 
 describe("DIMENSION_IDS", () => {
@@ -71,10 +89,17 @@ describe("DIMENSION_IDS", () => {
   });
 });
 
-describe("CONTEXT_IDS", () => {
-  it("contém ctx_01 e ctx_02", () => {
-    expect(CONTEXT_IDS).toContain("ctx_01");
-    expect(CONTEXT_IDS).toContain("ctx_02");
+describe("CARGOS", () => {
+  it("inclui o cargo de C-level", () => {
+    expect(CARGOS.some((c) => c.toLowerCase().includes("c-level"))).toBe(true);
+  });
+});
+
+describe("PERFIL_IDS", () => {
+  it("contém perfil_01, perfil_02 e perfil_03", () => {
+    expect(PERFIL_IDS).toContain("perfil_01");
+    expect(PERFIL_IDS).toContain("perfil_02");
+    expect(PERFIL_IDS).toContain("perfil_03");
   });
 });
 
@@ -96,14 +121,14 @@ describe("getDimensionById", () => {
   });
 });
 
-describe("getContextQuestionById", () => {
+describe("getProfileQuestionById", () => {
   it("retorna a pergunta quando o ID existe", () => {
-    const q = getContextQuestionById("ctx_01");
+    const q = getProfileQuestionById("perfil_01");
     expect(q).toBeDefined();
     expect(q!.pergunta.length).toBeGreaterThan(0);
   });
 
   it("retorna undefined para ID inexistente", () => {
-    expect(getContextQuestionById("ctx_99")).toBeUndefined();
+    expect(getProfileQuestionById("perfil_99")).toBeUndefined();
   });
 });

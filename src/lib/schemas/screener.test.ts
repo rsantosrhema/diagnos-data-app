@@ -13,7 +13,12 @@ function validSubmission() {
     email: "joao@corp.com",
     consent: true as const,
     consentText: "Autorizo o uso dos dados.",
-    context: { ctx_01: "C-level (CEO, CTO, CFO, CIO)", ctx_02: "51 a 200" },
+    context: {},
+    profile: {
+      perfil_01: "Indústria",
+      perfil_02: "51 a 200",
+      perfil_03: "R$ 5 a 50 milhões",
+    },
     answers: DIMS.map((d) => ({ dimensionId: d.id, nivel: 3 })),
     commercialAnswer: "Até R$ 50 mil",
   };
@@ -25,6 +30,30 @@ describe("screenerSubmissionSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("aceita payload sem role (cargo vem do lead)", () => {
+    const result = screenerSubmissionSchema.safeParse({
+      ...validSubmission(),
+      role: undefined,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("aceita leadId como uuid", () => {
+    const result = screenerSubmissionSchema.safeParse({
+      ...validSubmission(),
+      leadId: "c0b1f2e3-4a5b-6c7d-8e9f-0a1b2c3d4e5f",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejeita leadId que não é uuid", () => {
+    const result = screenerSubmissionSchema.safeParse({
+      ...validSubmission(),
+      leadId: "nao-uuid",
+    });
+    expect(result.success).toBe(false);
+  });
+
   it("rejeita nome muito curto", () => {
     const result = screenerSubmissionSchema.safeParse({
       ...validSubmission(),
@@ -33,7 +62,7 @@ describe("screenerSubmissionSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejeita cargo muito curto", () => {
+  it("rejeita cargo muito curto quando fornecido", () => {
     const result = screenerSubmissionSchema.safeParse({
       ...validSubmission(),
       role: "A",
@@ -84,6 +113,7 @@ describe("screenerSubmissionSchema", () => {
       consent: submission.consent,
       consentText: submission.consentText,
       context: submission.context,
+      profile: submission.profile,
       answers: submission.answers,
       commercialAnswer: submission.commercialAnswer,
     });
@@ -113,15 +143,17 @@ describe("screenerSubmissionSchema", () => {
 describe("agentPayloadSchema", () => {
   it("valida payload gerado pelo buildAgentPayload", () => {
     const dimensionAnswers = DIMS.map((d) => ({ dimensionId: d.id, nivel: 3 }));
-    const result = computeScores(SCREENER_CONTRACT, dimensionAnswers, {
-      ctx_01: "C-level",
-      ctx_02: "51 a 200",
-    });
+    const result = computeScores(SCREENER_CONTRACT, dimensionAnswers, {}, "CTO");
     const payload = buildAgentPayload({
       contract: SCREENER_CONTRACT,
       respondent: { name: "João", role: "CTO" },
       company: { name: "Corp", size: "51 a 200" },
-      contextAnswers: { ctx_01: "C-level", ctx_02: "51 a 200" },
+      profileAnswers: {
+        perfil_01: "Indústria",
+        perfil_02: "51 a 200",
+        perfil_03: "R$ 5 a 50 milhões",
+      },
+      contextAnswers: {},
       dimensionAnswers,
       commercialAnswer: "Até R$ 50 mil",
       result,
