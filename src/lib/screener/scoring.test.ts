@@ -220,6 +220,21 @@ describe("computeContextualScores", () => {
     }
   });
 
+  it("retorna dimensionScores com pesos ajustados diferentes dos base", () => {
+    const result = computeContextualScores({
+      contract: SCREENER_CONTRACT,
+      calibration: SCORING_CALIBRATION,
+      answers: allAnswers(3),
+      contextAnswers: {},
+      profile: { perfil_01: "Saúde", perfil_02: "Mais de 5.000", perfil_03: "Acima de R$ 1 bilhão" },
+    });
+    const baseResult = computeScores(SCREENER_CONTRACT, allAnswers(3), {});
+    const pesosDiferentes = result.dimensionScores.some(
+      (ds, i) => ds.peso !== baseResult.dimensionScores[i].peso,
+    );
+    expect(pesosDiferentes).toBe(true);
+  });
+
   it("mantém backward compatibility com computeScores", () => {
     const original = computeScores(SCREENER_CONTRACT, allAnswers(3), {});
     const contextual = computeContextualScores({

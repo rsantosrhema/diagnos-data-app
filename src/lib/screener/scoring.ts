@@ -49,7 +49,7 @@ export function computeScores(
   }
 
   const dimensionScores = answers.map((a) => {
-    const dim = getDimensionById(a.dimensionId);
+    const dim = contract.dimensoes.find((d) => d.id === a.dimensionId);
     if (!dim) {
       throw new ScoringError(`Dimensão desconhecida: ${a.dimensionId}`);
     }
