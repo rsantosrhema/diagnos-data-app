@@ -2,7 +2,8 @@ import type { LeadRepository } from "@/lib/repository/lead-repo";
 import type { AssessmentRepository } from "@/lib/repository/assessment-repo";
 import type { ScreenerContract } from "@/lib/screener/contract";
 import type { ScreenerSubmission } from "@/lib/schemas/screener";
-import { computeScores } from "@/lib/screener/scoring";
+import type { ScoringCalibration } from "@/lib/screener/scoring-calibration";
+import { computeScores, computeContextualScores } from "@/lib/screener/scoring";
 import { buildAgentPayload } from "@/lib/screener/agent-payload";
 
 export class ScreenServiceError extends Error {
@@ -28,6 +29,7 @@ export function createScreenService(deps: {
   leadRepo: LeadRepository;
   assessmentRepo: AssessmentRepository;
   contract: ScreenerContract;
+  loadActiveCalibration: () => Promise<ScoringCalibration>;
   generatePdf: (input: GeneratePdfInput) => Promise<{ pdf: Buffer; filename: string }>;
   sendEmail: (params: {
     to: string;
@@ -36,7 +38,7 @@ export function createScreenService(deps: {
     attachment: { filename: string; content: Buffer };
   }) => Promise<void>;
 }) {
-  const { leadRepo, assessmentRepo, contract, generatePdf, sendEmail } = deps;
+  const { leadRepo, assessmentRepo, contract, loadActiveCalibration, generatePdf, sendEmail } = deps;
 
   return {
     async submitScreener(
@@ -87,17 +89,26 @@ export function createScreenService(deps: {
         }
       }
 
-      // 4. Compute scores
+      // 4. Compute scores (contextual)
       const dimensionAnswers = submission.answers.map((a) => ({
         dimensionId: a.dimensionId,
         nivel: a.nivel,
       }));
-      const result = computeScores(
-        contract,
-        dimensionAnswers,
-        submission.context,
-        role,
-      );
+
+      let result;
+      try {
+        const calibration = await loadActiveCalibration();
+        result = computeContextualScores({
+          contract,
+          calibration,
+          answers: dimensionAnswers,
+          contextAnswers: submission.context,
+          profile,
+          role,
+        });
+      } catch {
+        result = computeScores(contract, dimensionAnswers, submission.context, role);
+      }
 
       // 5. Build agent payload
       const agentPayload = buildAgentPayload({

@@ -195,7 +195,7 @@ function ScreenerReport({ input }: { input: GeneratePdfInput }) {
       : []),
     h(View, { key: "warning", style: styles.section },
       h(Text, { style: { fontSize: 8, color: COLORS.lavender, fontStyle: "italic" } },
-        "Instrumento de triagem baseado em autoavaliação. Não substitui diagnóstico com evidência documental. Resultado reportado como faixa, não como número exato.",
+        "Pesos ajustados com base no perfil da empresa (segmento, porte e faturamento). Instrumento de triagem baseado em autoavaliação. Não substitui diagnóstico com evidência documental. Resultado reportado como faixa, não como número exato.",
       ),
     ),
     h(View, { key: "footer", style: styles.footer },

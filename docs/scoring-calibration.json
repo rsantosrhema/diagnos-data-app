@@ -1,0 +1,180 @@
+{
+  "version": "1.0.0",
+  "effective_from": "2025-08-25",
+
+  "dimensions": {
+    "d01": { "base_weight": 12, "min": 7, "max": 17, "description": "Governança e Responsabilidade" },
+    "d02": { "base_weight": 12, "min": 7, "max": 17, "description": "Patrocínio Executivo e Business Case" },
+    "d03": { "base_weight": 12, "min": 7, "max": 17, "description": "Arquitetura e Integração" },
+    "d04": { "base_weight": 12, "min": 7, "max": 17, "description": "Qualidade de Dados" },
+    "d05": { "base_weight": 10, "min": 6, "max": 14, "description": "Metadados e Rastreabilidade" },
+    "d06": { "base_weight": 8, "min": 5, "max": 11, "description": "Dados Mestres e Cadastros" },
+    "d07": { "base_weight": 10, "min": 6, "max": 14, "description": "Segurança e Conformidade (LGPD)" },
+    "d08": { "base_weight": 10, "min": 6, "max": 14, "description": "Consumo e Autonomia Analítica" },
+    "d09": { "base_weight": 6, "min": 4, "max": 8, "description": "IA, Modelos e Analytics Avançado" },
+    "d10": { "base_weight": 8, "min": 5, "max": 11, "description": "Time e Capacidade" }
+  },
+
+  "profile_factors": {
+    "segmento": {
+      "type": "categorical",
+      "source_field": "perfil_01",
+      "multipliers": {
+        "Indústria": {
+          "d01": 0.95, "d02": 0.95, "d03": 1.20, "d04": 1.15,
+          "d05": 1.10, "d06": 0.95, "d07": 1.05, "d08": 0.95,
+          "d09": 1.10, "d10": 0.95
+        },
+        "Varejo": {
+          "d01": 0.95, "d02": 0.95, "d03": 0.95, "d04": 1.10,
+          "d05": 0.95, "d06": 1.25, "d07": 0.95, "d08": 1.20,
+          "d09": 1.05, "d10": 0.95
+        },
+        "Serviços": {
+          "d01": 0.95, "d02": 1.15, "d03": 0.95, "d04": 0.95,
+          "d05": 0.95, "d06": 1.10, "d07": 0.95, "d08": 1.15,
+          "d09": 0.95, "d10": 1.20
+        },
+        "Saúde": {
+          "d01": 1.05, "d02": 0.95, "d03": 0.90, "d04": 1.20,
+          "d05": 1.15, "d06": 0.95, "d07": 1.30, "d08": 0.90,
+          "d09": 1.10, "d10": 0.95
+        },
+        "Finanças/Fintech": {
+          "d01": 1.10, "d02": 1.20, "d03": 0.95, "d04": 1.15,
+          "d05": 0.95, "d06": 0.90, "d07": 1.25, "d08": 0.90,
+          "d09": 1.15, "d10": 0.95
+        },
+        "Educação": {
+          "d01": 1.10, "d02": 1.10, "d03": 0.95, "d04": 0.95,
+          "d05": 0.95, "d06": 0.95, "d07": 0.95, "d08": 0.95,
+          "d09": 0.95, "d10": 1.25
+        },
+        "Governo": {
+          "d01": 1.20, "d02": 1.10, "d03": 0.95, "d04": 0.95,
+          "d05": 1.05, "d06": 0.95, "d07": 1.20, "d08": 0.95,
+          "d09": 0.95, "d10": 0.95
+        },
+        "Agronegócio": {
+          "d01": 0.95, "d02": 0.95, "d03": 1.15, "d04": 1.10,
+          "d05": 0.95, "d06": 0.95, "d07": 0.95, "d08": 0.95,
+          "d09": 1.05, "d10": 0.95
+        },
+        "Outro": {
+          "d01": 1.0, "d02": 1.0, "d03": 1.0, "d04": 1.0,
+          "d05": 1.0, "d06": 1.0, "d07": 1.0, "d08": 1.0,
+          "d09": 1.0, "d10": 1.0
+        }
+      }
+    },
+
+    "porte_funcionarios": {
+      "type": "ordinal",
+      "source_field": "perfil_02",
+      "weight": 0.60,
+      "multipliers": {
+        "Até 50": {
+          "d01": 0.90, "d02": 0.85, "d03": 0.95, "d04": 0.95,
+          "d05": 0.90, "d06": 0.95, "d07": 0.95, "d08": 0.95,
+          "d09": 0.90, "d10": 1.20
+        },
+        "51 a 200": {
+          "d01": 0.95, "d02": 0.90, "d03": 0.98, "d04": 0.98,
+          "d05": 1.00, "d06": 0.98, "d07": 0.98, "d08": 0.98,
+          "d09": 0.95, "d10": 1.10
+        },
+        "201 a 1.000": {
+          "d01": 1.0, "d02": 1.0, "d03": 1.0, "d04": 1.0,
+          "d05": 1.0, "d06": 1.0, "d07": 1.0, "d08": 1.0,
+          "d09": 1.0, "d10": 1.0
+        },
+        "1.001 a 5.000": {
+          "d01": 1.10, "d02": 1.05, "d03": 1.02, "d04": 1.02,
+          "d05": 1.10, "d06": 1.02, "d07": 1.05, "d08": 1.02,
+          "d09": 1.05, "d10": 1.02
+        },
+        "Mais de 5.000": {
+          "d01": 1.20, "d02": 1.15, "d03": 1.05, "d04": 1.05,
+          "d05": 1.15, "d06": 1.05, "d07": 1.10, "d08": 1.05,
+          "d09": 1.10, "d10": 1.05
+        }
+      }
+    },
+
+    "porte_faturamento": {
+      "type": "ordinal",
+      "source_field": "perfil_03",
+      "weight": 0.40,
+      "multipliers": {
+        "Até R$ 5 milhões": {
+          "d01": 0.95, "d02": 0.90, "d03": 0.97, "d04": 0.97,
+          "d05": 0.95, "d06": 0.97, "d07": 0.97, "d08": 0.97,
+          "d09": 0.90, "d10": 0.97
+        },
+        "R$ 5 a 50 milhões": {
+          "d01": 0.98, "d02": 0.95, "d03": 0.98, "d04": 0.98,
+          "d05": 0.98, "d06": 0.98, "d07": 0.98, "d08": 0.98,
+          "d09": 0.95, "d10": 0.98
+        },
+        "R$ 50 a 250 milhões": {
+          "d01": 1.0, "d02": 1.0, "d03": 1.0, "d04": 1.0,
+          "d05": 1.0, "d06": 1.0, "d07": 1.0, "d08": 1.0,
+          "d09": 1.0, "d10": 1.0
+        },
+        "R$ 250 milhões a 1 bilhão": {
+          "d01": 1.05, "d02": 1.05, "d03": 1.02, "d04": 1.02,
+          "d05": 1.05, "d06": 1.02, "d07": 1.02, "d08": 1.02,
+          "d09": 1.05, "d10": 1.02
+        },
+        "Acima de R$ 1 bilhão": {
+          "d01": 1.10, "d02": 1.10, "d03": 1.04, "d04": 1.04,
+          "d05": 1.10, "d06": 1.04, "d07": 1.05, "d08": 1.04,
+          "d09": 1.10, "d10": 1.04
+        }
+      }
+    }
+  },
+
+  "normalization": {
+    "method": "proportional",
+    "target_total": 100,
+    "rounding": "largest_remainder"
+  },
+
+  "constraints": {
+    "max_weight_change_percent": 40,
+    "min_score": 1.0,
+    "max_score": 5.0
+  },
+
+  "recalibrated_bands": {
+    "Indústria": [
+      { "min": 1.0, "max": 2.0, "rotulo": "Inicial", "descricao": "Dados tratados de forma reativa. Processos industriais dependem de planilhas e sistemas desconectados." },
+      { "min": 2.0, "max": 2.8, "rotulo": "Emergente", "descricao": "Iniciativas isoladas de dados na produção. Integração com ERP/SAP ainda incipiente." },
+      { "min": 2.8, "max": 3.6, "rotulo": "Estruturado", "descricao": "Plataforma de dados existe para operações. Gargalo é governança e qualidade de dados de chão de fábrica." },
+      { "min": 3.6, "max": 4.4, "rotulo": "Gerenciado", "descricao": "Dados industriais são ativo gerenciado. IoT e analytics preditivo em evolução." },
+      { "min": 4.4, "max": 5.0, "rotulo": "Otimizado", "descricao": "Indústria 4.0 com dados como produto. Manutenção preditiva e digital twin operacionais." }
+    ],
+    "Varejo": [
+      { "min": 1.0, "max": 1.9, "rotulo": "Inicial", "descricao": "Cadastros de produto e cliente fragmentados. E-commerce e loja física com dados desconectados." },
+      { "min": 1.9, "max": 2.7, "rotulo": "Emergente", "descricao": "Alguma integração entre canais. Dados de cliente ainda inconsistentes." },
+      { "min": 2.7, "max": 3.5, "rotulo": "Estruturado", "descricao": "MDM de produtos existe. Automação de marketing usa dados integrados." },
+      { "min": 3.5, "max": 4.3, "rotulo": "Gerenciado", "descricao": "Omnichannel com dados unificados. Personalização em tempo real operacional." },
+      { "min": 4.3, "max": 5.0, "rotulo": "Otimizado", "descricao": "Data-driven retail. Precificação dinâmica, recomendação e previsão de demanda avançadas." }
+    ],
+    "Finanças/Fintech": [
+      { "min": 1.0, "max": 2.2, "rotulo": "Inicial", "descricao": "Dados financeiros sem governança. Risco regulatório alto (BACEN, LGPD)." },
+      { "min": 2.2, "max": 3.0, "rotulo": "Emergente", "descricao": "Compliance reativo. Dados de crédito e fraude em silos." },
+      { "min": 3.0, "max": 3.8, "rotulo": "Estruturado", "descricao": "Governança de dados regulatórios existe. Modelos de risco em produção sem monitoramento formal." },
+      { "min": 3.8, "max": 4.5, "rotulo": "Gerenciado", "descricao": "Dados como ativo regulatório gerenciado. Modelos versionados e auditáveis." },
+      { "min": 4.5, "max": 5.0, "rotulo": "Otimizado", "descricao": "Data governance madura. IA/ML com governança formal e compliance automatizado." }
+    ],
+    "Saúde": [
+      { "min": 1.0, "max": 2.1, "rotulo": "Inicial", "descricao": "Prontuários e dados de pacientes fragmentados. Risco de compliance LGPD/ANS alto." },
+      { "min": 2.1, "max": 2.9, "rotulo": "Emergente", "descricao": "Sistemas clínicos parcialmente integrados. Qualidade de dados de saúde precária." },
+      { "min": 2.9, "max": 3.7, "rotulo": "Estruturado", "descricao": "Interoperação via RNDS em progresso. Dados de pacientes classificados e protegidos." },
+      { "min": 3.7, "max": 4.4, "rotulo": "Gerenciado", "descricao": "Dados de saúde unificados e governados. Analytics clínico operacional." },
+      { "min": 4.4, "max": 5.0, "rotulo": "Otimizado", "descricao": "Saúde digital avançada. IA diagnóstica com dados de qualidade e governança formal." }
+    ]
+  }
+}

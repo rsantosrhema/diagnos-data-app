@@ -5,6 +5,8 @@ import { verifyInternalApiKey } from "@/lib/auth/internal-key";
 import { readLeadFromSession } from "@/lib/auth/session";
 import { createLeadRepository } from "@/lib/repository/lead-repo";
 import { createAssessmentRepository } from "@/lib/repository/assessment-repo";
+import { createScoringConfigRepository } from "@/lib/repository/scoring-config-repo";
+import { createScoringConfigService } from "@/lib/service/scoring-config-service";
 import { createScreenService, ScreenServiceError } from "@/lib/service/screen-service";
 import { SCREENER_CONTRACT } from "@/lib/screener/contract";
 import { generateScreenerPdf } from "@/lib/report/report-generator";
@@ -34,10 +36,13 @@ export async function POST(req: Request) {
   const isMaster = session?.isMaster ?? false;
 
   const supabase = getServiceClient();
+  const configRepo = createScoringConfigRepository(supabase);
+  const configService = createScoringConfigService({ configRepo });
   const screenService = createScreenService({
     leadRepo: createLeadRepository(supabase),
     assessmentRepo: createAssessmentRepository(supabase),
     contract: SCREENER_CONTRACT,
+    loadActiveCalibration: () => configService.loadActiveCalibration(),
     generatePdf: generateScreenerPdf,
     sendEmail: sendReportEmail,
   });

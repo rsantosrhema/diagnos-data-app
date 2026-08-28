@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { SCREENER_CONTRACT } from "./contract";
-import { computeScores, ScoringError } from "./scoring";
+import { computeScores, computeContextualScores, ScoringError } from "./scoring";
 import type { DimensionAnswer } from "./scoring";
+import { SCORING_CALIBRATION } from "./scoring-calibration";
 
 const DIMS = SCREENER_CONTRACT.dimensoes;
 
@@ -154,5 +155,81 @@ describe("computeScores", () => {
     const result = computeScores(SCREENER_CONTRACT, allAnswers(5), {});
     expect(result.score).toBe(5.0);
     expect(result.band.rotulo).toBe("Otimizado");
+  });
+});
+
+describe("computeContextualScores", () => {
+  it("retorna score com pesos neutros para perfil vazio", () => {
+    const result = computeContextualScores({
+      contract: SCREENER_CONTRACT,
+      calibration: SCORING_CALIBRATION,
+      answers: allAnswers(3),
+      contextAnswers: {},
+      profile: {},
+    });
+    expect(result.score).toBe(3.0);
+    expect(result.dimensionScores).toHaveLength(10);
+  });
+
+  it("soma dos pesos ajustados = 100", () => {
+    const result = computeContextualScores({
+      contract: SCREENER_CONTRACT,
+      calibration: SCORING_CALIBRATION,
+      answers: allAnswers(3),
+      contextAnswers: {},
+      profile: { perfil_01: "Saúde", perfil_02: "Mais de 5.000" },
+    });
+    const totalPeso = result.dimensionScores.reduce((sum, d) => sum + d.peso, 0);
+    expect(totalPeso).toBe(100);
+  });
+
+  it("usa faixas recalibradas para segmento conhecido", () => {
+    const result = computeContextualScores({
+      contract: SCREENER_CONTRACT,
+      calibration: SCORING_CALIBRATION,
+      answers: allAnswers(3),
+      contextAnswers: {},
+      profile: { perfil_01: "Finanças/Fintech" },
+    });
+    expect(result.band).toBeDefined();
+    expect(result.band.rotulo).toBeDefined();
+  });
+
+  it("usa faixas padrão para segmento sem recalibração", () => {
+    const result = computeContextualScores({
+      contract: SCREENER_CONTRACT,
+      calibration: SCORING_CALIBRATION,
+      answers: allAnswers(3),
+      contextAnswers: {},
+      profile: { perfil_01: "Outro" },
+    });
+    expect(result.band.rotulo).toBe("Estruturado");
+  });
+
+  it("retorna dimensionScores com pesos ajustados", () => {
+    const result = computeContextualScores({
+      contract: SCREENER_CONTRACT,
+      calibration: SCORING_CALIBRATION,
+      answers: allAnswers(3),
+      contextAnswers: {},
+      profile: { perfil_01: "Saúde" },
+    });
+    for (const ds of result.dimensionScores) {
+      expect(ds.peso).toBeGreaterThan(0);
+      expect(Number.isInteger(ds.peso)).toBe(true);
+    }
+  });
+
+  it("mantém backward compatibility com computeScores", () => {
+    const original = computeScores(SCREENER_CONTRACT, allAnswers(3), {});
+    const contextual = computeContextualScores({
+      contract: SCREENER_CONTRACT,
+      calibration: SCORING_CALIBRATION,
+      answers: allAnswers(3),
+      contextAnswers: {},
+      profile: { perfil_01: "Outro" },
+    });
+    expect(contextual.score).toBe(original.score);
+    expect(contextual.band.rotulo).toBe(original.band.rotulo);
   });
 });

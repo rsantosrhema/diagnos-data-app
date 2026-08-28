@@ -89,6 +89,7 @@ function createService(deps: {
     }),
     assessmentRepo: deps.assessmentRepo ?? mockAssessmentRepo(),
     contract: SCREENER_CONTRACT,
+    loadActiveCalibration: vi.fn().mockRejectedValue(new Error("no db")),
     generatePdf: deps.generatePdf ?? mockGeneratePdf(),
     sendEmail: deps.sendEmail ?? mockSendEmail(),
   });
