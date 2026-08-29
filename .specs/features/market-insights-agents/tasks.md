@@ -306,13 +306,13 @@ Service + route + screen-service hook.
 - Skill: NONE
 
 **Done when**:
-- [ ] `enqueue` captura erro e não lança (AC INS-03)
-- [ ] `processNext` popula payload, roda orchestrator, upsert `analisado`; falha → upsert `falha` com erro
-- [ ] `processNext` com fila vazia retorna `{ processed: false }`
-- [ ] Unit tests: enqueue não lança, processNext feliz/falha/fila vazia
+- [x] `enqueue` captura erro e não lança (AC INS-03)
+- [x] `processNext` popula payload, roda orchestrator, upsert `analisado`; falha → upsert `falha` com erro
+- [x] `processNext` com fila vazia retorna `{ processed: false }`
+- [x] Unit tests: enqueue não lança, processNext feliz/falha/fila vazia
 
-**Tests**: unit
-**Gate**: quick
+**Tests**: unit ✅ (6 testes em `src/lib/service/analysis-service.test.ts`)
+**Gate**: quick ✅ (`npm run test` 287 passed)
 **Commit**: `feat(service): add analysis service with enqueue and processNext`
 
 ---
