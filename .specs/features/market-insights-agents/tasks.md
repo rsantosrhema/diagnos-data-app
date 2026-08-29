@@ -170,13 +170,13 @@ Service + route + screen-service hook.
 - Skill: NONE
 
 **Done when**:
-- [ ] Monta 4 queries (segmento, faturamento, porte, concorrentes) a partir do `AgentPayload`
-- [ ] `Promise.allSettled`; query que falha vira `status:"erro"`, não aborta
-- [ ] Concatena `sources` das URLs únicas
-- [ ] Unit tests com mock do Exa: feliz + falha isolada + sem nome de empresa (sem seção concorrentes)
+- [x] Monta 4 queries (segmento, faturamento, porte, concorrentes) a partir do `AgentPayload`
+- [x] `Promise.allSettled`; query que falha vira `status:"erro"`, não aborta
+- [x] Concatena `sources` das URLs únicas
+- [x] Unit tests com mock do Exa: feliz + falha isolada + sem nome de empresa (sem seção concorrentes)
 
-**Tests**: unit
-**Gate**: quick
+**Tests**: unit ✅ (6 testes em `src/lib/agents/researcher.test.ts`)
+**Gate**: quick ✅ (`npm run test` 254 passed)
 **Commit**: `feat(agents): add exa researcher agent`
 
 ---
