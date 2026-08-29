@@ -76,11 +76,16 @@ function mockSendEmail() {
   return vi.fn().mockResolvedValue(undefined);
 }
 
+function mockEnqueueAnalysis() {
+  return vi.fn().mockResolvedValue(undefined);
+}
+
 function createService(deps: {
   leadRepo?: LeadRepository;
   assessmentRepo?: AssessmentRepository;
   generatePdf?: ReturnType<typeof mockGeneratePdf>;
   sendEmail?: ReturnType<typeof mockSendEmail>;
+  enqueueAnalysis?: ReturnType<typeof mockEnqueueAnalysis>;
 } = {}) {
   return createScreenService({
     leadRepo: deps.leadRepo ?? mockLeadRepo({
@@ -92,6 +97,7 @@ function createService(deps: {
     loadActiveCalibration: vi.fn().mockRejectedValue(new Error("no db")),
     generatePdf: deps.generatePdf ?? mockGeneratePdf(),
     sendEmail: deps.sendEmail ?? mockSendEmail(),
+    enqueueAnalysis: deps.enqueueAnalysis ?? mockEnqueueAnalysis(),
   });
 }
 
@@ -228,6 +234,21 @@ describe("ScreenService", () => {
         subject: expect.stringContaining("João Silva"),
       }),
     );
+  });
+
+  it("enfileira a análise com o lead_id após persistir o diagnóstico (AC INS-01)", async () => {
+    const enqueueAnalysis = mockEnqueueAnalysis();
+    const service = createService({ enqueueAnalysis });
+    await service.submitScreener(validSubmission());
+    expect(enqueueAnalysis).toHaveBeenCalledWith("lead-1");
+  });
+
+  it("falha no enfileiramento não quebra o submit (AC INS-03)", async () => {
+    const enqueueAnalysis = mockEnqueueAnalysis();
+    enqueueAnalysis.mockRejectedValue(new Error("queue down"));
+    const service = createService({ enqueueAnalysis });
+    const result = await service.submitScreener(validSubmission());
+    expect(result).toEqual({ ok: true });
   });
 
   it("fallback sem lead: erro 23505 vira 409", async () => {

@@ -37,8 +37,9 @@ export function createScreenService(deps: {
     html: string;
     attachment: { filename: string; content: Buffer };
   }) => Promise<void>;
+  enqueueAnalysis: (leadId: string) => Promise<void>;
 }) {
-  const { leadRepo, assessmentRepo, contract, loadActiveCalibration, generatePdf, sendEmail } = deps;
+  const { leadRepo, assessmentRepo, contract, loadActiveCalibration, generatePdf, sendEmail, enqueueAnalysis } = deps;
 
   return {
     async submitScreener(
@@ -176,6 +177,17 @@ export function createScreenService(deps: {
         await leadRepo.updateStatus(leadId, "concluido");
       } catch {
         throw new ScreenServiceError("Erro ao salvar diagnóstico", 500);
+      }
+
+      // 6.1 Enfileirar análise em background (AC INS-01/INS-03): falha nunca
+      // quebra o submit — a análise pode ser reprocessada depois (fatia 3).
+      try {
+        await enqueueAnalysis(leadId);
+      } catch (err) {
+        console.error(
+          `[screen-service] falha ao enfileirar análise para lead ${leadId}:`,
+          err instanceof Error ? err.message : err,
+        );
       }
 
       // 7. Generate PDF

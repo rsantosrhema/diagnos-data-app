@@ -329,14 +329,14 @@ Service + route + screen-service hook.
 - Skill: NONE
 
 **Done when**:
-- [ ] Worker route verifica `verifyInternalApiKey` e chama `processNext()` × N
-- [ ] `screen-service` chama `enqueueAnalysis(leadId)` após persistir diagnóstico; falha não quebra submit (AC INS-03)
-- [ ] `screener/route.ts` injeta `enqueueAnalysis` no `createScreenService`
-- [ ] Testes existentes de `screen-service` atualizados para o novo dep (mock `enqueueAnalysis`)
-- [ ] Testes da rota: sem chave → 401; com chave → processa
+- [x] Worker route verifica `verifyInternalApiKey` e chama `processNext()` × N
+- [x] `screen-service` chama `enqueueAnalysis(leadId)` após persistir diagnóstico; falha não quebra submit (AC INS-03)
+- [x] `screener/route.ts` injeta `enqueueAnalysis` no `createScreenService`
+- [x] Testes existentes de `screen-service` atualizados para o novo dep (mock `enqueueAnalysis`)
+- [x] Testes da rota: sem chave → 401; com chave → processa
 
-**Tests**: unit
-**Gate**: build
+**Tests**: unit ✅ (4 novos testes: 2 em `src/app/api/analysis-worker/route.test.ts` + 2 em `screen-service.test.ts`)
+**Gate**: build ✅ (`npm run typecheck` + `npm run test` 291 passed + `npm run build` passou)
 **Commit**: `feat(worker): wire analysis worker route and screen-service enqueue hook`
 
 ---
