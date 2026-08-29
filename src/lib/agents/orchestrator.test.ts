@@ -48,10 +48,20 @@ function makeBrief(): InsightsBrief {
   return { bullets: [{ texto: "Insight", prioridade: "alta" }] };
 }
 
+type AnalystFn = (input: {
+  research: MarketResearch;
+  payload: AgentPayload;
+}) => Promise<MarketAnalysis>;
+
+type WriterFn = (input: {
+  analysis: MarketAnalysis;
+  payload: AgentPayload;
+}) => Promise<InsightsBrief>;
+
 describe("createAgentOrchestrator", () => {
-  let researcher: ReturnType<typeof vi.fn>;
-  let analyst: ReturnType<typeof vi.fn>;
-  let writer: ReturnType<typeof vi.fn>;
+  let researcher: ReturnType<typeof vi.fn<(payload: AgentPayload) => Promise<MarketResearch>>>;
+  let analyst: ReturnType<typeof vi.fn<AnalystFn>>;
+  let writer: ReturnType<typeof vi.fn<WriterFn>>;
   let payload: AgentPayload;
 
   beforeEach(() => {
