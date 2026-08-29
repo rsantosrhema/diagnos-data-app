@@ -215,13 +215,13 @@ Service + route + screen-service hook.
 - Skill: NONE
 
 **Done when**:
-- [ ] Prompt pede até 10 bullets em PT-BR com prioridade `alta|media|baixa`
-- [ ] Trunca resultado para 10 bullets mantendo ordem
-- [ ] Parse falha → `WriterError`
-- [ ] Unit tests: até 10 bullets, prioridade presente, truncamento
+- [x] Prompt pede até 10 bullets em PT-BR com prioridade `alta|media|baixa`
+- [x] Trunca resultado para 10 bullets mantendo ordem
+- [x] Parse falha → `WriterError`
+- [x] Unit tests: até 10 bullets, prioridade presente, truncamento
 
-**Tests**: unit
-**Gate**: quick
+**Tests**: unit ✅ (5 testes em `src/lib/agents/writer.test.ts`)
+**Gate**: quick ✅ (`npm run test` 264 passed)
 **Commit**: `feat(agents): add writer agent for insights brief`
 
 ---
