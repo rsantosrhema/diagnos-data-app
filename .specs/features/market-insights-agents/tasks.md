@@ -102,13 +102,13 @@ Service + route + screen-service hook.
 - Skill: NONE
 
 **Done when**:
-- [ ] `EnvSchema` com Zod `.strict()` cobre LLM/Exa vars (e mantém vars existentes que já estavam em uso)
-- [ ] Exporta `getEnv()` que lança erro claro se var obrigatória ausente
-- [ ] `.env.example` atualizado com `LLM_*` e `EXA_API_KEY`
-- [ ] `npm run typecheck` passa
+- [x] `EnvSchema` com Zod `.strict()` cobre LLM/Exa vars (e mantém vars existentes que já estavam em uso)
+- [x] Exporta `getEnv()` que lança erro claro se var obrigatória ausente
+- [x] `.env.example` atualizado com `LLM_*` e `EXA_API_KEY`
+- [x] `npm run typecheck` passa
 
-**Tests**: none
-**Gate**: build
+**Tests**: none ✅ (build gate)
+**Gate**: build ✅ (`npm run typecheck` passou)
 **Commit**: `build(env): add zod schema for LLM and Exa provider env vars`
 
 ---
