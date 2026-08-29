@@ -41,7 +41,8 @@ const row = {
 describe("MarketInsightsRepository", () => {
   describe("upsert", () => {
     it("faz upsert na tabela market_insights com onConflict lead_id", async () => {
-      const { sb, from, upsert } = mockSupabase({ error: null });      const repo = createMarketInsightsRepository(sb);
+      const { sb, from, upsert } = mockSupabase({ error: null });
+      const repo = createMarketInsightsRepository(sb);
 
       await repo.upsert({
         leadId: "lead-1",
