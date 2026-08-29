@@ -238,12 +238,12 @@ Service + route + screen-service hook.
 - Skill: NONE
 
 **Done when**:
-- [ ] Ordena researcher → analyst → writer; passa saída de um como entrada do próximo
-- [ ] Propaga erro de qualquer etapa
-- [ ] Unit tests com mocks dos 3 agentes
+- [x] Ordena researcher → analyst → writer; passa saída de um como entrada do próximo
+- [x] Propaga erro de qualquer etapa
+- [x] Unit tests com mocks dos 3 agentes
 
-**Tests**: unit
-**Gate**: quick
+**Tests**: unit ✅ (4 testes em `src/lib/agents/orchestrator.test.ts`)
+**Gate**: quick ✅ (`npm run test` 268 passed)
 **Commit**: `feat(agents): add agent orchestrator`
 
 ---
