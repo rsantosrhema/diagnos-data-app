@@ -86,7 +86,7 @@ Service + route + screen-service hook.
 
 **Tests**: unit ✅ (27 testes em `src/lib/agents/types.test.ts`)
 **Gate**: quick ✅ (`npm run test` 239 passed)
-**Commit**: `feat(agents): add domain types and zod schemas for market insights` ✅ (a74145c)
+**Commit**: `feat(agents): add domain types and zod schemas for market insights` ✅ (8c2d352)
 
 ---
 
