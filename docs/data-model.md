@@ -11,6 +11,7 @@ erDiagram
     leads ||--o| session_drafts : "tem"
     leads ||--o| diagnostics : "tem"
     leads ||--o| assessment_responses : "tem"
+    leads ||--o| market_insights : "tem"
 
     leads {
         uuid id PK
@@ -68,6 +69,18 @@ erDiagram
         jsonb agent_payload
         timestamptz created_at
     }
+    market_insights {
+        uuid id PK
+        uuid lead_id FK UK
+        jsonb research
+        jsonb analysis
+        jsonb insights
+        jsonb sources
+        text status
+        text error
+        timestamptz created_at
+        timestamptz updated_at
+    }
 ```
 
 ## Visão Geral
@@ -79,6 +92,7 @@ O modelo gira em torno de **`leads`** (o cliente). Cada lead pode ter:
 - **Um `session_draft`** — rascunho do formulário (1:1).
 - **Um `diagnostic`** — resultado do diagnóstico (1:1).
 - **Um `assessment_response`** — respostas completas da autoavaliação pública + `agent_payload` para o agente de análise (1:1).
+- **Um `market_insights`** — resultado do pipeline de agentes (research, analysis, insights + fontes) por lead (1:1), preenchido em background pelo worker de análise.
 
 Todas as tabelas têm **RLS habilitado sem policies** para `anon`/`authenticated` — o acesso é feito apenas via **service-role** (server-side). Gerentes são gerenciados pelo **Supabase Auth** (`auth.users`), sem tabela própria.
 
@@ -179,6 +193,27 @@ Todas as tabelas têm **RLS habilitado sem policies** para `anon`/`authenticated
 **Índices**: `assessment_responses_lead_id_idx`.
 
 **RLS**: habilitado, sem policies (service-role only).
+
+### `market_insights`
+
+| Coluna | Tipo | Constraints |
+| --- | --- | --- |
+| `id` | `uuid` | PK, default `gen_random_uuid()` |
+| `lead_id` | `uuid` | not null, **FK** → `leads(id)` `on delete cascade`, **unique** (1:1) |
+| `research` | `jsonb` | not null, default `'{}'` |
+| `analysis` | `jsonb` | not null, default `'{}'` |
+| `insights` | `jsonb` | not null, default `'[]'` |
+| `sources` | `jsonb` | not null, default `'[]'` |
+| `status` | `text` | not null, default `'pendente'`, **check** in (`pendente`,`processando`,`analisado`,`falha`) |
+| `error` | `text` | nullable |
+| `created_at` | `timestamptz` | not null, default `now()` |
+| `updated_at` | `timestamptz` | not null, default `now()` |
+
+**Índices**: `market_insights_lead_id_idx`.
+
+**RLS**: habilitado, sem policies (service-role only).
+
+**Fila**: os jobs de análise são enfileirados na fila `analysis_jobs` (extensão `pgmq`) via wrappers `security definer` `analysis_queue_enqueue(uuid)` / `analysis_queue_pop()`, chamados pelo service-role através de `supabase.rpc`. A fila é independente do PostgREST (não exposta a `anon`/`authenticated`).
 
 ---
 

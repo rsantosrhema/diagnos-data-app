@@ -260,14 +260,14 @@ Service + route + screen-service hook.
 - Skill: NONE
 
 **Done when**:
-- [ ] Tabela `market_insights` com colunas conforme design (status check, unique lead_id)
-- [ ] `create extension pgmq` + `select pgmq.create('analysis_jobs')`
-- [ ] Wrappers `analysis_queue_enqueue(uuid)` / `analysis_queue_pop()` (security definer)
-- [ ] `alter table ... enable row level security`
-- [ ] `docs/data-model.md` atualizado no mesmo commit
+- [x] Tabela `market_insights` com colunas conforme design (status check, unique lead_id)
+- [x] `create extension pgmq` + `select pgmq.create('analysis_jobs')`
+- [x] Wrappers `analysis_queue_enqueue(uuid)` / `analysis_queue_pop()` (security definer)
+- [x] `alter table ... enable row level security`
+- [x] `docs/data-model.md` atualizado no mesmo commit
 
 **Tests**: none
-**Gate**: build
+**Gate**: build ✅ (`npm run typecheck` passou)
 **Commit**: `feat(db): add market_insights table and analysis queue wrappers`
 
 ---
