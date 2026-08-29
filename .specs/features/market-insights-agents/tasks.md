@@ -284,12 +284,12 @@ Service + route + screen-service hook.
 - Skill: NONE
 
 **Done when**:
-- [ ] `market-insights-repo`: `upsert`, `findByLeadId`, `markStatus`
-- [ ] `analysis-queue-repo`: `enqueue(leadId)`, `pop()`
-- [ ] Unit tests com supabase mock: upsert/status, pop null e pop com job, enqueue
+- [x] `market-insights-repo`: `upsert`, `findByLeadId`, `markStatus`
+- [x] `analysis-queue-repo`: `enqueue(leadId)`, `pop()`
+- [x] Unit tests com supabase mock: upsert/status, pop null e pop com job, enqueue
 
-**Tests**: unit
-**Gate**: quick
+**Tests**: unit ✅ (11 testes em `src/lib/repository/market-insights-repo.test.ts` + `analysis-queue-repo.test.ts`)
+**Gate**: quick ✅ (`npm run test` 281 passed)
 **Commit**: `feat(repo): add market insights and analysis queue repositories`
 
 ---
