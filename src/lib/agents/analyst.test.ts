@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createAnalystAgent, AnalystError } from "./analyst";
+import { createAnalystAgent, AnalystError, type GenerateObjectFn } from "./analyst";
 import { marketAnalysisSchema } from "./types";
 import type { AgentPayload } from "@/lib/screener/agent-payload";
 import type { MarketResearch } from "./types";
@@ -76,7 +76,7 @@ function makeResearch(): MarketResearch {
 }
 
 describe("createAnalystAgent", () => {
-  let generateObjectMock: ReturnType<typeof vi.fn>;
+  let generateObjectMock: ReturnType<typeof vi.fn<GenerateObjectFn>>;
 
   beforeEach(() => {
     generateObjectMock = vi.fn();
@@ -96,7 +96,7 @@ describe("createAnalystAgent", () => {
     const analysis = await agent.run({ research: makeResearch(), payload: makePayload() });
 
     expect(skillLoader).toHaveBeenCalledWith("Indústria");
-    const prompt = generateObjectMock.mock.calls[0][0];
+    const prompt = generateObjectMock.mock.calls[0][0] as { schema: unknown; prompt: string };
     expect(prompt.schema).toBe(marketAnalysisSchema);
     const promptText = String(prompt.prompt);
     expect(promptText).toContain("Skill de Indústria");

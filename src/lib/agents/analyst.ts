@@ -11,14 +11,21 @@ export class AnalystError extends Error {
   }
 }
 
+export type GenerateObjectFn = (options: {
+  model: LanguageModel;
+  schema: typeof marketAnalysisSchema;
+  prompt: string;
+}) => Promise<{ object: unknown }>;
+
 export type AnalystDeps = {
   llm: LanguageModel;
-  generateObject?: typeof generateObject;
+  generateObject?: GenerateObjectFn;
   skillLoader?: typeof loadSegmentSkill;
 };
 
 export function createAnalystAgent(deps: AnalystDeps) {
-  const doGenerate = deps.generateObject ?? generateObject;
+  const doGenerate =
+    deps.generateObject ?? (generateObject as unknown as GenerateObjectFn);
   const loadSkill = deps.skillLoader ?? loadSegmentSkill;
 
   return {

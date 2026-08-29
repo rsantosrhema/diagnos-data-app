@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createWriterAgent, WriterError } from "./writer";
+import { createWriterAgent, WriterError, type GenerateObjectFn } from "./writer";
 import { insightsBriefSchema } from "./types";
 import type { AgentPayload } from "@/lib/screener/agent-payload";
 import type { MarketAnalysis } from "./types";
@@ -53,7 +53,7 @@ function makeBullets(count: number, prioridade: "alta" | "media" | "baixa") {
 }
 
 describe("createWriterAgent", () => {
-  let generateObjectMock: ReturnType<typeof vi.fn>;
+  let generateObjectMock: ReturnType<typeof vi.fn<GenerateObjectFn>>;
 
   beforeEach(() => {
     generateObjectMock = vi.fn();

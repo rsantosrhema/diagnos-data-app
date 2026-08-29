@@ -12,13 +12,20 @@ export class WriterError extends Error {
 
 const MAX_BULLETS = 10;
 
+export type GenerateObjectFn = (options: {
+  model: LanguageModel;
+  schema: typeof insightsBriefSchema;
+  prompt: string;
+}) => Promise<{ object: unknown }>;
+
 export type WriterDeps = {
   llm: LanguageModel;
-  generateObject?: typeof generateObject;
+  generateObject?: GenerateObjectFn;
 };
 
 export function createWriterAgent(deps: WriterDeps) {
-  const doGenerate = deps.generateObject ?? generateObject;
+  const doGenerate =
+    deps.generateObject ?? (generateObject as unknown as GenerateObjectFn);
 
   return {
     async run(input: {
