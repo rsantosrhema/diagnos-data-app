@@ -193,12 +193,12 @@ Service + route + screen-service hook.
 - Skill: NONE
 
 **Done when**:
-- [ ] Prompt contém scores + pesquisa + skill de segmento
-- [ ] `generateObject` com `marketAnalysisSchema`; parse falha → `AnalystError`
-- [ ] Unit tests: prompt montado (scores + skill), JSON inválido → `AnalystError`
+- [x] Prompt contém scores + pesquisa + skill de segmento
+- [x] `generateObject` com `marketAnalysisSchema`; parse falha → `AnalystError`
+- [x] Unit tests: prompt montado (scores + skill), JSON inválido → `AnalystError`
 
-**Tests**: unit
-**Gate**: quick
+**Tests**: unit ✅ (5 testes em `src/lib/agents/analyst.test.ts`)
+**Gate**: quick ✅ (`npm run test` 259 passed)
 **Commit**: `feat(agents): add analyst agent with segment skill`
 
 ---
