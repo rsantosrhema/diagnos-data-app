@@ -147,13 +147,13 @@ Service + route + screen-service hook.
 - Skill: NONE
 
 **Done when**:
-- [ ] `SEGMENT_SKILL_MAP` cobre `Indústria`, `Varejo`, `Serviços`, `Saúde`, `Finanças/Fintech`
-- [ ] `loadSegmentSkill(segmento)` retorna conteúdo do arquivo ou fallback genérico
-- [ ] 5 arquivos de skill Markdown criados com conteúdo curado por segmento
-- [ ] Unit tests para fallback e mapeamento
+- [x] `SEGMENT_SKILL_MAP` cobre `Indústria`, `Varejo`, `Serviços`, `Saúde`, `Finanças/Fintech`
+- [x] `loadSegmentSkill(segmento)` retorna conteúdo do arquivo ou fallback genérico
+- [x] 5 arquivos de skill Markdown criados com conteúdo curado por segmento
+- [x] Unit tests para fallback e mapeamento
 
-**Tests**: unit
-**Gate**: quick
+**Tests**: unit ✅ (9 testes em `src/lib/agents/segment-skills.test.ts`)
+**Gate**: quick ✅ (`npm run test` 248 passed)
 **Commit**: `feat(agents): add segment skill loader with fallback`
 
 ---
