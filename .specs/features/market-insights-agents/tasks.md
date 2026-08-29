@@ -125,12 +125,12 @@ Service + route + screen-service hook.
 - Skill: NONE
 
 **Done when**:
-- [ ] `getLlmModel()` retorna modelo apontando para `baseURL`/`apiKey` de env
-- [ ] Instala `ai` e `@ai-sdk/openai-compatible` como dependências
-- [ ] `npm run typecheck` passa
+- [x] `getLlmModel()` retorna modelo apontando para `baseURL`/`apiKey` de env
+- [x] Instala `ai` e `@ai-sdk/openai-compatible` como dependências
+- [x] `npm run typecheck` passa
 
-**Tests**: none
-**Gate**: build
+**Tests**: none ✅ (build gate)
+**Gate**: build ✅ (`npm run typecheck` passou)
 **Commit**: `build(agents): add llm factory via @ai-sdk/openai-compatible`
 
 ---
