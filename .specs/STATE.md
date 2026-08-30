@@ -12,9 +12,9 @@
 
 ## Handoff
 
-**Last session:** 2026-08-29
-**Feature:** market-insights-agents (slice 1: research/orchestrator/persistence) — **DONE**
-**Phase:** Execute complete — 14 commits (T1-T12 + follow-ups), Verifier PASS, validation.md written
-**Next step:** Fatia 2 (bullets priorizados + fallback PDF básico) ou Fatia 3 (radar + admin reprocessar)
+**Last session:** 2026-08-30
+**Feature:** market-insights-pdf (slice 2: bullets priorizados + análise no PDF + e-mail pós-análise) — **DONE**
+**Phase:** Execute complete — 8 commits (T1-T6 + verifier fixes), Verifier PASS (9/9 ACs, 3/3 mutants), validation.md written
+**Next step:** Fatia 3 (radar de aranha no PDF + admin reprocessar `analise_pendente`) — ver ADR-009
 **Branch:** main
-**Uncommitted changes:** .specs/STATE.md (modified), .specs/features/market-insights-agents/{spec,design,validation}.md (untracked), docs/decisions/009-pipeline-agentes-insights-de-mercado.md (untracked), .opencode/skills/grill-with-docs/ (untracked)
+**Uncommitted changes:** `.specs/features/market-insights-pdf/tasks.md` (status → Done, pendente de commit), `.specs/STATE.md` (este handoff)
