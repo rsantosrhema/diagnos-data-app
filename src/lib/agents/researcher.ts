@@ -73,8 +73,7 @@ export function createResearcherAgent({ exa }: { exa: Pick<Exa, "search"> }) {
             type: "auto",
             numResults: 5,
             contents: { highlights: true },
-          }),
-        ),
+          }),        ),
       );
 
       const sections: ResearchSection[] = queries.map(({ key, query }, index) => {

@@ -8,6 +8,7 @@ export function getLlmModel(): LanguageModel {
     name: "llm",
     apiKey: env.LLM_API_KEY,
     baseURL: env.LLM_BASE_URL,
+    supportsStructuredOutputs: false,
   });
   return provider(env.LLM_MODEL);
 }
