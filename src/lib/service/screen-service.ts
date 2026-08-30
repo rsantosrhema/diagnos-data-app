@@ -3,6 +3,7 @@ import type { AssessmentRepository } from "@/lib/repository/assessment-repo";
 import type { ScreenerContract } from "@/lib/screener/contract";
 import type { ScreenerSubmission } from "@/lib/schemas/screener";
 import type { ScoringCalibration } from "@/lib/screener/scoring-calibration";
+import type { InsightsBrief, MarketAnalysis } from "@/lib/agents/types";
 import { computeScores, computeContextualScores } from "@/lib/screener/scoring";
 import { buildAgentPayload } from "@/lib/screener/agent-payload";
 
@@ -23,6 +24,8 @@ export interface GeneratePdfInput {
   riskDimension: { name: string; nivel: number };
   imbalance: boolean;
   commercialAnswer: string;
+  analysis?: MarketAnalysis;
+  insights?: InsightsBrief;
 }
 
 export function createScreenService(deps: {

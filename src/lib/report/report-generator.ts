@@ -124,6 +124,23 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
   },
+  insightRow: {
+    flexDirection: "row",
+    marginBottom: 8,
+    alignItems: "flex-start",
+  },
+  insightSquare: {
+    width: 10,
+    height: 10,
+    borderRadius: 2,
+    marginTop: 2,
+    marginRight: 8,
+  },
+  insightText: {
+    flex: 1,
+    fontSize: 9,
+    lineHeight: 1.4,
+  },
   footer: {
     position: "absolute",
     bottom: 30,
@@ -140,9 +157,24 @@ const styles = StyleSheet.create({
   },
 });
 
+const PRIORITY_COLORS: Record<string, string> = {
+  alta: "#C0392B",
+  media: "#F1C40F",
+  baixa: "#2980B9",
+};
+const DEFAULT_BULLET_COLOR = PRIORITY_COLORS.baixa;
+
+function bulletColor(prioridade: string): string {
+  return PRIORITY_COLORS[prioridade] ?? DEFAULT_BULLET_COLOR;
+}
+
 const h = React.createElement;
 
-function ScreenerReport({ input }: { input: GeneratePdfInput }) {
+function bulletText(bullet: { texto: string; prioridade: string }): string {
+  return `[${bullet.prioridade.toUpperCase()}] ${bullet.texto}`;
+}
+
+export function buildReportChildren(input: GeneratePdfInput): ReturnType<typeof h>[] {
   const dimensionRows = input.dimensionScores.map((d, i) =>
     h(View, { key: d.name, style: [styles.tableRow, ...(i % 2 === 1 ? [styles.tableRowAlt] : [])] },
       h(Text, { style: styles.colName }, d.name),
@@ -152,7 +184,7 @@ function ScreenerReport({ input }: { input: GeneratePdfInput }) {
     ),
   );
 
-  const children = [
+  return [
     h(View, { key: "header", style: styles.header },
       h(Text, { style: styles.headerTitle }, "Diagnóstico de Maturidade de Dados"),
       h(Text, { style: styles.headerSubtitle }, "Rhema Data — Relatório de Autoavaliação"),
@@ -193,6 +225,47 @@ function ScreenerReport({ input }: { input: GeneratePdfInput }) {
           h(Text, null, input.commercialAnswer),
         )]
       : []),
+    ...(input.analysis
+      ? [h(View, { key: "analysis", style: styles.section },
+          h(Text, { style: styles.sectionTitle }, "Análise de Mercado"),
+          h(Text, { style: { fontSize: 9, marginBottom: 6 } }, input.analysis.resumo),
+          ...input.analysis.dores.map((pain) =>
+            h(View, { key: pain.dimensao_id, style: { marginBottom: 4 } },
+              h(Text, { style: { fontSize: 9, fontFamily: "Helvetica-Bold" } },
+                `${pain.dimensao}${pain.evidencia_mercado ? " — confirmada pelo mercado" : ""}`,
+              ),
+              h(Text, { style: { fontSize: 9 } }, pain.dor),
+            ),
+          ),
+        )]
+      : []),
+    ...(input.insights && input.insights.bullets.length > 0
+      ? [h(View, { key: "insights", style: styles.section },
+          h(Text, { style: styles.sectionTitle }, "Insights Priorizados"),
+          ...input.insights.bullets.map((bullet, i) =>
+            h(View, { key: `bullet-${i}`, style: styles.insightRow },
+              h(View, {
+                style: [styles.insightSquare, { backgroundColor: bulletColor(bullet.prioridade) }],
+              }),
+              h(Text, { style: styles.insightText }, [
+                `[${bullet.prioridade.toUpperCase()}] `,
+                bullet.texto,
+              ]),
+            ),
+          ),
+        )]
+      : []),
+    ...(input.analysis && input.analysis.contexto_concorrentes.length > 0
+      ? [h(View, { key: "competitors", style: styles.section },
+          h(Text, { style: styles.sectionTitle }, "Concorrentes"),
+          ...input.analysis.contexto_concorrentes.map((c, i) =>
+            h(View, { key: `comp-${i}`, style: { marginBottom: 4 } },
+              h(Text, { style: { fontSize: 9, fontFamily: "Helvetica-Bold" } }, c.nome),
+              h(Text, { style: { fontSize: 9 } }, c.contexto),
+            ),
+          ),
+        )]
+      : []),
     h(View, { key: "warning", style: styles.section },
       h(Text, { style: { fontSize: 8, color: COLORS.lavender, fontStyle: "italic" } },
         "Pesos ajustados com base no perfil da empresa (segmento, porte e faturamento). Instrumento de triagem baseado em autoavaliação. Não substitui diagnóstico com evidência documental. Resultado reportado como faixa, não como número exato.",
@@ -204,7 +277,10 @@ function ScreenerReport({ input }: { input: GeneratePdfInput }) {
       ),
     ),
   ];
+}
 
+export function ScreenerReport({ input }: { input: GeneratePdfInput }) {
+  const children = buildReportChildren(input);
   return h(Document, null,
     h(Page, { size: "A4", style: styles.page }, ...children),
   );
