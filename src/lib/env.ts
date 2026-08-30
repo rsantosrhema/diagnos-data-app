@@ -19,11 +19,3 @@ export function getEnv(): Env {
   cached = EnvSchema.parse(process.env);
   return cached;
 }
-
-export function hasEnv(): boolean {
-  return (
-    typeof process.env.LLM_BASE_URL === "string" &&
-    typeof process.env.LLM_API_KEY === "string" &&
-    typeof process.env.EXA_API_KEY === "string"
-  );
-}
