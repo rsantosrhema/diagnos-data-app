@@ -119,13 +119,13 @@ Mover o e-mail do submit para o worker, com fallback.
 - Skill: NONE
 
 **Done when**:
-- [ ] Teste: `generateScreenerPdf` sem `insights`/`analysis` gera buffer não-vazio (PDF básico)
-- [ ] Teste: sem `insights` a seção de bullets não existe (verificado por contrato do input, não por parse do buffer)
-- [ ] `npm run test` passa
+- [x] Teste: `generateScreenerPdf` sem `insights`/`analysis` gera buffer não-vazio (PDF básico) — coberto no commit de T1 (`sem insights: omite a seção de bullets (PDF básico de fallback)`)
+- [x] Teste: sem `insights` a seção de bullets não existe (verificado via `buildReportChildren`) — idem
+- [x] `npm run test` passa (296 passed)
 
-**Tests**: unit
-**Gate**: quick
-**Commit**: `test(report): assert basic fallback pdf renders without insights`
+**Tests**: unit ✅ (coberto em T1 — `report-generator.test.ts`, 8 testes)
+**Gate**: quick ✅ (`npm run test` 296 passed)
+**Commit**: coberto no commit de T1 (`feat(report): render prioritized insight bullets with colored squares`) — sem commit próprio
 
 ---
 
