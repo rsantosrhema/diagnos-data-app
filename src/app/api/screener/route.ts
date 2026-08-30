@@ -12,6 +12,8 @@ import { createAnalysisService } from "@/lib/service/analysis-service";
 import { createAnalysisQueueRepository } from "@/lib/repository/analysis-queue-repo";
 import { createMarketInsightsRepository } from "@/lib/repository/market-insights-repo";
 import { SCREENER_CONTRACT } from "@/lib/screener/contract";
+import { generateScreenerPdf } from "@/lib/report/report-generator";
+import { sendReportEmail } from "@/lib/email/send-report";
 import type { AgentPayload } from "@/lib/screener/agent-payload";
 
 export async function POST(req: Request) {
@@ -74,6 +76,9 @@ export async function POST(req: Request) {
       }
       return candidate as AgentPayload;
     },
+    leadRepo: createLeadRepository(supabase),
+    generatePdf: generateScreenerPdf,
+    sendEmail: sendReportEmail,
   });
   const screenService = createScreenService({
     leadRepo: createLeadRepository(supabase),

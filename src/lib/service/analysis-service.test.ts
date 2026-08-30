@@ -4,7 +4,6 @@ import type { AnalysisQueueRepository } from "@/lib/repository/analysis-queue-re
 import type { MarketInsightsRepository } from "@/lib/repository/market-insights-repo";
 import type { AgentPayload } from "@/lib/screener/agent-payload";
 import type { AgentOutput } from "@/lib/agents/orchestrator";
-
 const payload: AgentPayload = {
   versao: "1.0",
   solicitante: { nome: "João", cargo: "CTO" },
@@ -56,17 +55,40 @@ function mockOrchestrator(run: () => Promise<AgentOutput>) {
   return { run: vi.fn().mockImplementation(run) };
 }
 
+function mockGeneratePdf() {
+  return vi.fn().mockResolvedValue({
+    pdf: Buffer.from("fake-pdf"),
+    filename: "diagnostico.pdf",
+  });
+}
+
+function mockSendEmail() {
+  return vi.fn().mockResolvedValue(undefined);
+}
+
+function mockLeadRepo(overrides: { updateStatus?: (id: string, status: string) => Promise<void> } = {}) {
+  return {
+    updateStatus: overrides.updateStatus ?? vi.fn().mockResolvedValue(undefined),
+  };
+}
+
 function createService(deps: {
   queueRepo?: AnalysisQueueRepository;
   insightsRepo?: MarketInsightsRepository;
   orchestrator?: { run: (payload: AgentPayload) => Promise<AgentOutput> };
   payloadLoader?: (leadId: string) => Promise<AgentPayload | null>;
+  leadRepo?: { updateStatus(id: string, status: string): Promise<void> };
+  generatePdf?: ReturnType<typeof mockGeneratePdf>;
+  sendEmail?: ReturnType<typeof mockSendEmail>;
 }) {
   return createAnalysisService({
     queueRepo: deps.queueRepo ?? mockQueueRepo(),
     insightsRepo: deps.insightsRepo ?? mockInsightsRepo(),
     orchestrator: deps.orchestrator ?? mockOrchestrator(async () => output),
     payloadLoader: deps.payloadLoader ?? (async () => payload),
+    leadRepo: deps.leadRepo ?? mockLeadRepo(),
+    generatePdf: deps.generatePdf ?? mockGeneratePdf(),
+    sendEmail: deps.sendEmail ?? mockSendEmail(),
   });
 }
 
@@ -103,7 +125,7 @@ describe("AnalysisService", () => {
       expect(insightsRepo.markStatus).not.toHaveBeenCalled();
     });
 
-    it("happy path: pop → payloadLoader → orchestrator → upsert analisado", async () => {
+    it("happy path: pop → payloadLoader → orchestrator → upsert analisado + e-mail com PDF enriquecido", async () => {
       const queueRepo = mockQueueRepo({
         pop: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
       });
@@ -111,12 +133,16 @@ describe("AnalysisService", () => {
       const orchestrator = mockOrchestrator(async () => output);
       const upsert = vi.fn().mockResolvedValue(undefined);
       const insightsRepo = mockInsightsRepo({ upsert });
+      const generatePdf = mockGeneratePdf();
+      const sendEmail = mockSendEmail();
 
       const service = createService({
         queueRepo,
         insightsRepo,
         orchestrator,
         payloadLoader,
+        generatePdf,
+        sendEmail,
       });
 
       const result = await service.processNext();
@@ -133,9 +159,23 @@ describe("AnalysisService", () => {
         status: "analisado",
       });
       expect(insightsRepo.markStatus).not.toHaveBeenCalled();
+      // EMAIL-02: e-mail com PDF enriquecido (insights/analysis no input)
+      expect(generatePdf).toHaveBeenCalledWith(
+        expect.objectContaining({
+          insights: output.insights,
+          analysis: output.analysis,
+        }),
+      );
+      expect(sendEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: expect.any(String),
+          subject: expect.stringContaining("João"),
+          attachment: expect.objectContaining({ filename: "diagnostico.pdf" }),
+        }),
+      );
     });
 
-    it("payload ausente: marca falha e retorna processed true", async () => {
+    it("payload ausente: marca falha e NÃO envia e-mail", async () => {
       const queueRepo = mockQueueRepo({
         pop: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
       });
@@ -143,12 +183,14 @@ describe("AnalysisService", () => {
       const markStatus = vi.fn().mockResolvedValue(undefined);
       const insightsRepo = mockInsightsRepo({ markStatus });
       const orchestrator = mockOrchestrator(async () => output);
+      const sendEmail = mockSendEmail();
 
       const service = createService({
         queueRepo,
         insightsRepo,
         orchestrator,
         payloadLoader,
+        sendEmail,
       });
 
       const result = await service.processNext();
@@ -156,9 +198,10 @@ describe("AnalysisService", () => {
       expect(result).toEqual({ processed: true });
       expect(markStatus).toHaveBeenCalledWith("lead-1", "falha", expect.any(String));
       expect(orchestrator.run).not.toHaveBeenCalled();
+      expect(sendEmail).not.toHaveBeenCalled();
     });
 
-    it("falha do orchestrator: marca falha, não relança, retorna processed true", async () => {
+    it("falha do orchestrator: marca falha, lead analise_pendente, envia PDF básico, retorna processed true", async () => {
       const queueRepo = mockQueueRepo({
         pop: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
       });
@@ -167,14 +210,59 @@ describe("AnalysisService", () => {
       });
       const markStatus = vi.fn().mockResolvedValue(undefined);
       const insightsRepo = mockInsightsRepo({ markStatus });
+      const updateStatus = vi.fn().mockResolvedValue(undefined);
+      const leadRepo: { updateStatus(id: string, status: string): Promise<void> } = {
+        updateStatus,
+      };
+      const generatePdf = mockGeneratePdf();
+      const sendEmail = mockSendEmail();
 
-      const service = createService({ queueRepo, insightsRepo, orchestrator });
+      const service = createService({
+        queueRepo,
+        insightsRepo,
+        orchestrator,
+        leadRepo,
+        generatePdf,
+        sendEmail,
+      });
 
       const result = await service.processNext();
 
       expect(result).toEqual({ processed: true });
       expect(markStatus).toHaveBeenCalledWith("lead-1", "falha", expect.stringContaining("llm down"));
       expect(insightsRepo.upsert).not.toHaveBeenCalled();
+      // EMAIL-03: fallback — PDF básico (sem insights/analysis) + analise_pendente
+      expect(updateStatus).toHaveBeenCalledWith("lead-1", "analise_pendente");
+      expect(generatePdf).toHaveBeenCalledWith(
+        expect.not.objectContaining({ insights: expect.anything() }),
+      );
+      expect(sendEmail).toHaveBeenCalledTimes(1);
+    });
+
+    it("falha de e-mail no worker: não lança e mantém status analisado (EMAIL-04)", async () => {
+      const queueRepo = mockQueueRepo({
+        pop: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+      });
+      const orchestrator = mockOrchestrator(async () => output);
+      const upsert = vi.fn().mockResolvedValue(undefined);
+      const insightsRepo = mockInsightsRepo({ upsert });
+      const generatePdf = mockGeneratePdf();
+      const sendEmail = mockSendEmail();
+      sendEmail.mockRejectedValue(new Error("resend down"));
+
+      const service = createService({
+        queueRepo,
+        insightsRepo,
+        orchestrator,
+        generatePdf,
+        sendEmail,
+      });
+
+      const result = await service.processNext();
+
+      expect(result).toEqual({ processed: true });
+      expect(upsert).toHaveBeenCalledWith(expect.objectContaining({ status: "analisado" }));
+      expect(insightsRepo.markStatus).not.toHaveBeenCalled();
     });
   });
 });

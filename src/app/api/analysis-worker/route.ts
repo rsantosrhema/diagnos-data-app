@@ -4,7 +4,10 @@ import { verifyInternalApiKey } from "@/lib/auth/internal-key";
 import { createAssessmentRepository } from "@/lib/repository/assessment-repo";
 import { createMarketInsightsRepository } from "@/lib/repository/market-insights-repo";
 import { createAnalysisQueueRepository } from "@/lib/repository/analysis-queue-repo";
+import { createLeadRepository } from "@/lib/repository/lead-repo";
 import { createAnalysisService } from "@/lib/service/analysis-service";
+import { generateScreenerPdf } from "@/lib/report/report-generator";
+import { sendReportEmail } from "@/lib/email/send-report";
 import type { AgentPayload } from "@/lib/screener/agent-payload";
 
 const MAX_JOBS_PER_RUN = 5;
@@ -50,6 +53,9 @@ export async function POST(req: Request) {
       }
       return candidate as AgentPayload;
     },
+    leadRepo: createLeadRepository(supabase),
+    generatePdf: generateScreenerPdf,
+    sendEmail: sendReportEmail,
   });
 
   let processed = 0;

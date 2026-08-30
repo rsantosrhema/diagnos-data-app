@@ -162,6 +162,12 @@ describe("Smoke E2E — fluxo real (Supabase + Resend + Exa + LLM)", () => {
           if (!row) return null;
           return row.agent_payload as never;
         },
+        leadRepo: createLeadRepository(supabase),
+        generatePdf: async () => ({
+          pdf: Buffer.from("fake-pdf"),
+          filename: "diagnostico.pdf",
+        }),
+        sendEmail: async () => undefined,
       });
 
       await analysisService.enqueue(leadId);

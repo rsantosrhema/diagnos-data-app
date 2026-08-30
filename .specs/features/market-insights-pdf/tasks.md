@@ -166,15 +166,15 @@ Mover o e-mail do submit para o worker, com fallback.
 - Skill: NONE
 
 **Done when**:
-- [ ] No sucesso: regenera PDF com `insights`+`analysis`, envia e-mail ao `MANAGER_NOTIFICATION_EMAIL`, mantém status `analisado`
-- [ ] Na falha do pipeline: marca `leadRepo.updateStatus(leadId, 'analise_pendente')`, `market_insights.status = 'falha'`, envia PDF básico (sem `insights`)
-- [ ] Se o e-mail falhar: loga erro e não lança (status permanece)
-- [ ] Sem payload/lead: marca `falha` e NÃO envia e-mail
-- [ ] Unit tests: sucesso com PDF enriquecido + e-mail; falha → `analise_pendente` + PDF básico + e-mail; e-mail falha → não lança; sem payload → sem e-mail
-- [ ] `npm run test` passa
+- [x] No sucesso: regenera PDF com `insights`+`analysis`, envia e-mail ao `MANAGER_NOTIFICATION_EMAIL`, mantém status `analisado`
+- [x] Na falha do pipeline: marca `leadRepo.updateStatus(leadId, 'analise_pendente')`, `market_insights.status = 'falha'`, envia PDF básico (sem `insights`)
+- [x] Se o e-mail falhar: loga erro e não lança (status permanece)
+- [x] Sem payload/lead: marca `falha` e NÃO envia e-mail
+- [x] Unit tests: sucesso com PDF enriquecido + e-mail; falha → `analise_pendente` + PDF básico + e-mail; e-mail falha → não lança; sem payload → sem e-mail
+- [x] `npm run test` passa (294 passed) + `npm run build` passa
 
-**Tests**: unit
-**Gate**: build (fim da fase 2)
+**Tests**: unit ✅ (7 testes em `src/lib/service/analysis-service.test.ts`)
+**Gate**: build ✅ (`npm run test` 294 passed + `npm run build` passou)
 **Commit**: `feat(worker): email enriched or fallback pdf after analysis`
 
 ---
