@@ -53,6 +53,33 @@ function countText(node: unknown, text: string): number {
   return 0;
 }
 
+function collectBackgroundColors(node: unknown): string[] {
+  const colors: string[] = [];
+  const walk = (n: unknown): void => {
+    if (n === null || n === undefined) return;
+    if (Array.isArray(n)) {
+      n.forEach(walk);
+      return;
+    }
+    if (typeof n !== "object") return;
+    const props = (n as { props?: unknown }).props;
+    if (typeof props === "object" && props !== null) {
+      const style = (props as { style?: unknown }).style;
+      if (Array.isArray(style)) {
+        for (const s of style) {
+          if (s && typeof s === "object" && typeof (s as { backgroundColor?: unknown }).backgroundColor === "string") {
+            colors.push((s as { backgroundColor: string }).backgroundColor);
+          }
+        }
+      }
+      const children = (props as { children?: unknown }).children;
+      if (Array.isArray(children)) walk(children);
+    }
+  };
+  walk(node);
+  return colors;
+}
+
 describe("generateScreenerPdf", () => {
   it("gera PDF com buffer não-vazio", async () => {
     const result = await generateScreenerPdf(makeInput());
@@ -96,19 +123,79 @@ describe("generateScreenerPdf", () => {
     expect(countText(children, "Fortalecer qualidade")).toBe(1);
     expect(countText(children, "[BAIXA] ")).toBe(1);
     expect(countText(children, "Amadurecer analytics")).toBe(1);
+    const colors = collectBackgroundColors(children);
+    expect(colors).toContain("#C0392B");
+    expect(colors).toContain("#F1C40F");
+    expect(colors).toContain("#2980B9");
     const result = await generateScreenerPdf(input);
     expect(result.pdf.length).toBeGreaterThan(0);
     expect(result.pdf.toString("latin1")).not.toMatch(/https?:\/\/\S+/);
   });
 
-  it("prioridade inválida usa cor padrão de baixa (não quebra o PDF)", async () => {
+  it("prioridade inválida usa cor padrão de baixa (azul) (não quebra o PDF)", async () => {
     const input = makeInput({
       insights: { bullets: [{ texto: "Tópico", prioridade: "urgente" as never }] },
     });
     const children = buildReportChildren(input);
     expect(hasText(children, "Insights Priorizados")).toBe(true);
+    const colors = collectBackgroundColors(children).filter((c) => c === "#2980B9");
+    expect(colors).toEqual(["#2980B9"]);
+    expect(collectBackgroundColors(children)).not.toContain("#C0392B");
+    expect(collectBackgroundColors(children)).not.toContain("#F1C40F");
     const result = await generateScreenerPdf(input);
     expect(result.pdf.length).toBeGreaterThan(0);
+  });
+
+  it("analysis presente: renderiza seção Análise com resumo e dores (PDF-01)", async () => {
+    const input = makeInput({
+      analysis: {
+        resumo: "Empresa enfrenta dores típicas do segmento.",
+        dores: [
+          {
+            dimensao_id: "d01",
+            dimensao: "Governança e Responsabilidade",
+            dor: "Falta de dono dos dados",
+            evidencia_mercado: true,
+            confianca: 0.8,
+          },
+        ],
+        contexto_concorrentes: [],
+      },
+    });
+    const children = buildReportChildren(input);
+    expect(hasText(children, "Análise de Mercado")).toBe(true);
+    expect(hasText(children, "Empresa enfrenta dores típicas do segmento.")).toBe(true);
+    expect(hasText(children, "Falta de dono dos dados")).toBe(true);
+    const result = await generateScreenerPdf(input);
+    expect(result.pdf.length).toBeGreaterThan(0);
+  });
+
+  it("analysis ausente: omite a seção Análise (PDF-01 edge)", async () => {
+    const children = buildReportChildren(makeInput({ analysis: undefined }));
+    expect(hasText(children, "Análise de Mercado")).toBe(false);
+  });
+
+  it("contexto_concorrentes não-vazio: renderiza seção Concorrentes (PDF-03)", async () => {
+    const input = makeInput({
+      analysis: {
+        resumo: "r",
+        dores: [],
+        contexto_concorrentes: [
+          { nome: "Concorrente X", contexto: "Investe em governança" },
+        ],
+      },
+    });
+    const children = buildReportChildren(input);
+    expect(hasText(children, "Concorrentes")).toBe(true);
+    expect(hasText(children, "Concorrente X")).toBe(true);
+    expect(hasText(children, "Investe em governança")).toBe(true);
+  });
+
+  it("contexto_concorrentes vazio: omite a seção Concorrentes (PDF-03 edge)", async () => {
+    const children = buildReportChildren(
+      makeInput({ analysis: { resumo: "r", dores: [], contexto_concorrentes: [] } }),
+    );
+    expect(hasText(children, "Concorrentes")).toBe(false);
   });
 
   it("sem insights: omite a seção de bullets (PDF básico de fallback)", async () => {
