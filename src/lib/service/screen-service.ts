@@ -33,16 +33,9 @@ export function createScreenService(deps: {
   assessmentRepo: AssessmentRepository;
   contract: ScreenerContract;
   loadActiveCalibration: () => Promise<ScoringCalibration>;
-  generatePdf: (input: GeneratePdfInput) => Promise<{ pdf: Buffer; filename: string }>;
-  sendEmail: (params: {
-    to: string;
-    subject: string;
-    html: string;
-    attachment: { filename: string; content: Buffer };
-  }) => Promise<void>;
   enqueueAnalysis: (leadId: string) => Promise<void>;
 }) {
-  const { leadRepo, assessmentRepo, contract, loadActiveCalibration, generatePdf, sendEmail, enqueueAnalysis } = deps;
+  const { leadRepo, assessmentRepo, contract, loadActiveCalibration, enqueueAnalysis } = deps;
 
   return {
     async submitScreener(
@@ -193,38 +186,8 @@ export function createScreenService(deps: {
         );
       }
 
-      // 7. Generate PDF
-      let pdfResult: { pdf: Buffer; filename: string };
-      try {
-        pdfResult = await generatePdf({
-          respondentName: submission.name,
-          band: { rotulo: result.band.rotulo, descricao: result.band.descricao },
-          dimensionScores: result.dimensionScores,
-          riskDimension: result.riskDimension,
-          imbalance: result.imbalance,
-          commercialAnswer: submission.commercialAnswer,
-        });
-      } catch {
-        throw new ScreenServiceError("Erro ao gerar relatório", 500);
-      }
-
-      // 8. Send email
-      const managerEmail =
-        process.env.MANAGER_NOTIFICATION_EMAIL ?? "comercial@rhemadata.com";
-      try {
-        await sendEmail({
-          to: managerEmail,
-          subject: `Diagnóstico de Maturidade — ${submission.name}`,
-          html: `<p>Novo diagnóstico recebido de <strong>${escapeHtml(submission.name)}</strong> (${escapeHtml(role)}).</p><p>Faixa: <strong>${escapeHtml(result.band.rotulo)}</strong></p>`,
-          attachment: {
-            filename: pdfResult.filename,
-            content: pdfResult.pdf,
-          },
-        });
-      } catch {
-        throw new ScreenServiceError("Erro ao enviar relatório", 502);
-      }
-
+      // 7. E-mail ao comercial agora é responsabilidade do worker (pós-análise).
+      // O submit responde { ok: true } imediatamente (AC EMAIL-01/EMAIL-02).
       return { ok: true };
     },
   };
@@ -264,11 +227,3 @@ async function createLeadWithRepo(params: {
   }
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}

@@ -65,17 +65,6 @@ function mockAssessmentRepo(overrides: Partial<AssessmentRepository> = {}): Asse
   };
 }
 
-function mockGeneratePdf() {
-  return vi.fn().mockResolvedValue({
-    pdf: Buffer.from("fake-pdf"),
-    filename: "diagnostico.pdf",
-  });
-}
-
-function mockSendEmail() {
-  return vi.fn().mockResolvedValue(undefined);
-}
-
 function mockEnqueueAnalysis() {
   return vi.fn().mockResolvedValue(undefined);
 }
@@ -83,8 +72,6 @@ function mockEnqueueAnalysis() {
 function createService(deps: {
   leadRepo?: LeadRepository;
   assessmentRepo?: AssessmentRepository;
-  generatePdf?: ReturnType<typeof mockGeneratePdf>;
-  sendEmail?: ReturnType<typeof mockSendEmail>;
   enqueueAnalysis?: ReturnType<typeof mockEnqueueAnalysis>;
 } = {}) {
   return createScreenService({
@@ -95,8 +82,6 @@ function createService(deps: {
     assessmentRepo: deps.assessmentRepo ?? mockAssessmentRepo(),
     contract: SCREENER_CONTRACT,
     loadActiveCalibration: vi.fn().mockRejectedValue(new Error("no db")),
-    generatePdf: deps.generatePdf ?? mockGeneratePdf(),
-    sendEmail: deps.sendEmail ?? mockSendEmail(),
     enqueueAnalysis: deps.enqueueAnalysis ?? mockEnqueueAnalysis(),
   });
 }
@@ -194,48 +179,6 @@ describe("ScreenService", () => {
     ).rejects.toMatchObject({ status: 500 });
   });
 
-  it("falha na geração do PDF: lança 500", async () => {
-    const service = createService({
-      generatePdf: vi.fn().mockRejectedValue(new Error("pdf error")),
-    });
-    await expect(
-      service.submitScreener(validSubmission()),
-    ).rejects.toMatchObject({ status: 500 });
-  });
-
-  it("falha no envio do email: lança 502", async () => {
-    const service = createService({
-      sendEmail: vi.fn().mockRejectedValue(new Error("email error")),
-    });
-    await expect(
-      service.submitScreener(validSubmission()),
-    ).rejects.toMatchObject({ status: 502 });
-  });
-
-  it("chama generatePdf com os dados corretos", async () => {
-    const generatePdf = mockGeneratePdf();
-    const service = createService({ generatePdf });
-    await service.submitScreener(validSubmission());
-    expect(generatePdf).toHaveBeenCalledWith(
-      expect.objectContaining({
-        respondentName: "João Silva",
-        band: expect.objectContaining({ rotulo: "Estruturado" }),
-      }),
-    );
-  });
-
-  it("chama sendEmail para MANAGER_NOTIFICATION_EMAIL", async () => {
-    const sendEmail = mockSendEmail();
-    const service = createService({ sendEmail });
-    await service.submitScreener(validSubmission());
-    expect(sendEmail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: expect.any(String),
-        subject: expect.stringContaining("João Silva"),
-      }),
-    );
-  });
-
   it("enfileira a análise com o lead_id após persistir o diagnóstico (AC INS-01)", async () => {
     const enqueueAnalysis = mockEnqueueAnalysis();
     const service = createService({ enqueueAnalysis });
@@ -247,6 +190,12 @@ describe("ScreenService", () => {
     const enqueueAnalysis = mockEnqueueAnalysis();
     enqueueAnalysis.mockRejectedValue(new Error("queue down"));
     const service = createService({ enqueueAnalysis });
+    const result = await service.submitScreener(validSubmission());
+    expect(result).toEqual({ ok: true });
+  });
+
+  it("submit NÃO envia e-mail ao comercial (AC EMAIL-01)", async () => {
+    const service = createService();
     const result = await service.submitScreener(validSubmission());
     expect(result).toEqual({ ok: true });
   });

@@ -142,13 +142,13 @@ Mover o e-mail do submit para o worker, com fallback.
 - Skill: NONE
 
 **Done when**:
-- [ ] `submitScreener` NÃO chama `generatePdf`/`sendEmail` e retorna `{ok:true}` após persistir + enfileirar
-- [ ] `GeneratePdfInput` continua exportado (type) mas não é mais usado no submit
-- [ ] Unit tests atualizados: happy path retorna `{ok:true}`; `sendEmail` NÃO é chamado; `generatePdf` NÃO é chamado; persistência ainda lança 500
-- [ ] `npm run test` passa
+- [x] `submitScreener` NÃO chama `generatePdf`/`sendEmail` e retorna `{ok:true}` após persistir + enfileirar
+- [x] `GeneratePdfInput` continua exportado (type) mas não é mais usado no submit
+- [x] Unit tests atualizados: happy path retorna `{ok:true}`; `sendEmail` NÃO é chamado; `generatePdf` NÃO é chamado; persistência ainda lança 500
+- [x] `npm run test` passa (293 passed)
 
-**Tests**: unit
-**Gate**: quick
+**Tests**: unit ✅ (13 testes em `src/lib/service/screen-service.test.ts`)
+**Gate**: quick ✅ (`npm run test` 293 passed)
 **Commit**: `refactor(screen): stop sending report email on submit`
 
 ---
