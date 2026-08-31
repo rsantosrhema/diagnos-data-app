@@ -182,3 +182,14 @@ export async function regenerateToken(
     token: authToken,
   });
 }
+
+export async function reprocessAnalysis(
+  leadId: string,
+  authToken: string,
+): Promise<{ ok: true }> {
+  return apiFetch("/admin-proxy/analysis/reprocess", {
+    method: "POST",
+    body: { leadId },
+    token: authToken,
+  });
+}

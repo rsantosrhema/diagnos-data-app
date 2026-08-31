@@ -228,12 +228,13 @@ Client + UI da página admin.
 - Skill: NONE
 
 **Done when**:
-- [ ] Função exportada `reprocessAnalysis(leadId, authToken)` chamando `apiFetch("/admin-proxy/analysis/reprocess", { method: "POST", body: { leadId }, token: authToken })`
-- [ ] Sem teste dedicado (wrapper de `apiFetch`, padrão já coberto) — **confirmed**: demais clients não têm teste próprio
-- [ ] `npm run typecheck` passa
+- [x] Função exportada `reprocessAnalysis(leadId, authToken)` chamando `apiFetch("/admin-proxy/analysis/reprocess", { method: "POST", body: { leadId }, token: authToken })`
+- [x] Sem teste dedicado (wrapper de `apiFetch`, padrão já coberto) — **confirmed**: demais clients não têm teste próprio
+- [x] `npm run typecheck` passa
 
-**Tests**: none (wrapper de fetch; matriz não exige teste de client)
-**Gate**: build (typecheck)
+**Tests**: none ✅ (wrapper de fetch; matriz não exige teste de client)
+**Gate**: quick ✅ (`npm run typecheck` ok)
+**Commit**: `feat(admin): add reprocessAnalysis client function`
 
 ---
 
