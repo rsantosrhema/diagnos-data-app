@@ -122,4 +122,25 @@ describe("AnalysisQueueRepository", () => {
       });
     });
   });
+
+  describe("failStale", () => {
+    it("chama analysis_queue_fail_stale com o intervalo e retorna a contagem", async () => {
+      const { sb, rpc } = mockSupabase({ data: 2, error: null });
+      const repo = createAnalysisQueueRepository(sb);
+
+      const result = await repo.failStale(30);
+
+      expect(rpc).toHaveBeenCalledWith("analysis_queue_fail_stale", {
+        p_max_age: "30 minutes",
+      });
+      expect(result).toBe(2);
+    });
+
+    it("propaga erro do rpc", async () => {
+      const { sb } = mockSupabase({ error: new Error("fail_stale failed") });
+      const repo = createAnalysisQueueRepository(sb);
+
+      await expect(repo.failStale(30)).rejects.toThrow("fail_stale failed");
+    });
+  });
 });

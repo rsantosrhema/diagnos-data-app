@@ -41,6 +41,7 @@ function mockQueueRepo(overrides: Partial<AnalysisQueueRepository> = {}): Analys
     ack: vi.fn(),
     requeue: vi.fn(),
     stats: vi.fn(),
+    failStale: vi.fn(),
     ...overrides,
   };
 }
@@ -114,6 +115,16 @@ describe("AnalysisService", () => {
 
       await expect(service.enqueue("lead-1")).rejects.toThrow("queue down");
       expect(enqueue).toHaveBeenCalledWith("lead-1");
+    });
+
+    it("failStale repassa o limite ao queueRepo", async () => {
+      const failStale = vi.fn().mockResolvedValue(3);
+      const service = createService({ queueRepo: mockQueueRepo({ failStale }) });
+
+      const result = await service.failStale(30);
+
+      expect(failStale).toHaveBeenCalledWith(30);
+      expect(result).toBe(3);
     });
   });
 

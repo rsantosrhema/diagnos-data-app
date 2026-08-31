@@ -12,6 +12,9 @@ import type { AgentPayload } from "@/lib/screener/agent-payload";
 
 const MAX_JOBS_PER_RUN = 5;
 
+/** Tempo máximo que um job pode ficar na fila antes de ser marcado como falha. */
+const MAX_STALE_MINUTES = 30;
+
 function timingSafeEqualStr(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   const { createHash, timingSafeEqual } = require("node:crypto") as typeof import("node:crypto");
@@ -74,6 +77,15 @@ export async function POST(req: Request) {
     sendEmail: sendReportEmail,
   });
 
+  // Marca como falha jobs presos na fila por mais de MAX_STALE_MINUTES,
+  // para não ficarem "pendente/processando" para sempre.
+  let staleFailed = 0;
+  try {
+    staleFailed = await analysisService.failStale(MAX_STALE_MINUTES);
+  } catch (err) {
+    console.error("[analysis-worker] falha ao expirar jobs presos na fila:", err);
+  }
+
   let processed = 0;
   for (let i = 0; i < MAX_JOBS_PER_RUN; i++) {
     const { processed: didProcess } = await analysisService.processNext();
@@ -81,5 +93,5 @@ export async function POST(req: Request) {
     processed++;
   }
 
-  return NextResponse.json({ ok: true, processed }, { status: 200 });
+  return NextResponse.json({ ok: true, processed, staleFailed }, { status: 200 });
 }

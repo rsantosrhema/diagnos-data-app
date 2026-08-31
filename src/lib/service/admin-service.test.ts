@@ -56,6 +56,7 @@ function mockQueueRepo(overrides: Partial<AnalysisQueueRepository> = {}): Analys
       analisado: 0,
       falha: 0,
     }),
+    failStale: vi.fn(),
     ...overrides,
   };
 }

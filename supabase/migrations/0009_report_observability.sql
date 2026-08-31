@@ -176,6 +176,53 @@ begin
   perform pgmq.set_vt('analysis_jobs', p_msg_id, 0);
 end $$;
 
+-- Timeout de staleness: marca como falha jobs que permanecem em
+-- 'pendente'/'processando' por mais tempo que o limite informado (ex.: 30 min).
+-- Jobs 'processando' cuja mensagem voltou à fila (VT expirou e o worker caiu)
+-- também são encerrados aqui. Usado no início de cada drain do worker.
+create or replace function public.analysis_queue_fail_stale(p_max_age interval)
+returns integer language plpgsql security definer as $$
+declare
+  v_stale bigint;
+  v_rec   record;
+begin
+  select count(*) into v_stale
+  from public.market_insights mi
+  where mi.status in ('pendente', 'processando')
+    and mi.queued_at < now() - p_max_age;
+
+  if v_stale = 0 then
+    return 0;
+  end if;
+
+  for v_rec in
+    select mi.lead_id, mi.status
+    from public.market_insights mi
+    where mi.status in ('pendente', 'processando')
+      and mi.queued_at < now() - p_max_age
+  loop
+    update public.market_insights
+       set status = 'falha',
+           error = 'Tempo de espera na fila excedeu o limite (' ||
+                   to_char(p_max_age, 'HH24:MI') || '). Job considerado expirado.',
+           updated_at = now()
+     where lead_id = v_rec.lead_id;
+
+    insert into public.analysis_job_logs (lead_id, step, message)
+    values (v_rec.lead_id, 'failed',
+            'Job expirado por exceder o tempo máximo na fila');
+
+    -- Se a mensagem ainda está ativa na fila, arquiva para não ser reprocessada
+    perform pgmq.archive(
+      'analysis_jobs',
+      (select q.msg_id from pgmq.q_analysis_jobs q
+        where q.message->>'lead_id' = v_rec.lead_id::text)
+    );
+  end loop;
+
+  return v_stale;
+end $$;
+
 -- Estatísticas da fila + estado por status do market_insights.
 create or replace function public.analysis_queue_stats()
 returns jsonb language plpgsql security definer as $$

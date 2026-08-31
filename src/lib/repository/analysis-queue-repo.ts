@@ -64,6 +64,14 @@ export function createAnalysisQueueRepository(supabase: SupabaseClient) {
       if (error) throw error;
     },
 
+    async failStale(maxAgeMinutes: number): Promise<number> {
+      const { data, error } = await supabase.rpc("analysis_queue_fail_stale", {
+        p_max_age: `${maxAgeMinutes} minutes`,
+      });
+      if (error) throw error;
+      return (data as number) ?? 0;
+    },
+
     async stats(): Promise<AnalysisQueueStats> {
       const { data, error } = await supabase.rpc("analysis_queue_stats");
       if (error) throw error;

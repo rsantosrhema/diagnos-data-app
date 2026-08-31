@@ -89,6 +89,10 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
       return queueRepo.enqueue(leadId);
     },
 
+    async failStale(maxAgeMinutes: number): Promise<number> {
+      return queueRepo.failStale(maxAgeMinutes);
+    },
+
     async processNext(): Promise<{ processed: boolean }> {
       let job;
       try {

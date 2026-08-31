@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
 
 const mockProcessNext = vi.fn();
+const mockFailStale = vi.fn();
 
 const { mockVerifyInternalApiKey } = vi.hoisted(() => ({
   mockVerifyInternalApiKey: vi.fn(),
@@ -39,6 +40,7 @@ vi.mock("@/lib/service/analysis-service", () => ({
   createAnalysisService: vi.fn().mockReturnValue({
     enqueue: vi.fn(),
     processNext: mockProcessNext,
+    failStale: mockFailStale,
   }),
 }));
 
@@ -49,8 +51,10 @@ beforeAll(() => {
 beforeEach(() => {
   mockVerifyInternalApiKey.mockReset();
   mockProcessNext.mockReset();
+  mockFailStale.mockReset();
   mockVerifyInternalApiKey.mockReturnValue(true);
   mockProcessNext.mockResolvedValue({ processed: true });
+  mockFailStale.mockResolvedValue(0);
 });
 
 function makeRequest() {
@@ -108,5 +112,20 @@ describe("POST /api/analysis-worker", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toMatchObject({ ok: true });
+  });
+
+  it("chama failStale com 30 minutos no início do drain", async () => {
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest());
+    expect(res.status).toBe(200);
+    expect(mockFailStale).toHaveBeenCalledWith(30);
+  });
+
+  it("não derruba o worker quando failStale falha (loga e segue)", async () => {
+    mockFailStale.mockRejectedValue(new Error("stale rpc down"));
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest());
+    expect(res.status).toBe(200);
+    expect(mockProcessNext).toHaveBeenCalled();
   });
 });
