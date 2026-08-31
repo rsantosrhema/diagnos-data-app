@@ -46,6 +46,7 @@ vi.mock("@/lib/service/analysis-service", () => ({
 
 beforeAll(() => {
   process.env.INTERNAL_API_KEY = "a".repeat(64) + "-test-key-for-worker-route";
+  process.env.CRON_SECRET = "cron-secret-real";
 });
 
 beforeEach(() => {
@@ -78,9 +79,23 @@ describe("POST /api/analysis-worker", () => {
     expect(res.status).toBe(401);
   });
 
+  it("retorna 500 claro quando CRON_SECRET não está configurado", async () => {
+    mockVerifyInternalApiKey.mockReturnValue(false);
+    const original = process.env.CRON_SECRET;
+    delete process.env.CRON_SECRET;
+    const { POST } = await import("./route");
+    const req = new Request("http://localhost/api/analysis-worker", {
+      method: "POST",
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body).toMatchObject({ error: expect.stringContaining("CRON_SECRET") });
+    process.env.CRON_SECRET = original;
+  });
+
   it("retorna 401 sem internal key e com cron secret errado", async () => {
     mockVerifyInternalApiKey.mockReturnValue(false);
-    process.env.CRON_SECRET = "cron-secret-real";
     const { POST } = await import("./route");
     const req = new Request("http://localhost/api/analysis-worker", {
       method: "POST",
@@ -88,12 +103,10 @@ describe("POST /api/analysis-worker", () => {
     });
     const res = await POST(req);
     expect(res.status).toBe(401);
-    delete process.env.CRON_SECRET;
   });
 
   it("retorna 200 com cron secret válido via Authorization", async () => {
     mockVerifyInternalApiKey.mockReturnValue(false);
-    process.env.CRON_SECRET = "cron-secret-real";
     const { POST } = await import("./route");
     const req = new Request("http://localhost/api/analysis-worker", {
       method: "POST",
@@ -103,7 +116,6 @@ describe("POST /api/analysis-worker", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toMatchObject({ ok: true });
-    delete process.env.CRON_SECRET;
   });
 
   it("retorna 200 com internal key válida", async () => {

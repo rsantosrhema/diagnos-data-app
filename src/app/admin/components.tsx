@@ -100,12 +100,23 @@ const LOG_STEP_LABELS: Record<string, string> = {
   email: "E-mail enviado",
   completed: "Concluído",
   failed: "Falha",
+  pdf_failed: "Falha ao gerar PDF",
+  email_failed: "Falha ao enviar e-mail",
+  requeue: "Devolvido à fila (retry)",
 };
+
+const LOG_ERROR_STEPS = new Set(["failed", "pdf_failed", "email_failed"]);
 
 export function LogStepLabel({ step }: { step: string }) {
   const label = LOG_STEP_LABELS[step] ?? step;
-  const tone = step === "failed" ? "text-red-700 font-medium" : "text-rhema-dark/70";
+  const tone = LOG_ERROR_STEPS.has(step)
+    ? "text-red-700 font-medium"
+    : "text-rhema-dark/70";
   return <span className={tone}>{label}</span>;
+}
+
+export function isLogErrorStep(step: string): boolean {
+  return LOG_ERROR_STEPS.has(step);
 }
 
 export function Reveal({ delay = 0, children }: { delay?: number; children: React.ReactNode }) {

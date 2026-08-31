@@ -64,6 +64,17 @@ export function createAnalysisQueueRepository(supabase: SupabaseClient) {
       if (error) throw error;
     },
 
+    async resetReadCount(
+      msgId: string,
+    ): Promise<AnalysisQueueResetReadCountResult> {
+      const { data, error } = await supabase.rpc(
+        "analysis_queue_reset_read_ct",
+        { p_msg_id: msgId },
+      );
+      if (error) throw error;
+      return { alreadyRetried: (data as boolean | null) ?? false };
+    },
+
     async failStale(maxAgeMinutes: number): Promise<number> {
       const { data, error } = await supabase.rpc("analysis_queue_fail_stale", {
         p_max_age: `${maxAgeMinutes} minutes`,
@@ -93,6 +104,10 @@ export function createAnalysisQueueRepository(supabase: SupabaseClient) {
       };
     },
   };
+}
+
+export interface AnalysisQueueResetReadCountResult {
+  alreadyRetried: boolean;
 }
 
 export type AnalysisQueueRepository = ReturnType<

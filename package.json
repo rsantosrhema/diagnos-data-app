@@ -9,7 +9,10 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "pdf:sample": "node scripts/generate-sample-pdf.js",
+    "worker:run": "node scripts/worker-cron.js once",
+    "worker:watch": "node scripts/worker-cron.js watch"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.40",

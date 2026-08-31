@@ -12,6 +12,7 @@ import {
   Reveal,
   formatDuration,
   formatTime,
+  isLogErrorStep,
 } from "../components";
 
 export default function AdminFilaPage() {
@@ -269,7 +270,7 @@ export default function AdminFilaPage() {
                             <span className="text-rhema-dark/50"> · </span>
                             <LogStepLabel step={log.step} />
                           </p>
-                          {log.message && (
+                          {log.message && isLogErrorStep(log.step) && (
                             <p className="mt-0.5 font-inter text-xs text-red-700">{log.message}</p>
                           )}
                         </div>

@@ -48,6 +48,7 @@ function mockQueueRepo(overrides: Partial<AnalysisQueueRepository> = {}): Analys
     read: vi.fn(),
     ack: vi.fn(),
     requeue: vi.fn(),
+    resetReadCount: vi.fn().mockResolvedValue({ alreadyRetried: false }),
     stats: vi.fn().mockResolvedValue({
       queueLength: 0,
       oldestAgeSec: null,

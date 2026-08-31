@@ -37,7 +37,10 @@ export type AnalysisJobLogStep =
   | "pdf"
   | "email"
   | "completed"
-  | "failed";
+  | "failed"
+  | "pdf_failed"
+  | "email_failed"
+  | "requeue";
 
 export function createMarketInsightsRepository(supabase: SupabaseClient) {
   return {

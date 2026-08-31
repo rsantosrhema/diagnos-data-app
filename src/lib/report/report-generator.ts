@@ -1,5 +1,12 @@
 import React from "react";
-import { renderToBuffer, Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import {
+  renderToBuffer,
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+} from "@react-pdf/renderer";
 import type { GeneratePdfInput } from "@/lib/service/screen-service";
 import { RadarChart } from "./radar-chart";
 
@@ -12,17 +19,30 @@ const COLORS = {
   white: "#FFFFFF",
 };
 
+const PAGE = {
+  width: 595,
+  height: 842,
+  margin: 40,
+  footer: 34,
+};
+
+const BODY_FONT_SIZE = 9.5;
+const BODY_LINE_HEIGHT = 1.5;
+
 const styles = StyleSheet.create({
   page: {
-    padding: 40,
+    paddingTop: PAGE.margin,
+    paddingBottom: PAGE.margin,
+    paddingHorizontal: PAGE.margin,
     fontFamily: "Helvetica",
-    fontSize: 10,
+    fontSize: BODY_FONT_SIZE,
+    lineHeight: BODY_LINE_HEIGHT,
     color: COLORS.dark,
   },
   header: {
     backgroundColor: COLORS.institutional,
     padding: 24,
-    marginBottom: 24,
+    marginBottom: 20,
     borderRadius: 4,
   },
   headerTitle: {
@@ -54,18 +74,19 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     padding: 16,
     marginBottom: 16,
-    alignItems: "center",
   },
   bandLabel: {
     fontSize: 24,
     fontFamily: "Helvetica-Bold",
     color: COLORS.primary,
-    marginBottom: 4,
+    marginBottom: 6,
+    textAlign: "center",
   },
   bandDescription: {
     fontSize: 10,
     color: COLORS.dark,
     textAlign: "center",
+    lineHeight: 1.5,
   },
   radarBox: {
     alignItems: "center",
@@ -84,7 +105,8 @@ const styles = StyleSheet.create({
   },
   tableRow: {
     flexDirection: "row",
-    padding: 8,
+    paddingVertical: 7,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.lavender,
   },
@@ -138,27 +160,37 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 2,
-    marginTop: 2,
+    marginTop: 3,
     marginRight: 8,
   },
   insightText: {
     flex: 1,
     fontSize: 9,
-    lineHeight: 1.4,
+    lineHeight: 1.45,
+  },
+  insightPriority: {
+    fontFamily: "Helvetica-Bold",
   },
   footer: {
     position: "absolute",
-    bottom: 30,
-    left: 40,
-    right: 40,
+    bottom: PAGE.footer,
+    left: PAGE.margin,
+    right: PAGE.margin,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     borderTopWidth: 1,
     borderTopColor: COLORS.lavender,
-    paddingTop: 8,
+    paddingTop: 6,
   },
   footerText: {
     fontSize: 7,
     color: COLORS.lavender,
-    textAlign: "center",
+  },
+  warningText: {
+    fontSize: 8,
+    color: COLORS.lavender,
+    fontStyle: "italic",
   },
 });
 
@@ -175,11 +207,7 @@ function bulletColor(prioridade: string): string {
 
 const h = React.createElement;
 
-function bulletText(bullet: { texto: string; prioridade: string }): string {
-  return `[${bullet.prioridade.toUpperCase()}] ${bullet.texto}`;
-}
-
-export function buildReportChildren(input: GeneratePdfInput): ReturnType<typeof h>[] {
+function buildPages(input: GeneratePdfInput): ReturnType<typeof h>[] {
   const dimensionRows = input.dimensionScores.map((d, i) =>
     h(View, { key: d.name, style: [styles.tableRow, ...(i % 2 === 1 ? [styles.tableRowAlt] : [])] },
       h(Text, { style: styles.colName }, d.name),
@@ -189,27 +217,51 @@ export function buildReportChildren(input: GeneratePdfInput): ReturnType<typeof 
     ),
   );
 
-  return [
-    h(View, { key: "header", style: styles.header },
-      h(Text, { style: styles.headerTitle }, "Diagnóstico de Maturidade de Dados"),
-      h(Text, { style: styles.headerSubtitle }, "Rhema Data — Relatório de Autoavaliação"),
+  const pageHeader = h(View, { key: "header", style: styles.header },
+    h(Text, { style: styles.headerTitle }, "Diagnóstico de Maturidade de Dados"),
+    h(Text, { style: styles.headerSubtitle }, "Rhema Data - Relatório de Autoavaliação"),
+  );
+
+  const headerFooter = h(View, { key: "footer", style: styles.footer },
+    h(Text, { style: styles.footerText },
+      `© ${new Date().getFullYear()} Rhema Data - Diagnóstico de Maturidade de Dados`,
     ),
+    h(Text, { style: styles.footerText, render: ({ pageNumber }) => `${pageNumber}` }, ""),
+  );
+
+  // ---------- Página 1: cabeçalho + faixa + radar + respondente ----------
+  const page1Children: ReturnType<typeof h>[] = [
+    pageHeader,
     h(View, { key: "respondent", style: styles.section },
       h(Text, { style: styles.sectionTitle }, "Respondente"),
       h(Text, null, `Nome: ${input.respondentName}`),
     ),
-    h(View, { key: "band", style: styles.bandBox },
-      h(Text, { style: styles.bandLabel }, input.band.rotulo),
-      h(Text, { style: styles.bandDescription }, input.band.descricao),
-    ),
-    ...(input.dimensionScores.length > 0
-      ? [h(View, { key: "radar", style: styles.section },
-          h(Text, { style: styles.sectionTitle }, "Radar de Maturidade"),
-          h(View, { style: styles.radarBox },
-            h(RadarChart, { dimensions: input.dimensionScores }),
-          ),
-        )]
-      : []),
+  ];
+
+  if (input.dimensionScores.length > 0) {
+    page1Children.push(
+      h(View, { key: "band", style: styles.bandBox },
+        h(Text, { style: styles.bandLabel }, input.band.rotulo),
+        h(Text, { style: styles.bandDescription }, input.band.descricao),
+      ),
+      h(View, { key: "radar", style: styles.section },
+        h(Text, { style: styles.sectionTitle }, "Radar de Maturidade"),
+        h(View, { style: styles.radarBox },
+          h(RadarChart, { dimensions: input.dimensionScores }),
+        ),
+      ),
+    );
+  } else {
+    page1Children.push(
+      h(View, { key: "band", style: styles.bandBox },
+        h(Text, { style: styles.bandLabel }, input.band.rotulo),
+        h(Text, { style: styles.bandDescription }, input.band.descricao),
+      ),
+    );
+  }
+
+  // ---------- Página 2: scores por dimensão + risco + desequilíbrio + impacto ----------
+  const page2Children: ReturnType<typeof h>[] = [
     h(View, { key: "table", style: styles.section },
       h(Text, { style: styles.sectionTitle }, "Scores por Dimensão"),
       h(View, { style: styles.tableHeader },
@@ -238,65 +290,85 @@ export function buildReportChildren(input: GeneratePdfInput): ReturnType<typeof 
           h(Text, null, input.commercialAnswer),
         )]
       : []),
-    ...(input.analysis
-      ? [h(View, { key: "analysis", style: styles.section },
-          h(Text, { style: styles.sectionTitle }, "Análise de Mercado"),
-          h(Text, { style: { fontSize: 9, marginBottom: 6 } }, input.analysis.resumo),
-          ...input.analysis.dores.map((pain) =>
-            h(View, { key: pain.dimensao_id, style: { marginBottom: 4 } },
-              h(Text, { style: { fontSize: 9, fontFamily: "Helvetica-Bold" } },
-                `${pain.dimensao}${pain.evidencia_mercado ? " — confirmada pelo mercado" : ""}`,
-              ),
-              h(Text, { style: { fontSize: 9 } }, pain.dor),
+  ];
+
+  // ---------- Página 3: análise de mercado + concorrentes + insights + aviso ----------
+  const page3Children: ReturnType<typeof h>[] = [];
+
+  if (input.analysis) {
+    page3Children.push(
+      h(View, { key: "analysis", style: styles.section },
+        h(Text, { style: styles.sectionTitle }, "Análise de Mercado"),
+        h(Text, { style: { fontSize: 9.5, marginBottom: 8 } }, input.analysis.resumo),
+        ...input.analysis.dores.map((pain) =>
+          h(View, { key: pain.dimensao_id, style: { marginBottom: 6 } },
+            h(Text, { style: { fontSize: 9, fontFamily: "Helvetica-Bold" } },
+              `${pain.dimensao}${pain.evidencia_mercado ? " - confirmada pelo mercado" : ""}`,
             ),
+            h(Text, { style: { fontSize: 9 } }, pain.dor),
           ),
-        )]
-      : []),
-    ...(input.insights && input.insights.bullets.length > 0
-      ? [h(View, { key: "insights", style: styles.section },
-          h(Text, { style: styles.sectionTitle }, "Insights Priorizados"),
-          ...input.insights.bullets.map((bullet, i) =>
-            h(View, { key: `bullet-${i}`, style: styles.insightRow },
-              h(View, {
-                style: [styles.insightSquare, { backgroundColor: bulletColor(bullet.prioridade) }],
-              }),
-              h(Text, { style: styles.insightText }, [
-                `[${bullet.prioridade.toUpperCase()}] `,
-                bullet.texto,
-              ]),
-            ),
-          ),
-        )]
-      : []),
-    ...(input.analysis && input.analysis.contexto_concorrentes.length > 0
-      ? [h(View, { key: "competitors", style: styles.section },
+        ),
+      ),
+    );
+
+    if (input.analysis.contexto_concorrentes.length > 0) {
+      page3Children.push(
+        h(View, { key: "competitors", style: styles.section },
           h(Text, { style: styles.sectionTitle }, "Concorrentes"),
           ...input.analysis.contexto_concorrentes.map((c, i) =>
-            h(View, { key: `comp-${i}`, style: { marginBottom: 4 } },
+            h(View, { key: `comp-${i}`, style: { marginBottom: 6 } },
               h(Text, { style: { fontSize: 9, fontFamily: "Helvetica-Bold" } }, c.nome),
               h(Text, { style: { fontSize: 9 } }, c.contexto),
             ),
           ),
-        )]
-      : []),
+        ),
+      );
+    }
+  }
+
+  if (input.insights && input.insights.bullets.length > 0) {
+    page3Children.push(
+      h(View, { key: "insights", style: styles.section },
+        h(Text, { style: styles.sectionTitle }, "Insights Priorizados"),
+        ...input.insights.bullets.map((bullet, i) =>
+          h(View, { key: `bullet-${i}`, style: styles.insightRow },
+            h(View, {
+              style: [styles.insightSquare, { backgroundColor: bulletColor(bullet.prioridade) }],
+            }),
+            h(Text, { style: styles.insightText },
+              h(Text, { style: styles.insightPriority }, `[${bullet.prioridade.toUpperCase()}] `),
+              bullet.texto,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  page3Children.push(
     h(View, { key: "warning", style: styles.section },
-      h(Text, { style: { fontSize: 8, color: COLORS.lavender, fontStyle: "italic" } },
+      h(Text, { style: styles.warningText },
         "Pesos ajustados com base no perfil da empresa (segmento, porte e faturamento). Instrumento de triagem baseado em autoavaliação. Não substitui diagnóstico com evidência documental. Resultado reportado como faixa, não como número exato.",
       ),
     ),
-    h(View, { key: "footer", style: styles.footer },
-      h(Text, { style: styles.footerText },
-        `© ${new Date().getFullYear()} Rhema Data — Diagnóstico de Maturidade de Dados`,
-      ),
-    ),
+  );
+
+  return [
+    h(Page, { key: "page-1", size: "A4", style: styles.page }, ...page1Children, headerFooter),
+    h(Page, { key: "page-2", size: "A4", style: styles.page }, ...page2Children, headerFooter),
+    ...(page3Children.length > 1
+      ? [h(Page, { key: "page-3", size: "A4", style: styles.page }, ...page3Children, headerFooter)]
+      : []),
   ];
 }
 
+export function buildReportChildren(input: GeneratePdfInput): ReturnType<typeof h>[] {
+  return buildPages(input);
+}
+
 export function ScreenerReport({ input }: { input: GeneratePdfInput }) {
-  const children = buildReportChildren(input);
-  return h(Document, null,
-    h(Page, { size: "A4", style: styles.page }, ...children),
-  );
+  const pages = buildPages(input);
+  return h(Document, null, ...pages);
 }
 
 export async function generateScreenerPdf(

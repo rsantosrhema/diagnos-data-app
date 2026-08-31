@@ -7,13 +7,14 @@ import { createAssessmentRepository } from "@/lib/repository/assessment-repo";
 import { createMarketInsightsRepository } from "@/lib/repository/market-insights-repo";
 import { createAnalysisQueueRepository } from "@/lib/repository/analysis-queue-repo";
 import { createAnalysisService } from "@/lib/service/analysis-service";
-import { createAgentOrchestrator } from "@/lib/agents/orchestrator";
 import { createResearcherAgent } from "@/lib/agents/researcher";
 import { createAnalystAgent } from "@/lib/agents/analyst";
 import { createWriterAgent } from "@/lib/agents/writer";
 import { getLlmModel } from "@/lib/agents/llm";
 import { getEnv } from "@/lib/env";
 import { Exa } from "exa-js";
+import type { AgentPayload } from "@/lib/screener/agent-payload";
+import type { MarketResearch, MarketAnalysis } from "@/lib/agents/types";
 
 config({ path: ".env.local" });
 
@@ -31,11 +32,17 @@ async function buildPipeline() {
   const llm = getLlmModel();
   const exa = new Exa(env.EXA_API_KEY);
 
-  return createAgentOrchestrator({
-    researcher: createResearcherAgent({ exa }),
-    analyst: createAnalystAgent({ llm }),
-    writer: createWriterAgent({ llm }),
-  });
+  const researcher = createResearcherAgent({ exa });
+  const analyst = createAnalystAgent({ llm });
+  const writer = createWriterAgent({ llm });
+
+  return {
+    research: (payload: AgentPayload) => researcher.run(payload),
+    analyst: (input: { research: MarketResearch; payload: AgentPayload }) =>
+      analyst.run(input),
+    writer: (input: { analysis: MarketAnalysis; payload: AgentPayload }) =>
+      writer.run(input),
+  };
 }
 
 describe("Smoke E2E — fluxo real (Supabase + Resend + Exa + LLM)", () => {
@@ -137,7 +144,10 @@ describe("Smoke E2E — fluxo real (Supabase + Resend + Exa + LLM)", () => {
         payloadLoader: async (id: string) => {
           const row = await assessmentRepo.findByLeadId(id);
           if (!row) return null;
-          return row.agent_payload as never;
+          const parsed = (await import("@/lib/schemas/agent-payload"))
+            .agentPayloadSchema.safeParse(row.agent_payload);
+          if (!parsed.success) return null;
+          return parsed.data;
         },
         leadRepo: createLeadRepository(supabase),
         generatePdf: async () => ({

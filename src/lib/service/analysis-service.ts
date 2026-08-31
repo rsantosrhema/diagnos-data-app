@@ -1,8 +1,16 @@
-import type { AnalysisQueueRepository } from "@/lib/repository/analysis-queue-repo";
-import type { EnqueueResult } from "@/lib/repository/analysis-queue-repo";
+import type {
+  AnalysisQueueJob,
+  AnalysisQueueRepository,
+  AnalysisQueueStats,
+  EnqueueResult,
+} from "@/lib/repository/analysis-queue-repo";
 import type { MarketInsightsRepository } from "@/lib/repository/market-insights-repo";
 import type { AgentPayload } from "@/lib/screener/agent-payload";
-import type { AgentOutput } from "@/lib/agents/orchestrator";
+import type {
+  MarketResearch,
+  MarketAnalysis,
+  InsightsBrief,
+} from "@/lib/agents/types";
 import type { GeneratePdfInput } from "@/lib/service/screen-service";
 
 export class AnalysisServiceError extends Error {
@@ -22,7 +30,17 @@ export interface SendReportEmailParams {
 export interface AnalysisServiceDeps {
   queueRepo: AnalysisQueueRepository;
   insightsRepo: MarketInsightsRepository;
-  orchestrator: { run(payload: AgentPayload): Promise<AgentOutput> };
+  orchestrator: {
+    research(payload: AgentPayload): Promise<MarketResearch>;
+    analyst(input: {
+      research: MarketResearch;
+      payload: AgentPayload;
+    }): Promise<MarketAnalysis>;
+    writer(input: {
+      analysis: MarketAnalysis;
+      payload: AgentPayload;
+    }): Promise<InsightsBrief>;
+  };
   payloadLoader: (leadId: string) => Promise<AgentPayload | null>;
   leadRepo: { updateStatus(id: string, status: string): Promise<void> };
   generatePdf: (input: GeneratePdfInput) => Promise<{ pdf: Buffer; filename: string }>;
@@ -49,6 +67,12 @@ function buildPdfInput(payload: AgentPayload, output?: AgentOutput): GeneratePdf
   };
 }
 
+interface AgentOutput {
+  research: MarketResearch;
+  analysis: MarketAnalysis;
+  insights: InsightsBrief;
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -61,27 +85,101 @@ function escapeHtml(value: string): string {
 export function createAnalysisService(deps: AnalysisServiceDeps) {
   const { queueRepo, insightsRepo, orchestrator, payloadLoader, leadRepo, generatePdf, sendEmail } = deps;
 
-  async function sendAnalysisEmail(opts: {
-    leadId: string;
-    payload: AgentPayload;
-    output?: AgentOutput;
-  }): Promise<void> {
+  async function requeueWithLock(msgId: string, leadId: string): Promise<boolean> {
+    // Lock de in-flight + retry atômico (transação SQL + lock_row):
+    // apenas um worker devolve a mensagem à fila. Retorna true se outro worker
+    // já fez o requeue (este processamento deve encerrar sem efeitos).
     try {
-      const pdfResult = await generatePdf(buildPdfInput(opts.payload, opts.output));
-      const to = process.env.MANAGER_NOTIFICATION_EMAIL ?? "comercial@rhemadata.com";
-      await sendEmail({
-        to,
-        subject: `Diagnóstico de Maturidade — ${opts.payload.solicitante.nome}`,
-        html: `<p>Diagnóstico recebido de <strong>${escapeHtml(opts.payload.solicitante.nome)}</strong> (${escapeHtml(opts.payload.solicitante.cargo)}).</p><p>Faixa: <strong>${escapeHtml(opts.payload.score.faixa)}</strong></p>`,
-        attachment: { filename: pdfResult.filename, content: pdfResult.pdf },
-      });
-    } catch (err) {
-      // EMAIL-04: falha de e-mail não derruba o worker nem muda o status
+      const { alreadyRetried } = await queueRepo.resetReadCount(msgId);
+      return alreadyRetried;
+    } catch (reqErr) {
       console.error(
-        `[analysis-service] falha ao enviar e-mail do relatório para lead ${opts.leadId}:`,
-        err instanceof Error ? err.message : err,
+        `[analysis-service] falha ao requeue do job ${msgId} do lead ${leadId}:`,
+        reqErr,
+      );
+      // Sem garantia de requeue: devolve a mensagem à fila pelo mecanismo de
+      // visibility timeout (set_vt) como última alternativa, mas nunca dispara
+      // e-mail duplicado a partir daqui.
+      try {
+        await queueRepo.requeue(msgId);
+      } catch (vtErr) {
+        console.error(
+          `[analysis-service] falha no fallback de requeue do job ${msgId} do lead ${leadId}:`,
+          vtErr,
+        );
+      }
+      return false;
+    }
+  }
+
+  async function logEventSafe(
+    leadId: string,
+    step: "failed",
+    message: string,
+    durationMs?: number,
+  ): Promise<void> {
+    try {
+      await insightsRepo.logEvent(leadId, step, message, durationMs);
+    } catch (logErr) {
+      console.error(
+        `[analysis-service] falha ao registrar evento ${step} do lead ${leadId}:`,
+        logErr,
       );
     }
+  }
+
+  async function sendAnalysisEmail(opts: {
+    leadId: string;
+    payload: AgentPayload | null;
+    output?: AgentOutput;
+  }): Promise<{ pdf: boolean; email: boolean }> {
+    let pdfMs = 0;
+    let emailMs = 0;
+    let pdfOk = false;
+    let emailOk = false;
+
+    try {
+      const pdfStart = Date.now();
+      const pdfResult = await generatePdf(buildPdfInput(opts.payload!, opts.output));
+      pdfMs = Date.now() - pdfStart;
+      pdfOk = true;
+      await insightsRepo.logEvent(opts.leadId, "pdf", undefined, pdfMs);
+
+      const to = process.env.MANAGER_NOTIFICATION_EMAIL ?? "comercial@rhemadata.com";
+      const emailStart = Date.now();
+      await sendEmail({
+        to,
+        subject: `Diagnóstico de Maturidade — ${opts.payload!.solicitante.nome}`,
+        html: `<p>Diagnóstico recebido de <strong>${escapeHtml(opts.payload!.solicitante.nome)}</strong> (${escapeHtml(opts.payload!.solicitante.cargo)}).</p><p>Faixa: <strong>${escapeHtml(opts.payload!.score.faixa)}</strong></p>`,
+        attachment: { filename: pdfResult.filename, content: pdfResult.pdf },
+      });
+      emailMs = Date.now() - emailStart;
+      emailOk = true;
+      await insightsRepo.logEvent(opts.leadId, "email", undefined, emailMs);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "erro desconhecido";
+      const step = pdfOk ? "email_failed" : "pdf_failed";
+      console.error(
+        `[analysis-service] ${pdfOk ? "falha ao enviar e-mail" : "falha ao gerar PDF"} do relatório para lead ${opts.leadId}:`,
+        message,
+      );
+      try {
+        await insightsRepo.logEvent(
+          opts.leadId,
+          step,
+          message,
+          step === "email_failed" ? emailMs || undefined : pdfMs || undefined,
+        );
+      } catch (logErr) {
+        console.error(
+          `[analysis-service] falha ao registrar evento ${step} do lead ${opts.leadId}:`,
+          logErr,
+        );
+      }
+    }
+
+    return { pdf: pdfOk, email: emailOk };
   }
 
   return {
@@ -128,13 +226,24 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
           status: "analisado",
         });
 
-        const totalMs = Date.now() - pipelineStart;
-        await insightsRepo.logEvent(leadId, "pdf", undefined, totalMs);
-        await insightsRepo.logEvent(leadId, "email", undefined, totalMs);
-        await queueRepo.ack(job.msgId, leadId, "analisado", undefined, totalMs);
+        const emailResult = await sendAnalysisEmail({ leadId, payload, output });
 
-        // EMAIL-02: e-mail com PDF enriquecido após a análise
-        await sendAnalysisEmail({ leadId, payload, output });
+        const totalMs = Date.now() - pipelineStart;
+        if (emailResult.pdf) {
+          await queueRepo.ack(job.msgId, leadId, "analisado", undefined, totalMs);
+        } else {
+          // PDF não foi produzido: relatório não existe → falha real + marcado
+          // para reprocessamento manual.
+          await queueRepo.ack(job.msgId, leadId, "falha", "Falha ao gerar o PDF do relatório", totalMs);
+          try {
+            await leadRepo.updateStatus(leadId, "analise_pendente");
+          } catch (statusErr) {
+            console.error(
+              `[analysis-service] falha ao marcar lead ${leadId} como analise_pendente:`,
+              statusErr,
+            );
+          }
+        }
 
         return { processed: true };
       } catch (err) {
@@ -142,14 +251,59 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
           err instanceof Error ? err.message : "erro desconhecido no pipeline";
         console.error(`[analysis-service] pipeline falhou para lead ${leadId}:`, message);
         const totalMs = Date.now() - pipelineStart;
+
+        await logEventSafe(leadId, "failed", message, totalMs);
+
+        let attempts = 0;
         try {
-          await insightsRepo.logEvent(leadId, "failed", message, totalMs);
-        } catch (logErr) {
-          console.error(
-            `[analysis-service] falha ao registrar evento failed do lead ${leadId}:`,
-            logErr,
-          );
+          const row = await insightsRepo.findByLeadId(leadId);
+          attempts = row?.attempts ?? 0;
+        } catch {
+          /* tenta retry mesmo sem conseguir ler attempts */
         }
+
+        if (attempts < 2) {
+          // Retry único: devolve a mensagem à fila sem arquivar. O lead fica
+          // 'pendente' para bloquear re-enfileiramento duplicado via admin.
+          //
+          // O e-mail de fallback NÃO é enviado aqui: o job ainda vai ser
+          // reprocessado (possivelmente com sucesso) e o envio seria duplicado.
+          // O e-mail só sai na falha definitiva (attempts >= 2), via
+          // sendAnalysisEmail abaixo.
+          const alreadyRetried = await requeueWithLock(job.msgId, leadId);
+          if (alreadyRetried) {
+            // Outro worker já devolveu esta mensagem à fila (o lock de
+            // in-flight impediu a leitura dupla): não arquiva, não envia
+            // e-mail, apenas encerra este processamento.
+            return { processed: true };
+          }
+
+          try {
+            await leadRepo.updateStatus(leadId, "analise_pendente");
+          } catch (statusErr) {
+            console.error(
+              `[analysis-service] falha ao marcar lead ${leadId} como analise_pendente:`,
+              statusErr,
+            );
+          }
+          // Job devolvido à fila para nova tentativa (sem e-mail de fallback —
+          // o envio só acontece na falha definitiva).
+          try {
+            await insightsRepo.logEvent(
+              leadId,
+              "requeue",
+              "Job devolvido à fila para nova tentativa",
+            );
+          } catch (logErr) {
+            console.error(
+              `[analysis-service] falha ao registrar evento requeue do lead ${leadId}:`,
+              logErr,
+            );
+          }
+          return { processed: true };
+        }
+
+        // Falha definitiva após a(s) tentativa(s) de retry.
         try {
           await queueRepo.ack(job.msgId, leadId, "falha", message, totalMs);
         } catch (ackErr) {
@@ -158,7 +312,6 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
             ackErr,
           );
         }
-        // EMAIL-03: fallback — PDF básico + lead marcado para reprocessamento
         if (payload) {
           try {
             await leadRepo.updateStatus(leadId, "analise_pendente");
@@ -168,20 +321,40 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
               statusErr,
             );
           }
+          // EMAIL-03: fallback — PDF básico (sem insights/analysis). O e-mail
+          // só é enviado aqui, na falha definitiva, para nunca duplicar envio
+          // em conjunto com um retry pendente na fila.
           await sendAnalysisEmail({ leadId, payload });
         }
         return { processed: true };
       }
     },
+
+    async requeueWithLock(
+      msgId: string,
+      leadId: string,
+    ): Promise<boolean> {
+      // Lock de in-flight + retry atômico (transação SQL + lock_row):
+      // apenas um worker devolve a mensagem à fila. Retorna true se outro
+      // worker já fez o requeue desta mensagem.
+      const { alreadyRetried } = await queueRepo.resetReadCount(msgId);
+      return alreadyRetried;
+    },
   };
 
   async function runPipelineWithLogs(payload: AgentPayload, leadId: string): Promise<AgentOutput> {
-    const startedAt = Date.now();
-    const output = await orchestrator.run(payload);
-    const stageMs = Math.round((Date.now() - startedAt) / 3);
-    await insightsRepo.logEvent(leadId, "researcher", undefined, stageMs);
-    await insightsRepo.logEvent(leadId, "analyst", undefined, stageMs);
-    await insightsRepo.logEvent(leadId, "writer", undefined, stageMs);
-    return output;
+    let startedAt = Date.now();
+    const research = await orchestrator.research(payload);
+    await insightsRepo.logEvent(leadId, "researcher", undefined, Date.now() - startedAt);
+
+    startedAt = Date.now();
+    const analysis = await orchestrator.analyst({ research, payload });
+    await insightsRepo.logEvent(leadId, "analyst", undefined, Date.now() - startedAt);
+
+    startedAt = Date.now();
+    const insights = await orchestrator.writer({ analysis, payload });
+    await insightsRepo.logEvent(leadId, "writer", undefined, Date.now() - startedAt);
+
+    return { research, analysis, insights };
   }
 }
