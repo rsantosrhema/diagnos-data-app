@@ -9,8 +9,14 @@ import {
   generateReport,
   type AdminDashboardResponse,
   type AdminLeadRow,
-  type AnalysisStatus,
 } from "@/lib/api/client";
+import {
+  AnalysisBadge,
+  DiagnosticBadge,
+  KpiCard,
+  Reveal,
+  type AnalysisStatus,
+} from "./components";
 
 type View = "login" | "dashboard";
 
@@ -426,139 +432,26 @@ function DashboardView({
             </div>
           )}
 
-          {/* Fila de relatórios */}
-          {data && (
-            <Reveal delay={4}>
-              <div className="card mt-8 overflow-hidden">
-                <div className="flex items-center justify-between border-b border-rhema-lavender-light px-6 py-4">
-                  <h2 className="font-poppins text-lg font-semibold text-rhema-institutional">
-                    Fila de relatórios
-                  </h2>
-                  <span className="font-mono text-[11px] uppercase tracking-wider text-rhema-dark/50">
-                    {data.queue.pendente} na fila · {data.queue.processando} processando ·{" "}
-                    {data.queue.analisado} concluídos · {data.queue.falha} falhas ·{" "}
-                    profundidade {data.queue.queueLength}
-                  </span>
-                </div>
-
-                <div className="overflow-x-auto">
-                  {data.rows.filter(
-                    (r) =>
-                      r.analysisStatus === "pendente" ||
-                      r.analysisStatus === "processando" ||
-                      r.analysisStatus === "falha",
-                  ).length === 0 ? (
-                    <div className="px-6 py-10 text-center font-inter text-sm text-rhema-dark/60">
-                      Nenhum relatório aguardando, em processamento ou com falha.
-                    </div>
-                  ) : (
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-rhema-lavender-light bg-rhema-lavender-light/30">
-                          {["Cliente", "Status", "Na fila desde", "Tempo na fila", "Tentativas", "Erro"].map(
-                            (h) => (
-                              <th key={h} className="px-6 py-3 font-poppins text-xs font-medium text-rhema-dark/60 text-left">
-                                {h}
-                              </th>
-                            ),
-                          )}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.rows
-                          .filter(
-                            (r) =>
-                              r.analysisStatus === "pendente" ||
-                              r.analysisStatus === "processando" ||
-                              r.analysisStatus === "falha",
-                          )
-                          .map((r) => (
-                            <tr key={r.leadId} className="border-b border-rhema-lavender-light/50 last:border-0">
-                              <td className="px-6 py-3.5 font-inter font-medium text-rhema-dark">
-                                {r.name}
-                              </td>
-                              <td className="px-6 py-3.5">
-                                <AnalysisBadge status={r.analysisStatus} />
-                              </td>
-                              <td className="px-6 py-3.5 font-inter text-rhema-dark/70">
-                                {formatTime(r.analysisQueuedAt)}
-                              </td>
-                              <td className="px-6 py-3.5 font-inter text-rhema-dark/70 tabular-nums">
-                                {formatDuration(r.ageSeconds)}
-                              </td>
-                              <td className="px-6 py-3.5 font-inter text-rhema-dark/70 tabular-nums">
-                                {r.attempts}
-                              </td>
-                              <td className="px-6 py-3.5">
-                                {r.analysisStatus === "falha" && r.errorMessage ? (
-                                  <span
-                                    title={r.errorMessage}
-                                    className="inline-block max-w-[240px] cursor-help truncate font-inter text-xs text-red-700"
-                                  >
-                                    {r.errorMessage}
-                                  </span>
-                                ) : (
-                                  <span className="font-inter text-xs text-rhema-dark/40">—</span>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
+          {/* Fila de relatórios — página dedicada */}
+          <Reveal delay={4}>
+            <div className="card mt-8 flex items-center justify-between p-6">
+              <div>
+                <h2 className="font-poppins text-lg font-semibold text-rhema-institutional">
+                  Fila de relatórios
+                </h2>
+                <p className="mt-1 font-inter text-sm text-rhema-dark/60">
+                  Acompanhe o estado de cada relatório, o log de processamento e os
+                  KPIs da fila.
+                </p>
               </div>
-            </Reveal>
-          )}
-
-          {/* Log de processamentos */}
-          {data && (
-            <Reveal delay={5}>
-              <div className="card mt-8 overflow-hidden">
-                <div className="flex items-center justify-between border-b border-rhema-lavender-light px-6 py-4">
-                  <h2 className="font-poppins text-lg font-semibold text-rhema-institutional">
-                    Log de processamentos
-                  </h2>
-                  <span className="font-mono text-[11px] uppercase tracking-wider text-rhema-dark/50">
-                    últimos {data.logs.length} eventos
-                  </span>
-                </div>
-
-                {data.logs.length === 0 ? (
-                  <div className="px-6 py-10 text-center font-inter text-sm text-rhema-dark/60">
-                    Nenhum evento registrado ainda.
-                  </div>
-                ) : (
-                  <div className="max-h-[420px] overflow-y-auto">
-                    <ul className="divide-y divide-rhema-lavender-light/50">
-                      {data.logs.map((log, i) => (
-                        <li key={`${log.leadId}-${log.createdAt}-${i}`} className="flex items-start gap-3 px-6 py-3">
-                          <span className="mt-1 flex h-2 w-2 shrink-0 rounded-full bg-rhema-primary/60" aria-hidden />
-                          <div className="min-w-0">
-                            <p className="font-inter text-sm text-rhema-dark">
-                              <span className="font-medium">{log.leadName ?? "Lead"}</span>
-                              <span className="text-rhema-dark/50"> · </span>
-                              <LogStepLabel step={log.step} />
-                            </p>
-                            {log.message && (
-                              <p className="mt-0.5 font-inter text-xs text-red-700">{log.message}</p>
-                            )}
-                          </div>
-                          <span className="ml-auto shrink-0 font-mono text-[11px] tabular-nums text-rhema-dark/50">
-                            {formatTime(log.createdAt)}
-                            {log.durationMs != null && ` · ${formatDuration(Math.round(log.durationMs / 1000))}`}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </Reveal>
-          )}
+              <a href="/admin/fila" className="btn-primary shrink-0">
+                Ver fila de relatórios
+              </a>
+            </div>
+          </Reveal>
 
           {/* Table */}
-          <Reveal delay={6}>
+          <Reveal delay={5}>
             <div className="card mt-8 overflow-hidden">
               <div className="flex items-center justify-between border-b border-rhema-lavender-light px-6 py-4">
                 <h2 className="font-poppins text-lg font-semibold text-rhema-institutional">
@@ -699,132 +592,7 @@ function EmptyState() {
   );
 }
 
-// ─── Reveal wrapper ───
-
-function Reveal({ delay = 0, children }: { delay?: number; children: React.ReactNode }) {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), 100 * delay);
-    return () => clearTimeout(timer);
-  }, [delay]);
-
-  return (
-    <div
-      className={`reveal ${visible ? "is-visible" : ""}`}
-      style={{ transitionDelay: `${100 * delay}ms` }}
-    >
-      {children}
-    </div>
-  );
-}
-
 // ─── Sub-components ───
-
-function KpiCard({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone: "amber" | "red" | "green" | "primary";
-}) {
-  const tones: Record<string, string> = {
-    amber: "text-amber-600",
-    red: "text-red-600",
-    green: "text-green-600",
-    primary: "text-rhema-primary",
-  };
-
-  return (
-    <div className="card p-5 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5">
-      <p className="font-inter text-xs uppercase tracking-wide text-rhema-dark/50">
-        {label}
-      </p>
-      <p
-        className={`mt-2 font-poppins text-3xl font-bold tabular-nums ${tones[tone]}`}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function DiagnosticBadge({ hasDiagnostic }: { hasDiagnostic: boolean }) {
-  return hasDiagnostic ? (
-    <span className="inline-block rounded-full bg-green-100 px-2.5 py-1 font-inter text-xs font-medium text-green-700">
-      Concluído
-    </span>
-  ) : (
-    <span className="inline-block rounded-full bg-gray-100 px-2.5 py-1 font-inter text-xs font-medium text-gray-600">
-      Pendente
-    </span>
-  );
-}
-
-function AnalysisBadge({ status }: { status: AnalysisStatus }) {
-  if (!status) {
-    return <span className="font-inter text-xs text-rhema-dark/40">—</span>;
-  }
-
-  const map: Record<Exclude<AnalysisStatus, null>, string> = {
-    pendente: "bg-amber-100 text-amber-700",
-    processando: "bg-blue-100 text-blue-700",
-    analisado: "bg-green-100 text-green-700",
-    falha: "bg-red-100 text-red-700",
-  };
-
-  const labels: Record<Exclude<AnalysisStatus, null>, string> = {
-    pendente: "Pendente",
-    processando: "Processando",
-    analisado: "Analisado",
-    falha: "Falha",
-  };
-
-  const pulse = status === "processando" ? " animate-pulse" : "";
-
-  return (
-    <span
-      className={`inline-block rounded-full px-2.5 py-1 font-inter text-xs font-medium ${map[status]}${pulse}`}
-    >
-      {labels[status]}
-    </span>
-  );
-}
-
-function formatTime(value: string | null): string {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-}
-
-function formatDuration(seconds: number | null): string {
-  if (seconds == null) return "—";
-  if (seconds < 60) return `${seconds}s`;
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return s > 0 ? `${m}m ${s}s` : `${m}m`;
-}
-
-const LOG_STEP_LABELS: Record<string, string> = {
-  enqueued: "Enfileirado",
-  started: "Processamento iniciado",
-  researcher: "Pesquisa de mercado (Exa)",
-  analyst: "Análise (LLM)",
-  writer: "Geração de insights (LLM)",
-  pdf: "PDF gerado",
-  email: "E-mail enviado",
-  completed: "Concluído",
-  failed: "Falha",
-};
-
-function LogStepLabel({ step }: { step: string }) {
-  const label = LOG_STEP_LABELS[step] ?? step;
-  const tone = step === "failed" ? "text-red-700 font-medium" : "text-rhema-dark/70";
-  return <span className={tone}>{label}</span>;
-}
 
 function RowActionMenu({
   row,
