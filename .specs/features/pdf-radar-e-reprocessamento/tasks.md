@@ -127,13 +127,14 @@ Client + UI da página admin.
 - Skill: NONE
 
 **Done when**:
-- [ ] `reprocessAnalysisSchema` aceita `{ leadId: <uuid válido> }`
-- [ ] Rejeita `leadId` não-uuid e campos extras (`.strict()`)
-- [ ] Unit tests cobrem os três casos
-- [ ] `npm run test` passa
+- [x] `reprocessAnalysisSchema` aceita `{ leadId: <uuid válido> }`
+- [x] Rejeita `leadId` não-uuid e campos extras (`.strict()`)
+- [x] Unit tests cobrem os três casos (4 testes)
+- [x] `npm run test` passa (314 passed)
 
-**Tests**: unit
-**Gate**: quick
+**Tests**: unit ✅ (4 testes em `src/lib/schemas/analysis.test.ts`)
+**Gate**: quick ✅ (`npm run test` 314 passed)
+**Commit**: `feat(admin): add reprocess analysis schema`
 
 ---
 
