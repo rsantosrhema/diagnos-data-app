@@ -33,15 +33,11 @@ export function createScreenService(deps: {
   assessmentRepo: AssessmentRepository;
   contract: ScreenerContract;
   loadActiveCalibration: () => Promise<ScoringCalibration>;
-  enqueueAnalysis: (leadId: string) => Promise<void>;
 }) {
-  const { leadRepo, assessmentRepo, contract, loadActiveCalibration, enqueueAnalysis } = deps;
+  const { leadRepo, assessmentRepo, contract, loadActiveCalibration } = deps;
 
   return {
-    async submitScreener(
-      submission: ScreenerSubmission,
-      options?: { isMaster?: boolean },
-    ): Promise<{ ok: true }> {
+    async submitScreener(submission: ScreenerSubmission): Promise<{ ok: true }> {
       // 1. Honeypot: discard silently
       if (submission.website && submission.website.trim() !== "") {
         return { ok: true };
@@ -51,16 +47,16 @@ export function createScreenService(deps: {
       const role = submission.role ?? "";
       const profile = submission.profile ?? {};
 
-      // 2. Resolve o lead: via leadId (sessão) ou fallback por email
+      // 2. Resolve o lead: via leadId (cadastro na landing) ou fallback por email
       let leadId: string;
       if (submission.leadId) {
         const lead = await leadRepo.findById(submission.leadId);
         if (!lead) {
-          throw new ScreenServiceError("Sessão inválida", 401);
+          throw new ScreenServiceError("Lead inválido", 401);
         }
         leadId = lead.id;
       } else {
-        // Fallback (fluxo legado): tenta reutilizar lead existente não-concluído
+        // Fallback: tenta reutilizar lead existente não-concluído
         const existing = await leadRepo.findByEmail(email);
         if (existing && existing.status !== "concluido") {
           leadId = existing.id;
@@ -75,15 +71,13 @@ export function createScreenService(deps: {
         }
       }
 
-      // 3. Bloqueia reenvio (master sessions podem reenviar)
-      if (!options?.isMaster) {
-        const alreadyDone = await assessmentRepo.existsForLead(leadId);
-        if (alreadyDone) {
-          throw new ScreenServiceError(
-            "Este diagnóstico já foi enviado. Caso precise de ajustes, entre em contato conosco.",
-            409,
-          );
-        }
+      // 3. Bloqueia reenvio
+      const alreadyDone = await assessmentRepo.existsForLead(leadId);
+      if (alreadyDone) {
+        throw new ScreenServiceError(
+          "Este diagnóstico já foi enviado. Caso precise de ajustes, entre em contato conosco.",
+          409,
+        );
       }
 
       // 4. Compute scores (contextual)
@@ -126,11 +120,7 @@ export function createScreenService(deps: {
 
       // 6. Persist assessment response + diagnostic
       try {
-        const persistFn = options?.isMaster
-          ? assessmentRepo.upsertAssessmentResponse.bind(assessmentRepo)
-          : assessmentRepo.createAssessmentResponse.bind(assessmentRepo);
-
-        await persistFn({
+        await assessmentRepo.createAssessmentResponse({
           leadId,
           context: submission.context,
           profile,
@@ -144,11 +134,7 @@ export function createScreenService(deps: {
           agentPayload,
         });
 
-        const persistDiagnosticFn = options?.isMaster
-          ? assessmentRepo.upsertDiagnostic.bind(assessmentRepo)
-          : assessmentRepo.createDiagnostic.bind(assessmentRepo);
-
-        await persistDiagnosticFn({
+        await assessmentRepo.createDiagnostic({
           leadId,
           overallScore: result.score,
           overallLevel: result.band.rotulo === "Inicial" ? 1
@@ -175,19 +161,8 @@ export function createScreenService(deps: {
         throw new ScreenServiceError("Erro ao salvar diagnóstico", 500);
       }
 
-      // 6.1 Enfileirar análise em background (AC INS-01/INS-03): falha nunca
-      // quebra o submit — a análise pode ser reprocessada depois (fatia 3).
-      try {
-        await enqueueAnalysis(leadId);
-      } catch (err) {
-        console.error(
-          `[screen-service] falha ao enfileirar análise para lead ${leadId}:`,
-          err instanceof Error ? err.message : err,
-        );
-      }
-
-      // 7. E-mail ao comercial agora é responsabilidade do worker (pós-análise).
-      // O submit responde { ok: true } imediatamente (AC EMAIL-01/EMAIL-02).
+      // 7. A geração de relatório agora é disparada sob demanda pelo gerente
+      // comercial (painel admin). O submit apenas persiste os dados.
       return { ok: true };
     },
   };

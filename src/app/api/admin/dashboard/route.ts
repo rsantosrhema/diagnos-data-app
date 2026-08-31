@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase/server";
 import { requireManager, unauthorized } from "@/lib/auth/guard";
 import { verifyInternalApiKey } from "@/lib/auth/internal-key";
-import { createTokenRepository } from "@/lib/repository/token-repo";
 import { createLeadRepository } from "@/lib/repository/lead-repo";
 import { createAssessmentRepository } from "@/lib/repository/assessment-repo";
 import { createMarketInsightsRepository } from "@/lib/repository/market-insights-repo";
@@ -19,9 +18,9 @@ export async function GET(req: Request) {
 
   const supabase = getServiceClient();
   const adminService = createAdminService({
-    tokenRepo: createTokenRepository(supabase),
     leadRepo: createLeadRepository(supabase),
     assessmentRepo: createAssessmentRepository(supabase),
+    marketInsightsRepo: createMarketInsightsRepository(supabase),
     analysisService: createAnalysisService({
       queueRepo: createAnalysisQueueRepository(supabase),
       insightsRepo: createMarketInsightsRepository(supabase),
@@ -38,7 +37,7 @@ export async function GET(req: Request) {
   });
 
   try {
-    const result = await adminService.getTokensDashboard();
+    const result = await adminService.getDashboard();
     return NextResponse.json(result, { status: 200 });
   } catch {
     return NextResponse.json({ error: "Erro ao carregar dados" }, { status: 500 });

@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { RhemaLogo } from "./components/RhemaLogo";
 import { WaveDivider } from "./components/WaveDivider";
 import { submitLead, type LeadInput } from "@/lib/api/client";
 import { CARGOS } from "@/lib/screener/contract";
+import { LEAD_STORAGE_KEY, type StoredLead } from "@/lib/lead-storage";
 
 const INITIAL_FORM: LeadInput = {
   name: "",
@@ -16,9 +18,10 @@ const INITIAL_FORM: LeadInput = {
 };
 
 export default function HomePage() {
+  const router = useRouter();
   const [form, setForm] = useState<LeadInput>(INITIAL_FORM);
   const [errors, setErrors] = useState<Partial<Record<keyof LeadInput, string>>>({});
-  const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
   const [serverError, setServerError] = useState("");
 
   function validate(): boolean {
@@ -39,13 +42,24 @@ export default function HomePage() {
 
     setStatus("submitting");
     try {
-      await submitLead(form);
-      setStatus("success");
-      setForm(INITIAL_FORM);
+      const result = await submitLead(form);
+      try {
+        const lead: StoredLead = {
+          leadId: result.leadId ?? "",
+          name: form.name.trim(),
+          email: form.email.trim(),
+          company: form.company.trim(),
+          role: form.role,
+        };
+        sessionStorage.setItem(LEAD_STORAGE_KEY, JSON.stringify(lead));
+      } catch {
+        // storage indisponível: wizard segue com fallback por email
+      }
+      router.push("/diagnostico");
     } catch (err) {
       setStatus("error");
       setServerError(
-        err instanceof Error ? err.message : "Erro ao enviar solicitação",
+        err instanceof Error ? err.message : "Erro ao enviar cadastro",
       );
     }
   }
@@ -62,12 +76,6 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <RhemaLogo variant="dark" width={140} />
           <div className="flex items-center gap-6">
-            <a
-              href="/access"
-              className="text-sm font-poppins font-medium text-white/80 hover:text-white transition-colors"
-            >
-              Já tenho um token
-            </a>
             <a
               href="/admin"
               className="text-sm font-poppins font-medium text-white/40 hover:text-white/70 transition-colors"
@@ -112,18 +120,18 @@ export default function HomePage() {
               {[
                 {
                   step: "01",
-                  title: "Solicite seu acesso",
-                  desc: "Preencha o formulário ao lado. Nosso time comercial entrará em contato com seu token de acesso.",
+                  title: "Cadastre-se",
+                  desc: "Preencha o formulário ao lado com seus dados e os da sua empresa. Leva menos de 1 minuto.",
                 },
                 {
                   step: "02",
                   title: "Responda o questionário",
-                  desc: "8 a 12 perguntas sobre práticas de gestão de dados da sua empresa. Leva menos de 10 minutos.",
+                  desc: "Perguntas sobre práticas de gestão de dados da sua empresa. Leva menos de 10 minutos.",
                 },
                 {
                   step: "03",
                   title: "Receba o relatório",
-                  desc: "Análise detalhada por dimensão do DAMA-DMBOK com scores, recomendações e plano de ação.",
+                  desc: "Nosso time comercial analisa seu diagnóstico e envia um relatório detalhado com scores, recomendações e plano de ação.",
                 },
               ].map((item) => (
                 <div key={item.step} className="flex gap-5">
@@ -148,142 +156,120 @@ export default function HomePage() {
           {/* Right: form */}
           <div className="card p-8 md:p-10 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
             <h2 className="font-poppins font-semibold text-xl text-rhema-institutional mb-1">
-              Solicitar acesso
+              Comece seu diagnóstico
             </h2>
             <p className="font-inter text-sm text-rhema-dark/60 mb-8">
-              Preencha os dados abaixo para receber seu token de acesso.
+              Preencha os dados abaixo para iniciar agora.
             </p>
 
-            {status === "success" ? (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <h3 className="font-poppins font-semibold text-lg text-rhema-institutional mb-2">
-                  Solicitação enviada!
-                </h3>
-                <p className="font-inter text-sm text-rhema-dark/70 mb-6">
-                  Nosso time comercial entrará em contato com seu token de acesso em breve.
-                </p>
-                <button
-                  onClick={() => setStatus("idle")}
-                  className="btn-secondary text-sm"
-                >
-                  Enviar nova solicitação
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-                {/* honeypot */}
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+              {/* honeypot */}
+              <input
+                type="text"
+                name="website"
+                value={form.website}
+                onChange={(e) => update("website", e.target.value)}
+                className="hidden"
+                tabIndex={-1}
+                autoComplete="off"
+              />
+
+              <div>
+                <label htmlFor="name" className="label-field">Nome completo</label>
                 <input
+                  id="name"
                   type="text"
-                  name="website"
-                  value={form.website}
-                  onChange={(e) => update("website", e.target.value)}
-                  className="hidden"
-                  tabIndex={-1}
-                  autoComplete="off"
+                  className={`input-field ${errors.name ? "error" : ""}`}
+                  placeholder="Seu nome"
+                  value={form.name}
+                  onChange={(e) => update("name", e.target.value)}
                 />
+                {errors.name && <p className="text-red-600 text-xs mt-1 font-inter">{errors.name}</p>}
+              </div>
 
-                <div>
-                  <label htmlFor="name" className="label-field">Nome completo</label>
-                  <input
-                    id="name"
-                    type="text"
-                    className={`input-field ${errors.name ? "error" : ""}`}
-                    placeholder="Seu nome"
-                    value={form.name}
-                    onChange={(e) => update("name", e.target.value)}
-                  />
-                  {errors.name && <p className="text-red-600 text-xs mt-1 font-inter">{errors.name}</p>}
-                </div>
+              <div>
+                <label htmlFor="company" className="label-field">Empresa</label>
+                <input
+                  id="company"
+                  type="text"
+                  className={`input-field ${errors.company ? "error" : ""}`}
+                  placeholder="Nome da empresa"
+                  value={form.company}
+                  onChange={(e) => update("company", e.target.value)}
+                />
+                {errors.company && <p className="text-red-600 text-xs mt-1 font-inter">{errors.company}</p>}
+              </div>
 
-                <div>
-                  <label htmlFor="company" className="label-field">Empresa</label>
-                  <input
-                    id="company"
-                    type="text"
-                    className={`input-field ${errors.company ? "error" : ""}`}
-                    placeholder="Nome da empresa"
-                    value={form.company}
-                    onChange={(e) => update("company", e.target.value)}
-                  />
-                  {errors.company && <p className="text-red-600 text-xs mt-1 font-inter">{errors.company}</p>}
-                </div>
-
-                <div>
-                  <label htmlFor="role" className="label-field">Cargo</label>
-                  <select
-                    id="role"
-                    className={`input-field ${errors.role ? "error" : ""}`}
-                    value={form.role}
-                    onChange={(e) => update("role", e.target.value)}
-                  >
-                    <option value="" disabled>
-                      Selecione seu cargo
-                    </option>
-                    {CARGOS.map((cargo) => (
-                      <option key={cargo} value={cargo}>
-                        {cargo}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.role && <p className="text-red-600 text-xs mt-1 font-inter">{errors.role}</p>}
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="label-field">Email corporativo</label>
-                  <input
-                    id="email"
-                    type="email"
-                    className={`input-field ${errors.email ? "error" : ""}`}
-                    placeholder="voce@empresa.com"
-                    value={form.email}
-                    onChange={(e) => update("email", e.target.value)}
-                  />
-                  {errors.email && <p className="text-red-600 text-xs mt-1 font-inter">{errors.email}</p>}
-                </div>
-
-                <div>
-                  <label htmlFor="phone" className="label-field">Telefone</label>
-                  <input
-                    id="phone"
-                    type="tel"
-                    className={`input-field ${errors.phone ? "error" : ""}`}
-                    placeholder="(11) 99999-9999"
-                    value={form.phone}
-                    onChange={(e) => update("phone", e.target.value)}
-                  />
-                  {errors.phone && <p className="text-red-600 text-xs mt-1 font-inter">{errors.phone}</p>}
-                </div>
-
-                {serverError && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                    <p className="text-red-700 text-sm font-inter">{serverError}</p>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={status === "submitting"}
-                  className="btn-primary w-full"
+              <div>
+                <label htmlFor="role" className="label-field">Cargo</label>
+                <select
+                  id="role"
+                  className={`input-field ${errors.role ? "error" : ""}`}
+                  value={form.role}
+                  onChange={(e) => update("role", e.target.value)}
                 >
-                  {status === "submitting" ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      Enviando...
-                    </span>
-                  ) : (
-                    "Solicitar acesso"
-                  )}
-                </button>
-              </form>
-            )}
+                  <option value="" disabled>
+                    Selecione seu cargo
+                  </option>
+                  {CARGOS.map((cargo) => (
+                    <option key={cargo} value={cargo}>
+                      {cargo}
+                    </option>
+                  ))}
+                </select>
+                {errors.role && <p className="text-red-600 text-xs mt-1 font-inter">{errors.role}</p>}
+              </div>
+
+              <div>
+                <label htmlFor="email" className="label-field">Email corporativo</label>
+                <input
+                  id="email"
+                  type="email"
+                  className={`input-field ${errors.email ? "error" : ""}`}
+                  placeholder="voce@empresa.com"
+                  value={form.email}
+                  onChange={(e) => update("email", e.target.value)}
+                />
+                {errors.email && <p className="text-red-600 text-xs mt-1 font-inter">{errors.email}</p>}
+              </div>
+
+              <div>
+                <label htmlFor="phone" className="label-field">Telefone</label>
+                <input
+                  id="phone"
+                  type="tel"
+                  className={`input-field ${errors.phone ? "error" : ""}`}
+                  placeholder="(11) 99999-9999"
+                  value={form.phone}
+                  onChange={(e) => update("phone", e.target.value)}
+                />
+                {errors.phone && <p className="text-red-600 text-xs mt-1 font-inter">{errors.phone}</p>}
+              </div>
+
+              {serverError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-red-700 text-sm font-inter">{serverError}</p>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={status === "submitting"}
+                className="btn-primary w-full"
+              >
+                {status === "submitting" ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Enviando...
+                  </span>
+                ) : (
+                  "Iniciar diagnóstico"
+                )}
+              </button>
+            </form>
           </div>
         </div>
       </section>

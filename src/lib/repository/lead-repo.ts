@@ -59,16 +59,21 @@ export function createLeadRepository(supabase: SupabaseClient) {
       phone: string;
       email: string;
       role: string;
-    }): Promise<void> {
-      const { error } = await supabase.from("leads").insert({
-        name: params.name,
-        company: params.company,
-        phone: params.phone,
-        email: params.email,
-        role: params.role,
-        status: "pendente",
-      });
+    }): Promise<string> {
+      const { data, error } = await supabase
+        .from("leads")
+        .insert({
+          name: params.name,
+          company: params.company,
+          phone: params.phone,
+          email: params.email,
+          role: params.role,
+          status: "pendente",
+        })
+        .select("id")
+        .single();
       if (error) throw error;
+      return data.id;
     },
 
     async updateStatus(id: string, status: string): Promise<void> {

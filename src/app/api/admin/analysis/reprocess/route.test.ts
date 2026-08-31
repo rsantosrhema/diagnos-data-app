@@ -16,11 +16,11 @@ vi.mock("@/lib/auth/guard", () => ({
   unauthorized: mockUnauthorized,
 }));
 
-const mockReprocessAnalysis = vi.fn();
+const mockGenerateReport = vi.fn();
 vi.mock("@/lib/service/admin-service", () => ({
   createAdminService: vi.fn().mockReturnValue({
-    getTokensDashboard: vi.fn(),
-    reprocessAnalysis: mockReprocessAnalysis,
+    getDashboard: vi.fn(),
+    generateReport: mockGenerateReport,
   }),
   AdminServiceError: class AdminServiceError extends Error {
     status: number;
@@ -43,7 +43,7 @@ beforeEach(() => {
   mockVerifyInternalApiKey.mockReset();
   mockRequireManager.mockReset();
   mockUnauthorized.mockReset();
-  mockReprocessAnalysis.mockReset();
+  mockGenerateReport.mockReset();
   mockVerifyInternalApiKey.mockReturnValue(true);
   mockRequireManager.mockResolvedValue({ id: "manager-1", email: "m@rhema.com" });
   mockUnauthorized.mockReturnValue(
@@ -96,20 +96,20 @@ describe("POST /api/admin/analysis/reprocess", () => {
     expect(res.status).toBe(400);
   });
 
-  it("retorna 400 quando o serviço lança AdminServiceError (REPRO-02/03)", async () => {
+  it("retorna 400 quando o serviço lança AdminServiceError", async () => {
     const { AdminServiceError } = await import("@/lib/service/admin-service");
-    mockReprocessAnalysis.mockRejectedValue(
-      new AdminServiceError("Lead sem análise reprocessável", 400),
+    mockGenerateReport.mockRejectedValue(
+      new AdminServiceError("Lead sem relatório gerável", 400),
     );
     const { POST } = await import("./route");
     const res = await POST(makeRequest({ leadId: VALID_UUID }));
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toBe("Lead sem análise reprocessável");
+    expect(body.error).toBe("Lead sem relatório gerável");
   });
 
   it("retorna 500 quando o enfileiramento falha (REPRO-04)", async () => {
-    mockReprocessAnalysis.mockRejectedValue(new Error("queue down"));
+    mockGenerateReport.mockRejectedValue(new Error("queue down"));
     const { POST } = await import("./route");
     const res = await POST(makeRequest({ leadId: VALID_UUID }));
     expect(res.status).toBe(500);
@@ -118,12 +118,12 @@ describe("POST /api/admin/analysis/reprocess", () => {
   });
 
   it("retorna 200 { ok: true } em sucesso (REPRO-01)", async () => {
-    mockReprocessAnalysis.mockResolvedValue({ ok: true });
+    mockGenerateReport.mockResolvedValue({ ok: true });
     const { POST } = await import("./route");
     const res = await POST(makeRequest({ leadId: VALID_UUID }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toEqual({ ok: true });
-    expect(mockReprocessAnalysis).toHaveBeenCalledWith(VALID_UUID);
+    expect(mockGenerateReport).toHaveBeenCalledWith(VALID_UUID);
   });
 });

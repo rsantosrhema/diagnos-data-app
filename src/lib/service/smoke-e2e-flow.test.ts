@@ -82,30 +82,7 @@ describe("Smoke E2E — fluxo real (Supabase + Resend + Exa + LLM)", () => {
       if (!lead) throw new Error("lead não criado");
       const leadId = lead.id;
 
-      // 2. Gera token (usa repositório de tokens) e cria sessão
-      const tokenRepo = (await import("@/lib/repository/token-repo")).createTokenRepository(supabase);
-      const sessionRepo = (await import("@/lib/repository/session-repo")).createSessionRepository(supabase);
-      const { generateToken, hashToken, createSessionToken, hashSessionToken } =
-        await import("@/lib/auth/token");
-
-      const token = generateToken();
-      const expiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
-      const tokenRow = await tokenRepo.create({
-        leadId,
-        tokenHash: hashToken(token),
-        expiresAt,
-      });
-      if (!tokenRow) throw new Error("token não criado");
-      await leadRepo.updateStatus(leadId, "token_gerado");
-
-      const sessionToken = createSessionToken();
-      await sessionRepo.create({
-        tokenHash: hashSessionToken(sessionToken),
-        leadId,
-        expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-      });
-
-      // 3. Monta payload de agentes (simula o que o submitScreener persistiria)
+      // 2. Monta payload de agentes (simula o que o submitScreener persistiria)
       const { buildAgentPayload } = await import("@/lib/screener/agent-payload");
       const { computeScores } = await import("@/lib/screener/scoring");
       const { SCREENER_CONTRACT } = await import("@/lib/screener/contract");

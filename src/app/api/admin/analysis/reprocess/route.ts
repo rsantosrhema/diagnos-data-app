@@ -3,7 +3,6 @@ import { getServiceClient } from "@/lib/supabase/server";
 import { requireManager, unauthorized } from "@/lib/auth/guard";
 import { verifyInternalApiKey } from "@/lib/auth/internal-key";
 import { reprocessAnalysisSchema } from "@/lib/schemas/analysis";
-import { createTokenRepository } from "@/lib/repository/token-repo";
 import { createLeadRepository } from "@/lib/repository/lead-repo";
 import { createAssessmentRepository } from "@/lib/repository/assessment-repo";
 import { createMarketInsightsRepository } from "@/lib/repository/market-insights-repo";
@@ -31,28 +30,27 @@ export async function POST(req: Request) {
   }
 
   const supabase = getServiceClient();
-  const leadRepo = createLeadRepository(supabase);
   const adminService = createAdminService({
-    tokenRepo: createTokenRepository(supabase),
-    leadRepo,
+    leadRepo: createLeadRepository(supabase),
     assessmentRepo: createAssessmentRepository(supabase),
+    marketInsightsRepo: createMarketInsightsRepository(supabase),
     analysisService: createAnalysisService({
       queueRepo: createAnalysisQueueRepository(supabase),
       insightsRepo: createMarketInsightsRepository(supabase),
       orchestrator: {
         run: async () => {
-          throw new Error("orchestrator não usado no reprocessamento síncrono");
+          throw new Error("orchestrator não usado no enfileiramento");
         },
       },
       payloadLoader: async () => null,
-      leadRepo,
+      leadRepo: createLeadRepository(supabase),
       generatePdf: async () => ({ pdf: Buffer.from(""), filename: "" }),
       sendEmail: async () => undefined,
     }),
   });
 
   try {
-    const result = await adminService.reprocessAnalysis(parsed.data.leadId);
+    const result = await adminService.generateReport(parsed.data.leadId);
     return NextResponse.json(result, { status: 200 });
   } catch (err) {
     if (err instanceof AdminServiceError) {

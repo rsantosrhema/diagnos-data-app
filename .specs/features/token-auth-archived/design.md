@@ -1,7 +1,9 @@
 # Token Authentication Design
 
-**Spec**: `.specs/features/token-auth/spec.md`
-**Status**: Approved (escopo: backend + APIs + schema; UI adiada)
+**Spec**: `.specs/features/token-auth-archived/spec.md`
+**Status**: Approved (escopo: backend + APIs + schema; UI adiada) — **SUPERSEDED em 2026-08-31** (ver banner no spec).
+
+> **⚠️ SUPERSEDED — Não aplicar.** Este design descreve o fluxo antigo de token de acesso único, removido do produto na migration `0008_remove_token_flow` (2026-08-31). O lead agora se cadastra na landing e inicia o diagnóstico direto, sem token nem sessão; o relatório passa a ser gerado sob demanda pelo gerente no painel admin. Veja `docs/decisions/003-usar-token-de-acesso-unico.md` (status: Superseded), `docs/architecture.md` e `AGENTS.md` (seção 4). Este arquivo é mantido apenas por razões históricas.
 
 > **Escopo desta entrega (decisão do usuário):** implementar **somente backend + APIs + schema** — sem as páginas Next.js e sem inicializar o app `src/app/**` de UI. O banco é aplicado via **supabase-mcp** pelo agente. As rotas de API (`src/app/api/**`) são implementadas como módulos server-side, mas a camada de UI (landing, /access, /admin) fica para uma entrega futura.
 

@@ -1,9 +1,11 @@
 # ADR-003: Usar token de acesso único para autenticação do diagnóstico
 
 - **Data**: 2026-08-19
-- **Status**: Aceito
+- **Status**: Superseded por remoção do fluxo de token (migration `0008_remove_token_flow`, 2026-08-31)
 - **Decisores**: Time de produto e engenharia
 - **Tags**: autenticação, segurança, fluxo comercial
+
+> **⚠️ SUPERSEDED — Não aplicar.** Este ADR descreve o fluxo antigo de token de acesso, removido do produto. O fluxo atual: o lead se cadastra na landing page e inicia o diagnóstico direto, sem token nem sessão (`docs/decisions/` não contém ADR substituto dedicado — a mudança foi registrada na migration `0008_remove_token_flow` e nos docs `architecture.md` / `data-model.md` / `security.md`). O bloqueio de reenvio passou a ser por email único (constraint `leads.email` + 409 quando o diagnóstico já foi concluído). Este documento é mantido apenas por razões históricas.
 
 ## Contexto e Declaração do Problema
 

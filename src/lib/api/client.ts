@@ -59,7 +59,9 @@ export interface LeadInput {
   website?: string;
 }
 
-export async function submitLead(input: LeadInput): Promise<{ ok: boolean }> {
+export async function submitLead(
+  input: LeadInput,
+): Promise<{ ok: boolean; leadId?: string }> {
   return apiFetch("/public-proxy/leads", { method: "POST", body: input });
 }
 
@@ -82,34 +84,9 @@ export async function submitScreener(input: ScreenerInput): Promise<{ ok: true }
   return apiFetch("/public-proxy/screener", { method: "POST", body: input });
 }
 
-export async function logoutSession(): Promise<{ ok: boolean }> {
-  return apiFetch("/public-proxy/sessions/logout", { method: "POST" });
-}
-
-export interface ScreenerProfile {
-  id: string;
-  name: string;
-  email: string;
-  company: string;
-  role: string;
-  status: string;
-  isMaster: boolean;
-}
-
-export async function getScreenerProfile(): Promise<ScreenerProfile> {
-  return apiFetch("/public-proxy/screener/profile", { method: "GET" });
-}
-
-export async function validateToken(
-  token: string,
-): Promise<{ redirect: string }> {
-  return apiFetch("/public-proxy/tokens/validate", {
-    method: "POST",
-    body: { token },
-  });
-}
-
 // ─── Admin API (via proxy, requires auth) ───
+
+export type AnalysisStatus = "pendente" | "processando" | "analisado" | "falha" | null;
 
 export interface AdminLeadRow {
   leadId: string;
@@ -117,73 +94,30 @@ export interface AdminLeadRow {
   company: string;
   email: string;
   leadStatus: string;
-  tokenId: string | null;
-  tokenStatus: string | null;
-  tokenExpiresAt: string | null;
-  tokenSentAt: string | null;
+  hasDiagnostic: boolean;
+  analysisStatus: AnalysisStatus;
+  analysisUpdatedAt: string | null;
 }
 
 export interface AdminKpis {
-  pendentesEnvio: number;
-  expirados: number;
-  cadastrados: number;
+  leadsTotal: number;
+  diagnosticosConcluidos: number;
+  relatoriosPendentes: number;
+  relatoriosFalha: number;
 }
 
-export interface AdminTokensResponse {
+export interface AdminDashboardResponse {
   kpis: AdminKpis;
   rows: AdminLeadRow[];
 }
 
-export async function getAdminTokens(
+export async function getAdminDashboard(
   authToken: string,
-): Promise<AdminTokensResponse> {
-  return apiFetch("/admin-proxy/tokens", { token: authToken });
+): Promise<AdminDashboardResponse> {
+  return apiFetch("/admin-proxy/dashboard", { token: authToken });
 }
 
-export async function generateToken(
-  leadId: string,
-  authToken: string,
-): Promise<{ token: string }> {
-  return apiFetch("/admin-proxy/tokens/generate", {
-    method: "POST",
-    body: { leadId },
-    token: authToken,
-  });
-}
-
-export async function sendToken(
-  tokenId: string,
-  token: string,
-  authToken: string,
-): Promise<{ sentAt: string }> {
-  return apiFetch(`/admin-proxy/tokens/${tokenId}/send`, {
-    method: "POST",
-    body: { token },
-    token: authToken,
-  });
-}
-
-export async function cancelToken(
-  tokenId: string,
-  authToken: string,
-): Promise<{ ok: boolean }> {
-  return apiFetch(`/admin-proxy/tokens/${tokenId}/cancel`, {
-    method: "POST",
-    token: authToken,
-  });
-}
-
-export async function regenerateToken(
-  tokenId: string,
-  authToken: string,
-): Promise<{ token: string }> {
-  return apiFetch(`/admin-proxy/tokens/${tokenId}/regenerate`, {
-    method: "POST",
-    token: authToken,
-  });
-}
-
-export async function reprocessAnalysis(
+export async function generateReport(
   leadId: string,
   authToken: string,
 ): Promise<{ ok: true }> {

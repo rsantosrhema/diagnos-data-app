@@ -14,7 +14,7 @@ const leadRow = (overrides: Partial<LeadRow> = {}): LeadRow => ({
   email: "joao@corp.com",
   phone: "",
   role: "CTO",
-  status: "token_gerado",
+  status: "pendente",
   created_at: new Date().toISOString(),
   ...overrides,
 });
@@ -57,22 +57,15 @@ function mockAssessmentRepo(overrides: Partial<AssessmentRepository> = {}): Asse
   return {
     existsForLead: vi.fn().mockResolvedValue(false),
     createAssessmentResponse: vi.fn(),
-    upsertAssessmentResponse: vi.fn(),
     createDiagnostic: vi.fn(),
-    upsertDiagnostic: vi.fn(),
     findByLeadId: vi.fn(),
     ...overrides,
   };
 }
 
-function mockEnqueueAnalysis() {
-  return vi.fn().mockResolvedValue(undefined);
-}
-
 function createService(deps: {
   leadRepo?: LeadRepository;
   assessmentRepo?: AssessmentRepository;
-  enqueueAnalysis?: ReturnType<typeof mockEnqueueAnalysis>;
 } = {}) {
   return createScreenService({
     leadRepo: deps.leadRepo ?? mockLeadRepo({
@@ -82,7 +75,6 @@ function createService(deps: {
     assessmentRepo: deps.assessmentRepo ?? mockAssessmentRepo(),
     contract: SCREENER_CONTRACT,
     loadActiveCalibration: vi.fn().mockRejectedValue(new Error("no db")),
-    enqueueAnalysis: deps.enqueueAnalysis ?? mockEnqueueAnalysis(),
   });
 }
 
@@ -127,7 +119,7 @@ describe("ScreenService", () => {
     ).rejects.toMatchObject({ status: 409 });
   });
 
-  it("usa o lead da sessão quando leadId é enviado", async () => {
+  it("usa o lead do cadastro quando leadId é enviado", async () => {
     const findById = vi.fn().mockResolvedValue(leadRow());
     const create = vi.fn();
     const service = createService({
@@ -139,7 +131,7 @@ describe("ScreenService", () => {
   });
 
   it("fallback sem leadId: reutiliza lead existente não-concluído", async () => {
-    const findByEmail = vi.fn().mockResolvedValue(leadRow({ id: "lead-9", status: "token_gerado" }));
+    const findByEmail = vi.fn().mockResolvedValue(leadRow({ id: "lead-9", status: "pendente" }));
     const create = vi.fn();
     const service = createService({
       leadRepo: mockLeadRepo({
@@ -165,6 +157,20 @@ describe("ScreenService", () => {
     expect(updateStatus).toHaveBeenCalledWith("lead-1", "concluido");
   });
 
+  it("persist via create (nunca upsert)", async () => {
+    const createAssessmentResponse = vi.fn();
+    const createDiagnostic = vi.fn();
+    const service = createService({
+      assessmentRepo: mockAssessmentRepo({
+        createAssessmentResponse,
+        createDiagnostic,
+      }),
+    });
+    await service.submitScreener(validSubmission());
+    expect(createAssessmentResponse).toHaveBeenCalledTimes(1);
+    expect(createDiagnostic).toHaveBeenCalledTimes(1);
+  });
+
   it("falha na persistência: lança 500", async () => {
     const service = createService({
       leadRepo: mockLeadRepo({
@@ -179,22 +185,13 @@ describe("ScreenService", () => {
     ).rejects.toMatchObject({ status: 500 });
   });
 
-  it("enfileira a análise com o lead_id após persistir o diagnóstico (AC INS-01)", async () => {
-    const enqueueAnalysis = mockEnqueueAnalysis();
-    const service = createService({ enqueueAnalysis });
-    await service.submitScreener(validSubmission());
-    expect(enqueueAnalysis).toHaveBeenCalledWith("lead-1");
-  });
-
-  it("falha no enfileiramento não quebra o submit (AC INS-03)", async () => {
-    const enqueueAnalysis = mockEnqueueAnalysis();
-    enqueueAnalysis.mockRejectedValue(new Error("queue down"));
-    const service = createService({ enqueueAnalysis });
+  it("NÃO enfileira análise no submit (geração sob demanda pelo gerente)", async () => {
+    const service = createService();
     const result = await service.submitScreener(validSubmission());
     expect(result).toEqual({ ok: true });
   });
 
-  it("submit NÃO envia e-mail ao comercial (AC EMAIL-01)", async () => {
+  it("submit NÃO envia e-mail ao comercial", async () => {
     const service = createService();
     const result = await service.submitScreener(validSubmission());
     expect(result).toEqual({ ok: true });

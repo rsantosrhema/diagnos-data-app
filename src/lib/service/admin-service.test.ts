@@ -1,24 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { createAdminService, AdminServiceError } from "./admin-service";
-import type { TokenRepository, TokenRow } from "@/lib/repository/token-repo";
 import type { LeadRepository, LeadRow } from "@/lib/repository/lead-repo";
 import type { AssessmentRepository } from "@/lib/repository/assessment-repo";
-
-function mockTokenRepo(overrides: Partial<TokenRepository> = {}): TokenRepository {
-  return {
-    findByHash: vi.fn(),
-    findById: vi.fn(),
-    markExpired: vi.fn(),
-    consume: vi.fn(),
-    cancel: vi.fn(),
-    cancelActiveByLeadId: vi.fn(),
-    create: vi.fn(),
-    updateSentAt: vi.fn(),
-    markExpiredTokens: vi.fn(),
-    findAll: vi.fn(),
-    ...overrides,
-  };
-}
+import type { MarketInsightsRepository, MarketInsightsRow } from "@/lib/repository/market-insights-repo";
 
 function mockLeadRepo(overrides: Partial<LeadRepository> = {}): LeadRepository {
   return {
@@ -36,12 +20,37 @@ function mockLeadRepo(overrides: Partial<LeadRepository> = {}): LeadRepository {
 
 function mockAssessmentRepo(overrides: Partial<AssessmentRepository> = {}): AssessmentRepository {
   return {
-    existsForLead: vi.fn(),
+    existsForLead: vi.fn().mockResolvedValue(false),
     createAssessmentResponse: vi.fn(),
-    upsertAssessmentResponse: vi.fn(),
     createDiagnostic: vi.fn(),
-    upsertDiagnostic: vi.fn(),
     findByLeadId: vi.fn(),
+    ...overrides,
+  };
+}
+
+function mockMarketInsightsRepo(
+  overrides: Partial<MarketInsightsRepository> = {},
+): MarketInsightsRepository {
+  return {
+    upsert: vi.fn(),
+    findByLeadId: vi.fn().mockResolvedValue(null),
+    markStatus: vi.fn(),
+    ...overrides,
+  };
+}
+
+function insightRow(overrides: Partial<MarketInsightsRow> = {}): MarketInsightsRow {
+  return {
+    id: "ins-1",
+    lead_id: "l1",
+    research: null,
+    analysis: null,
+    insights: null,
+    sources: null,
+    status: "analisado",
+    error: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     ...overrides,
   };
 }
@@ -53,83 +62,110 @@ function mockAnalysisService(overrides: { enqueue?: (leadId: string) => Promise<
 }
 
 describe("AdminService", () => {
-  describe("getTokensDashboard", () => {
-    it("runs lazy expiry and returns KPIs + rows without tokenPlain", async () => {
-      const now = Date.now();
-      const leads: LeadRow[] = [
-        { id: "l1", name: "Alice", company: "A Corp", email: "a@a.com", phone: "1", role: "CEO", status: "token_gerado", created_at: new Date(now).toISOString() },
-        { id: "l2", name: "Bob", company: "B Corp", email: "b@b.com", phone: "2", role: "CTO", status: "pendente", created_at: new Date(now).toISOString() },
-      ];
-      const tokens: TokenRow[] = [
-        { id: "t1", lead_id: "l1", status: "disponivel", expires_at: new Date(now + 60000).toISOString(), sent_at: null, created_at: new Date(now).toISOString() },
-        { id: "t2", lead_id: "l2", status: "expirado", expires_at: new Date(now - 60000).toISOString(), sent_at: null, created_at: new Date(now).toISOString() },
-      ];
+  describe("getDashboard", () => {
+    const leads: LeadRow[] = [
+      { id: "l1", name: "Alice", company: "A Corp", email: "a@a.com", phone: "1", role: "CEO", status: "concluido", created_at: new Date().toISOString() },
+      { id: "l2", name: "Bob", company: "B Corp", email: "b@b.com", phone: "2", role: "CTO", status: "pendente", created_at: new Date().toISOString() },
+    ];
 
-      const markExpiredTokens = vi.fn();
+    it("retorna KPIs e rows com status de análise", async () => {
+      const existsForLead = vi
+        .fn()
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false);
+      const findByLeadId = vi
+        .fn()
+        .mockResolvedValueOnce(insightRow({ lead_id: "l1", status: "analisado" }))
+        .mockResolvedValueOnce(null);
       const service = createAdminService({
-        tokenRepo: mockTokenRepo({ findAll: vi.fn().mockResolvedValue(tokens), markExpiredTokens }),
         leadRepo: mockLeadRepo({ findAll: vi.fn().mockResolvedValue(leads) }),
-        assessmentRepo: mockAssessmentRepo(),
+        assessmentRepo: mockAssessmentRepo({ existsForLead }),
+        marketInsightsRepo: mockMarketInsightsRepo({ findByLeadId }),
         analysisService: mockAnalysisService(),
       });
 
-      const result = await service.getTokensDashboard();
+      const result = await service.getDashboard();
 
-      expect(markExpiredTokens).toHaveBeenCalled();
       expect(result.kpis).toEqual({
-        pendentesEnvio: 1,
-        expirados: 1,
-        cadastrados: 2,
+        leadsTotal: 2,
+        diagnosticosConcluidos: 1,
+        relatoriosPendentes: 0,
+        relatoriosFalha: 0,
       });
       expect(result.rows).toHaveLength(2);
       expect(result.rows[0]).toMatchObject({
         leadId: "l1",
         name: "Alice",
-        tokenId: "t1",
-        tokenStatus: "disponivel",
+        hasDiagnostic: true,
+        analysisStatus: "analisado",
       });
-      // tokenPlain must NOT be in the response
-      expect(result.rows[0]).not.toHaveProperty("tokenPlain");
+      expect(result.rows[1]).toMatchObject({
+        leadId: "l2",
+        hasDiagnostic: false,
+        analysisStatus: null,
+      });
     });
 
-    it("returns empty rows when no leads", async () => {
+    it("conta relatórios pendentes e com falha", async () => {
+      const existsForLead = vi.fn().mockResolvedValue(true);
+      const findByLeadId = vi
+        .fn()
+        .mockResolvedValueOnce(insightRow({ lead_id: "l1", status: "processando" }))
+        .mockResolvedValueOnce(insightRow({ lead_id: "l2", status: "falha" }));
       const service = createAdminService({
-        tokenRepo: mockTokenRepo({ findAll: vi.fn().mockResolvedValue([]), markExpiredTokens: vi.fn() }),
-        leadRepo: mockLeadRepo({ findAll: vi.fn().mockResolvedValue([]) }),
-        assessmentRepo: mockAssessmentRepo(),
+        leadRepo: mockLeadRepo({ findAll: vi.fn().mockResolvedValue(leads) }),
+        assessmentRepo: mockAssessmentRepo({ existsForLead }),
+        marketInsightsRepo: mockMarketInsightsRepo({ findByLeadId }),
         analysisService: mockAnalysisService(),
       });
 
-      const result = await service.getTokensDashboard();
+      const result = await service.getDashboard();
+
+      expect(result.kpis).toMatchObject({
+        relatoriosPendentes: 1,
+        relatoriosFalha: 1,
+        diagnosticosConcluidos: 2,
+      });
+    });
+
+    it("retorna rows vazias sem leads", async () => {
+      const service = createAdminService({
+        leadRepo: mockLeadRepo({ findAll: vi.fn().mockResolvedValue([]) }),
+        assessmentRepo: mockAssessmentRepo(),
+        marketInsightsRepo: mockMarketInsightsRepo(),
+        analysisService: mockAnalysisService(),
+      });
+
+      const result = await service.getDashboard();
       expect(result.rows).toEqual([]);
-      expect(result.kpis.cadastrados).toBe(0);
+      expect(result.kpis.leadsTotal).toBe(0);
     });
   });
 
-  describe("reprocessAnalysis", () => {
-    const validLead: LeadRow = {
+  describe("generateReport", () => {
+    const leadBase: LeadRow = {
       id: "l1",
       name: "Alice",
       company: "A Corp",
       email: "a@a.com",
       phone: "1",
       role: "CEO",
-      status: "analisado",
+      status: "concluido",
       created_at: new Date().toISOString(),
     };
 
-    it("enfileira para lead com diagnóstico e status elegível (REPRO-01)", async () => {
-      const findById = vi.fn().mockResolvedValue(validLead);
+    it("enfileira para lead recém-concluído sem análise anterior (GER-01)", async () => {
+      const findById = vi.fn().mockResolvedValue(leadBase);
       const existsForLead = vi.fn().mockResolvedValue(true);
       const enqueue = vi.fn().mockResolvedValue(undefined);
       const service = createAdminService({
-        tokenRepo: mockTokenRepo(),
         leadRepo: mockLeadRepo({ findById }),
         assessmentRepo: mockAssessmentRepo({ existsForLead }),
+        marketInsightsRepo: mockMarketInsightsRepo(),
         analysisService: mockAnalysisService({ enqueue }),
       });
 
-      const result = await service.reprocessAnalysis("l1");
+      const result = await service.generateReport("l1");
 
       expect(result).toEqual({ ok: true });
       expect(findById).toHaveBeenCalledWith("l1");
@@ -137,58 +173,73 @@ describe("AdminService", () => {
       expect(enqueue).toHaveBeenCalledWith("l1");
     });
 
-    it("lança 400 quando o lead não existe (REPRO-02)", async () => {
+    it("enfileira para status de regeração (analisado/falha/analise_pendente)", async () => {
+      const enqueue = vi.fn().mockResolvedValue(undefined);
       const service = createAdminService({
-        tokenRepo: mockTokenRepo(),
-        leadRepo: mockLeadRepo({ findById: vi.fn().mockResolvedValue(null) }),
-        assessmentRepo: mockAssessmentRepo(),
-        analysisService: mockAnalysisService(),
-      });
-
-      await expect(service.reprocessAnalysis("l1")).rejects.toMatchObject({
-        name: "AdminServiceError",
-        status: 400,
-      });
-    });
-
-    it("lança 400 quando o lead não tem diagnóstico (REPRO-02)", async () => {
-      const service = createAdminService({
-        tokenRepo: mockTokenRepo(),
-        leadRepo: mockLeadRepo({ findById: vi.fn().mockResolvedValue(validLead) }),
-        assessmentRepo: mockAssessmentRepo({ existsForLead: vi.fn().mockResolvedValue(false) }),
-        analysisService: mockAnalysisService(),
-      });
-
-      await expect(service.reprocessAnalysis("l1")).rejects.toMatchObject({ status: 400 });
-    });
-
-    it("lança 400 para status inelegível (REPRO-03)", async () => {
-      const service = createAdminService({
-        tokenRepo: mockTokenRepo(),
         leadRepo: mockLeadRepo({
-          findById: vi.fn().mockResolvedValue({ ...validLead, status: "token_gerado" }),
+          findById: vi.fn().mockResolvedValue({ ...leadBase, status: "analisado" }),
         }),
         assessmentRepo: mockAssessmentRepo({ existsForLead: vi.fn().mockResolvedValue(true) }),
-        analysisService: mockAnalysisService(),
-      });
-
-      await expect(service.reprocessAnalysis("l1")).rejects.toMatchObject({
-        name: "AdminServiceError",
-        status: 400,
-      });
-    });
-
-    it("propaga erro de enqueue sem capturar (REPRO-04)", async () => {
-      const findById = vi.fn().mockResolvedValue(validLead);
-      const enqueue = vi.fn().mockRejectedValue(new Error("queue down"));
-      const service = createAdminService({
-        tokenRepo: mockTokenRepo(),
-        leadRepo: mockLeadRepo({ findById }),
-        assessmentRepo: mockAssessmentRepo({ existsForLead: vi.fn().mockResolvedValue(true) }),
+        marketInsightsRepo: mockMarketInsightsRepo(),
         analysisService: mockAnalysisService({ enqueue }),
       });
 
-      await expect(service.reprocessAnalysis("l1")).rejects.toThrow("queue down");
+      await expect(service.generateReport("l1")).resolves.toEqual({ ok: true });
+      expect(enqueue).toHaveBeenCalledWith("l1");
+    });
+
+    it("lança 400 quando o lead não existe", async () => {
+      const service = createAdminService({
+        leadRepo: mockLeadRepo({ findById: vi.fn().mockResolvedValue(null) }),
+        assessmentRepo: mockAssessmentRepo(),
+        marketInsightsRepo: mockMarketInsightsRepo(),
+        analysisService: mockAnalysisService(),
+      });
+
+      await expect(service.generateReport("l1")).rejects.toMatchObject({
+        name: "AdminServiceError",
+        status: 400,
+      });
+    });
+
+    it("lança 400 quando o lead não tem diagnóstico", async () => {
+      const service = createAdminService({
+        leadRepo: mockLeadRepo({ findById: vi.fn().mockResolvedValue(leadBase) }),
+        assessmentRepo: mockAssessmentRepo({ existsForLead: vi.fn().mockResolvedValue(false) }),
+        marketInsightsRepo: mockMarketInsightsRepo(),
+        analysisService: mockAnalysisService(),
+      });
+
+      await expect(service.generateReport("l1")).rejects.toMatchObject({ status: 400 });
+    });
+
+    it("lança 400 para status inelegível (pendente/token_gerado)", async () => {
+      const service = createAdminService({
+        leadRepo: mockLeadRepo({
+          findById: vi.fn().mockResolvedValue({ ...leadBase, status: "pendente" }),
+        }),
+        assessmentRepo: mockAssessmentRepo({ existsForLead: vi.fn().mockResolvedValue(true) }),
+        marketInsightsRepo: mockMarketInsightsRepo(),
+        analysisService: mockAnalysisService(),
+      });
+
+      await expect(service.generateReport("l1")).rejects.toMatchObject({
+        name: "AdminServiceError",
+        status: 400,
+      });
+    });
+
+    it("propaga erro de enqueue sem capturar", async () => {
+      const findById = vi.fn().mockResolvedValue(leadBase);
+      const enqueue = vi.fn().mockRejectedValue(new Error("queue down"));
+      const service = createAdminService({
+        leadRepo: mockLeadRepo({ findById }),
+        assessmentRepo: mockAssessmentRepo({ existsForLead: vi.fn().mockResolvedValue(true) }),
+        marketInsightsRepo: mockMarketInsightsRepo(),
+        analysisService: mockAnalysisService({ enqueue }),
+      });
+
+      await expect(service.generateReport("l1")).rejects.toThrow("queue down");
     });
   });
 });

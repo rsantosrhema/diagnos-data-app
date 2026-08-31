@@ -50,9 +50,9 @@ describe("proxy", () => {
     );
 
     const { proxyToInternal } = await importFresh();
-    const req = new Request("http://localhost/api/admin-proxy/tokens", { method: "GET" });
-    await proxyToInternal(req, { target: "admin/tokens" });
+    const req = new Request("http://localhost/api/admin-proxy/dashboard", { method: "GET" });
 
+    await proxyToInternal(req, { target: "admin/dashboard" });
     const [, calledInit] = mockFetch.mock.calls[1];
     expect(calledInit.method).toBe("GET");
   });
@@ -66,8 +66,8 @@ describe("proxy", () => {
     );
 
     const { proxyToInternal } = await importFresh();
-    const req = new Request("http://localhost/api/admin-proxy/tokens");
-    const res = await proxyToInternal(req, { target: "admin/tokens" });
+    const req = new Request("http://localhost/api/admin-proxy/dashboard");
+    const res = await proxyToInternal(req, { target: "admin/dashboard" });
     expect(res.status).toBe(401);
   });
 

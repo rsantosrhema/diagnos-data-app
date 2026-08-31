@@ -4,17 +4,6 @@ vi.mock("@/lib/supabase/server", () => ({
   getServiceClient: vi.fn().mockReturnValue({}),
 }));
 
-vi.mock("@/lib/report/report-generator", () => ({
-  generateScreenerPdf: vi.fn().mockResolvedValue({
-    pdf: Buffer.from("fake-pdf"),
-    filename: "diagnostico.pdf",
-  }),
-}));
-
-vi.mock("@/lib/email/send-report", () => ({
-  sendReportEmail: vi.fn().mockResolvedValue(undefined),
-}));
-
 const mockSubmitScreener = vi.fn().mockResolvedValue({ ok: true });
 vi.mock("@/lib/service/screen-service", () => ({
   createScreenService: vi.fn().mockReturnValue({
@@ -89,10 +78,10 @@ describe("POST /api/screener", () => {
     expect(res.status).toBe(201);
   });
 
-  it("retorna 409 para lead duplicado", async () => {
+  it("retorna 409 para diagnóstico duplicado", async () => {
     mockSubmitScreener.mockRejectedValueOnce(
       new (await import("@/lib/service/screen-service")).ScreenServiceError(
-        "Já existe uma solicitação pendente para este email.",
+        "Este diagnóstico já foi enviado. Caso precise de ajustes, entre em contato conosco.",
         409,
       ),
     );

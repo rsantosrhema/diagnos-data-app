@@ -1,4 +1,4 @@
-# AGENTS.md — Diagnos Data App
+﻿# AGENTS.md — Diagnos Data App
 
 This file is the **system prompt** for any code agent (OpenCode, Claude Code, Cursor, etc.) working on this repository. Read it fully before making changes. It defines the product, the architecture, and the conventions every agent must follow.
 
@@ -10,10 +10,11 @@ This file is the **system prompt** for any code agent (OpenCode, Claude Code, Cu
 
 The product flow is:
 
-1. **Multi-step form** — a visitor answers a contract-driven questionnaire (2 context questions + 10 DAMA-DMBOK dimensions + 1 commercial question + consent). Each dimension has 5 levels (CMMI-like).
-2. **Deterministic scoring** — the answers are scored with a fixed formula (weighted aggregate), producing a score band and per-dimension levels. No LLM is involved in the screener.
-3. **Persistence** — the lead, the raw answers, and the computed diagnostic are stored in **Supabase**.
-4. **PDF report** — a **PDF report** is generated server-side (`@react-pdf/renderer`) and emailed to the **commercial team** (Resend). The visitor sees a success screen.
+1. **Landing page** - the visitor fills the lead form (name, company, phone, email, role) and is redirected straight to the screener. Duplicate emails reuse the existing pending lead; a completed email is rejected (409).
+2. **Multi-step form** - the lead answers a contract-driven questionnaire (company profile + 10 DAMA-DMBOK dimensions + 1 commercial question + consent). Each dimension has 5 levels (CMMI-like).
+3. **Deterministic scoring** - the answers are scored with a fixed formula (weighted aggregate), producing a score band and per-dimension levels. No LLM is involved in the screener.
+4. **Persistence** - the lead, the raw answers, and the computed diagnostic are stored in **Supabase**. No PDF is generated at this point.
+5. **On-demand report** - the **commercial manager**, via the admin panel (`/admin`), clicks "Gerar relatório" for a lead; the analysis pipeline (agents + PDF + email via Resend) runs in the background worker.
 
 The questionnaire content is data-driven: it lives in `docs/snapshot-maturidade-dados.json` and is typed/loaded via a Zod-validated contract in `src/lib/screener/contract.ts`. Changing questions, weights, or score bands is a data change, not a redeploy.
 
@@ -31,7 +32,7 @@ The questionnaire content is data-driven: it lives in `docs/snapshot-maturidade-
 | Report generation | PDF (server-side) via **@react-pdf/renderer** |
 | Database + Storage | **Supabase** (PostgreSQL gerenciado) |
 | Email | **Resend** (envio do PDF ao time comercial) |
-| Auth | **Token de acesso único** (hash SHA-256, consumido no primeiro uso) + **`INTERNAL_API_KEY`** para o proxy |
+| Auth | **Supabase Auth** (painel admin do gerente) + **`INTERNAL_API_KEY`** para o proxy. Sem login de lead — cadastro direto na landing |
 
 ---
 
@@ -39,47 +40,48 @@ The questionnaire content is data-driven: it lives in `docs/snapshot-maturidade-
 
 ```
 diagnos-data-app/
-├── AGENTS.md                     # This file — agent system prompt
+├── AGENTS.md                     # This file - agent system prompt
 ├── .opencode/                    # OpenCode configuration
 │   ├── opencode.json             # OpenCode project config
 │   └── command/init.md           # /init command (bootstrap/onboard)
 ├── docs/
 │   ├── decisions/                # ADRs (Architecture Decision Records)
 │   ├── rules/                    # Detailed development rules
-│   │   ├── security.md           # Security rules (token, auth, env vars, Supabase)
+│   │   ├── security.md           # Security rules (auth, env vars, Supabase)
 │   │   ├── validation.md         # Validation rules (Zod patterns, boundaries)
 │   │   └── architecture.md       # Architecture rules (layers, server/client)
 │   ├── snapshot-maturidade-dados.json  # Single source of truth for the questionnaire
-│   └── architecture.md           # High-level architecture notes
+│   ├── architecture.md           # High-level architecture notes
+│   └── data-model.md             # Living schema reference (Supabase)
 ├── src/                          # Next.js application
 │   ├── app/
-│   │   ├── page.tsx              # Landing / lead request form
-│   │   ├── access/               # Token validation route
+│   │   ├── page.tsx              # Landing / lead registration (redirects to /diagnostico)
 │   │   ├── diagnostico/          # Multi-step screener form
 │   │   │   ├── page.tsx
 │   │   │   └── page.test.tsx
-│   │   ├── admin/                # Admin token/lead management
+│   │   ├── admin/                # Manager panel (lead list + report generation)
 │   │   └── api/
 │   │       ├── leads/            # (internal) create lead
 │   │       ├── screener/         # (internal) screener submission
-│   │       ├── tokens/           # (internal) token validation
-│   │       ├── public-proxy/     # proxy routes (screener, leads, tokens/validate)
-│   │       ├── admin/            # admin internal routes
+│   │       ├── analysis-worker/  # (internal) analysis queue worker (agents + PDF + email)
+│   │       ├── public-proxy/     # proxy routes (screener, leads)
+│   │       ├── admin/            # admin internal routes (analysis, scoring-config)
 │   │       └── admin-proxy/      # admin proxy routes
 │   ├── components/               # shared React components (logo, wave divider)
 │   ├── lib/
 │   │   ├── api/                  # typed client functions (submitLead, submitScreener, ...)
-│   │   ├── auth/                 # token/session hashing, internal-key verification, proxy
+│   │   ├── auth/                 # internal-key verification, proxy, manager guard
 │   │   ├── dto/                  # safe response shapes
-│   │   ├── email/                # Resend email sending (token, report)
+│   │   ├── email/                # Resend email sending (report)
 │   │   ├── http/                 # client IP helpers
 │   │   ├── report/               # concrete PDF generator (@react-pdf/renderer)
-│   │   ├── repository/           # Supabase data access (lead, token, session, assessment)
+│   │   ├── repository/           # Supabase data access (lead, assessment, insights, queue)
 │   │   ├── schemas/              # Zod schemas (boundaries)
 │   │   ├── screener/             # contract type; scoring; agent payload builder
-│   │   ├── service/              # business logic (token, lead, screen, admin)
+│   │   ├── service/              # business logic (lead, screen, admin, analysis)
 │   │   └── supabase/             # server/client Supabase clients
 │   └── middleware.ts             # rate limiting for public-proxy endpoints
+├── supabase/                     # SQL migrations + validation scripts
 ├── .env.example                  # Environment variable template
 ├── package.json
 └── tsconfig.json
@@ -99,8 +101,8 @@ The screener is the heart of the system. It is fully deterministic and lives und
 
 ### 4.2 Public entry (`src/app/diagnostico/page.tsx`)
 
-- Multi-step wizard: info (name/role/email) → context (2) → dimensions (10) → commercial (1) → consent.
-- Draft is persisted to `localStorage` (anti-abandonment).
+- Multi-step wizard: info (company profile) → dimensions (10) → commercial (1) → consent.
+- Lead identity (name/email/company/leadId) is hydrated from `sessionStorage` (`diagnos_lead`, written by the landing form via `src/lib/lead-storage.ts`); answers are persisted to `localStorage` as draft (anti-abandonment).
 - On submit it calls `submitScreener` (`src/lib/api/client.ts`) which POSTs to `/api/public-proxy/screener`.
 
 ### 4.3 Submission pipeline (`src/app/api/screener/route.ts` + `src/lib/service/screen-service.ts`)
@@ -110,21 +112,19 @@ client → /api/public-proxy/screener → (injects x-internal-api-key) → /api/
   → validate body (screenerSubmissionSchema, Zod)
   → screenService.submitScreener:
       1. honeypot check   (website filled → silently ok)
-      2. duplicate pending lead?  → 409
-      3. create lead (Supabase)
+      2. resolve lead (by leadId from sessionStorage, fallback by email)
+      3. block resubmission (existing assessment → 409)
       4. compute scores (src/lib/screener/scoring.ts)
-      5. build agent payload (src/lib/screener/agent-payload.ts)   [reserved for future LLM]
-      6. persist assessment response + diagnostic (Supabase)
-      7. generate PDF (src/lib/report/report-generator.ts)
-      8. email PDF to commercial team (src/lib/email/send-report.ts, Resend)
-      → { ok: true }
+      5. build agent payload (src/lib/screener/agent-payload.ts)   [consumed later by analysis agents]
+      6. persist assessment response + diagnostic (Supabase), lead → status `concluido`
+      → { ok: true }   (no PDF, no email — report is generated on demand)
 ```
 
-### 4.4 Auth / token flow
+### 4.4 Report generation (on demand, manager-driven)
 
-- Visitor requests access on `/` → creates a lead (status `pendente`).
-- Commercial generates a one-time token (`src/lib/service/token-service.ts`), stored hashed (SHA-256), sent via email (`src/lib/email/send-token.ts`).
-- Visitor enters the token on `/access` → `/api/public-proxy/tokens/validate` → validates, marks token `usado`, creates a 2h session cookie `diagnos_session`, redirects to **`/diagnostico`**.
+- Manager logs into `/admin` (Supabase Auth) and clicks "Gerar relatório" on a lead row.
+- `POST /api/admin-proxy/analysis/reprocess` → `/api/admin/analysis/reprocess` → `adminService.generateReport` validates the lead (status `concluido`/`analisado`/`falha`/`analise_pendente` + has diagnostic) and enqueues a job in the pgmq queue `analysis_jobs`.
+- The worker (`/api/analysis-worker`, triggered by Vercel cron every 5 min with `CRON_SECRET`) pops the job, runs the agent pipeline (`src/lib/agents/`: researcher via Exa, analyst + writer via LLM), persists to `market_insights`, generates the enriched PDF (`src/lib/report/report-generator.ts`) and emails it to the manager (`src/lib/email/send-report.ts`, Resend).
 
 ---
 
@@ -156,6 +156,9 @@ MANAGER_NOTIFICATION_EMAIL=comercial@example.com
 
 # Internal key (server-only) used by the proxy to authenticate internal calls. 32+ random chars. NEVER expose to client.
 INTERNAL_API_KEY=
+
+# Vercel Cron secret sent by the scheduler to /api/analysis-worker.
+CRON_SECRET=
 ```
 
 `NEXT_PUBLIC_*` vars are bundled into client JS — NEVER put secrets there.
@@ -187,7 +190,7 @@ INTERNAL_API_KEY=
 - Infer types from schemas (`z.infer<typeof schema>`), never define types manually that should come from a schema.
 
 ### Errors
-- Services throw typed errors (e.g. `TokenServiceError`, `ScreenServiceError`, `LeadServiceError`) carrying an HTTP status.
+- Services throw typed errors (e.g. `AdminServiceError`, `ScreenServiceError`, `LeadServiceError`) carrying an HTTP status.
 - Map errors to proper HTTP status codes in the API route.
 - Never leak stack traces or internal messages to the client — return generic messages (`{ error: "Erro interno" }`).
 
@@ -231,14 +234,11 @@ export async function POST(req: Request) {
 }
 ```
 
-### 8.2 Token Security
+### 8.2 Secret Comparison & Rotation
 
-- NEVER store tokens in plaintext in the database — hash with SHA-256 before storage.
-- NEVER send tokens in URL query strings (visible in logs, referrer headers).
-- NEVER expose tokens via `console.log`, error messages, or analytics events.
-- Session cookies MUST have `httpOnly: true`, `secure: true`, `sameSite: "lax"`, and `expires`.
-- Use `crypto.timingSafeEqual` for comparing secret values. Never use `===`.
-- On logout: delete the session from the database AND clear the cookie. Both.
+- Use `crypto.timingSafeEqual` for comparing secret values (internal key, cron secret). Never use `===`.
+- Hash both values before comparison to handle different lengths (see `src/lib/auth/internal-key.ts`).
+- If a future feature needs one-time tokens or secrets, hash with SHA-256 before storage and never persist plaintext.
 
 ### 8.3 Frontend Never Handles Auth Directly
 
@@ -349,7 +349,6 @@ A task is done when:
 - [ ] No `NEXT_PUBLIC_*` prefix on secret env vars.
 - [ ] Rate limiting on new public-facing endpoints.
 - [ ] `import "server-only"` on server-only modules.
-- [ ] Session cookies have `httpOnly`, `secure`, `sameSite`, `expires`.
 - [ ] The questionnaire source of truth (`docs/snapshot-maturidade-dados.json`) + contract are in sync.
 - [ ] Tests pass (if tests exist for the touched area).
 - [ ] `npm run lint` and `npm run build` pass.

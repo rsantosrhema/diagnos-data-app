@@ -1,25 +1,25 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, type FormEvent } from "react";
+import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { RhemaLogo } from "../components/RhemaLogo";
 import { WaveDivider } from "../components/WaveDivider";
-import {
-  submitScreener,
-  getScreenerProfile,
-  logoutSession,
-  ApiError,
-  type ScreenerProfile,
-} from "@/lib/api/client";
+import { submitScreener, ApiError } from "@/lib/api/client";
 import {
   SCREENER_CONTRACT,
   DIMENSION_IDS,
   PERFIL_IDS,
   COMMERCIAL_ID,
 } from "@/lib/screener/contract";
+import {
+  LEAD_STORAGE_KEY,
+  readStoredLead,
+  clearStoredLead,
+} from "@/lib/lead-storage";
 
 const STORAGE_KEY = "diagnos_screener_draft";
 
 interface FormData {
+  leadId: string;
   name: string;
   email: string;
   company: string;
@@ -30,6 +30,7 @@ interface FormData {
 }
 
 const EMPTY_FORM: FormData = {
+  leadId: "",
   name: "",
   email: "",
   company: "",
@@ -85,49 +86,30 @@ function clearDraft(): void {
 
 export default function DiagnosticoPage() {
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
-  const [profile, setProfile] = useState<ScreenerProfile | null>(null);
-  const [profileError, setProfileError] = useState("");
   const [step, setStep] = useState<Step>({ kind: "info" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [serverError, setServerError] = useState("");
-  const logoutCalled = useRef(false);
 
   useEffect(() => {
+    const stored = readStoredLead();
     const draft = loadDraft();
-    setForm(draft);
-
-    getScreenerProfile()
-      .then((p) => {
-        setProfile(p);
-        setForm((prev) => ({
-          ...prev,
-          name: p.name,
-          email: p.email,
-          company: p.company,
-        }));
-      })
-      .catch((err) => {
-        setProfileError(
-          err instanceof ApiError
-            ? err.message
-            : "Não foi possível carregar seus dados. Tente novamente.",
-        );
-      });
+    setForm({
+      ...draft,
+      ...(stored
+        ? {
+            leadId: stored.leadId,
+            name: stored.name,
+            email: stored.email,
+            company: stored.company,
+          }
+        : {}),
+    });
   }, []);
 
   useEffect(() => {
     if (form !== EMPTY_FORM) saveDraft(form);
   }, [form]);
-
-  useEffect(() => {
-    if (status === "success" && !logoutCalled.current) {
-      logoutCalled.current = true;
-      logoutSession().catch(() => {
-        // session may already be gone; ignore
-      });
-    }
-  }, [status]);
 
   const stepIndex = useCallback((): number => {
     if (step.kind === "info") return 0;
@@ -160,10 +142,6 @@ export default function DiagnosticoPage() {
   }
 
   function validateInfo(): boolean {
-    if (!profile) {
-      setErrors({ name: "Não foi possível carregar seus dados. Recarregue a página." });
-      return false;
-    }
     const e: Record<string, string> = {};
     for (const pid of PERFIL_IDS) {
       if (!form.profile[pid]) e[`prof_${pid}`] = "Selecione uma opção";
@@ -221,7 +199,7 @@ export default function DiagnosticoPage() {
 
     try {
       await submitScreener({
-        leadId: profile?.id,
+        leadId: form.leadId || undefined,
         name: form.name.trim(),
         email: form.email.trim(),
         consent: form.consent,
@@ -240,6 +218,11 @@ export default function DiagnosticoPage() {
       });
       setStatus("success");
       clearDraft();
+      try {
+        sessionStorage.removeItem(LEAD_STORAGE_KEY);
+      } catch {
+        // ignore
+      }
     } catch (err) {
       setStatus("error");
       setServerError(
@@ -263,8 +246,8 @@ export default function DiagnosticoPage() {
               Diagnóstico enviado!
             </h1>
             <p className="text-rhema-lavender/80 font-inter text-base max-w-lg mx-auto">
-              Seu relatório está sendo gerado. Nosso time comercial receberá o
-              resultado e entrará em contato.
+              Recebemos suas respostas. Nosso time comercial fará a análise e
+              entrará em contato.
             </p>
           </div>
           <WaveDivider color="var(--color-rhema-offwhite)" />
@@ -280,7 +263,7 @@ export default function DiagnosticoPage() {
               Obrigado!
             </h2>
             <p className="font-inter text-sm text-rhema-dark/70 leading-relaxed">
-              Em breve nosso time comercial receberá seu diagnóstico e entrará em contato.
+              Nosso time comercial fará a análise do seu diagnóstico e entrará em contato.
             </p>
             <a
               href="/"
@@ -302,11 +285,6 @@ export default function DiagnosticoPage() {
     questionTitle = `Olá, ${form.name || "visitante"}`;
     questionBody = (
       <div className="space-y-6">
-        {profileError && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-            <p className="text-red-700 text-sm font-inter">{profileError}</p>
-          </div>
-        )}
         <p className="font-inter text-sm text-rhema-dark/70">
           Responda essas perguntas para entendermos mais sobre a <strong>{form.company || "sua empresa"}</strong>.
         </p>

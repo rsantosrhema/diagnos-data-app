@@ -5,14 +5,11 @@ import { RhemaLogo } from "../components/RhemaLogo";
 import { WaveDivider } from "../components/WaveDivider";
 import { supabase } from "@/lib/supabase/browser";
 import {
-  getAdminTokens,
-  generateToken,
-  sendToken,
-  cancelToken,
-  regenerateToken,
-  reprocessAnalysis,
-  type AdminTokensResponse,
+  getAdminDashboard,
+  generateReport,
+  type AdminDashboardResponse,
   type AdminLeadRow,
+  type AnalysisStatus,
 } from "@/lib/api/client";
 
 type View = "login" | "dashboard";
@@ -32,10 +29,9 @@ export default function AdminPage() {
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
 
-  const [data, setData] = useState<AdminTokensResponse | null>(null);
+  const [data, setData] = useState<AdminDashboardResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [generatedTokens, setGeneratedTokens] = useState<Record<string, string>>({});
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -60,7 +56,7 @@ export default function AdminPage() {
         setView("login");
         return;
       }
-      const result = await getAdminTokens(token);
+      const result = await getAdminDashboard(token);
       setData(result);
     } catch {
       setView("login");
@@ -122,115 +118,21 @@ export default function AdminPage() {
     setView("login");
   }
 
-  async function handleGenerate(leadId: string) {
-    setActionLoading(`gen-${leadId}`);
-    try {
-      const token = await getAuthToken();
-      if (!token) return;
-      const result = await generateToken(leadId, token);
-      // Store the plaintext token in memory — only available at generation time
-      setGeneratedTokens((prev) => ({ ...prev, [leadId]: result.token }));
-      await loadData();
-      pushToast("success", "Token gerado e pronto para envio");
-    } catch (err) {
-      pushToast("error", err instanceof Error ? err.message : "Não foi possível gerar o token");
-    } finally {
-      setActionLoading(null);
-      setOpenMenu(null);
-    }
-  }
-
-  async function handleSend(row: AdminLeadRow) {
-    const tokenPlain = generatedTokens[row.leadId] ?? null;
-    if (!tokenPlain) {
-      pushToast("error", "Gere um novo token antes de enviar. O token em texto puro não é recuperável após o envio.");
-      return;
-    }
-
-    setActionLoading(`send-${row.tokenId}`);
-    try {
-      const authToken = await getAuthToken();
-      if (!authToken || !row.tokenId) return;
-      await sendToken(row.tokenId, tokenPlain, authToken);
-      setGeneratedTokens((prev) => {
-        const next = { ...prev };
-        delete next[row.leadId];
-        return next;
-      });
-      await loadData();
-      pushToast("success", "Token enviado por email");
-    } catch (err) {
-      pushToast("error", err instanceof Error ? err.message : "Não foi possível enviar o token");
-    } finally {
-      setActionLoading(null);
-      setOpenMenu(null);
-    }
-  }
-
-  async function handleCancel(tokenId: string) {
-    setActionLoading(`cancel-${tokenId}`);
-    try {
-      const token = await getAuthToken();
-      if (!token) return;
-      await cancelToken(tokenId, token);
-      await loadData();
-      pushToast("success", "Token cancelado");
-    } catch (err) {
-      pushToast("error", err instanceof Error ? err.message : "Não foi possível cancelar o token");
-    } finally {
-      setActionLoading(null);
-      setOpenMenu(null);
-    }
-  }
-
-  async function handleRegenerate(tokenId: string) {
-    setActionLoading(`regen-${tokenId}`);
+  async function handleGenerateReport(leadId: string) {
+    setActionLoading(`report-${leadId}`);
     try {
       const authToken = await getAuthToken();
       if (!authToken) return;
-      const result = await regenerateToken(tokenId, authToken);
-      // Find the leadId for this token from the current data
-      const row = data?.rows.find((r) => r.tokenId === tokenId);
-      if (row) {
-        setGeneratedTokens((prev) => ({ ...prev, [row.leadId]: result.token }));
-      }
+      await generateReport(leadId, authToken);
       await loadData();
-      pushToast("success", "Novo token gerado");
+      pushToast("success", "Relatório enfileirado — você receberá por email");
     } catch (err) {
-      pushToast("error", err instanceof Error ? err.message : "Não foi possível regenerar o token");
+      pushToast("error", err instanceof Error ? err.message : "Não foi possível gerar o relatório");
     } finally {
       setActionLoading(null);
       setOpenMenu(null);
     }
   }
-
-  async function handleReprocess(leadId: string) {
-    setActionLoading(`reproc-${leadId}`);
-    try {
-      const authToken = await getAuthToken();
-      if (!authToken) return;
-      await reprocessAnalysis(leadId, authToken);
-      await loadData();
-      pushToast("success", "Análise reprocessada em background");
-    } catch (err) {
-      pushToast("error", err instanceof Error ? err.message : "Não foi possível reprocessar a análise");
-    } finally {
-      setActionLoading(null);
-      setOpenMenu(null);
-    }
-  }
-
-  const handleCopyToken = useCallback(
-    async (token: string) => {
-      try {
-        await navigator.clipboard.writeText(token);
-        pushToast("success", "Token copiado");
-      } catch {
-        // clipboard unavailable
-      }
-    },
-    [pushToast],
-  );
 
   return (
     <main className="flex min-h-screen flex-col">
@@ -257,17 +159,11 @@ export default function AdminPage() {
           data={data}
           loading={loading}
           actionLoading={actionLoading}
-          generatedTokens={generatedTokens}
           openMenu={openMenu}
           setOpenMenu={setOpenMenu}
           onRefresh={loadData}
           onLogout={handleLogout}
-          onGenerate={handleGenerate}
-          onSend={handleSend}
-          onCancel={handleCancel}
-          onRegenerate={handleRegenerate}
-          onReprocess={handleReprocess}
-          onCopyToken={handleCopyToken}
+          onGenerateReport={handleGenerateReport}
         />
       )}
 
@@ -427,32 +323,20 @@ function DashboardView({
   data,
   loading,
   actionLoading,
-  generatedTokens,
   openMenu,
   setOpenMenu,
   onRefresh,
   onLogout,
-  onGenerate,
-  onSend,
-  onCancel,
-  onRegenerate,
-  onReprocess,
-  onCopyToken,
+  onGenerateReport,
 }: {
-  data: AdminTokensResponse | null;
+  data: AdminDashboardResponse | null;
   loading: boolean;
   actionLoading: string | null;
-  generatedTokens: Record<string, string>;
   openMenu: string | null;
   setOpenMenu: (v: string | null) => void;
   onRefresh: () => void;
   onLogout: () => void;
-  onGenerate: (leadId: string) => void;
-  onSend: (row: AdminLeadRow) => void;
-  onCancel: (tokenId: string) => void;
-  onRegenerate: (tokenId: string) => void;
-  onReprocess: (leadId: string) => void;
-  onCopyToken: (token: string) => void;
+  onGenerateReport: (leadId: string) => void;
 }) {
   const [now, setNow] = useState(new Date());
 
@@ -501,8 +385,8 @@ function DashboardView({
             Operações
           </h1>
           <p className="mt-4 max-w-xl font-inter text-base leading-relaxed text-rhema-lavender/80">
-            Gerencie leads e tokens de acesso. Cada token é de uso único e
-            expira automaticamente.
+            Acompanhe os diagnósticos recebidos e gere relatórios de análise
+            sob demanda.
           </p>
         </div>
         <WaveDivider color="var(--color-rhema-offwhite)" />
@@ -512,21 +396,24 @@ function DashboardView({
         <div className="mx-auto max-w-7xl px-6 pb-24 pt-10 md:pt-14">
           {/* KPIs */}
           {data?.kpis && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Reveal delay={0}>
-                <KpiCard label="Pendentes envio" value={data.kpis.pendentesEnvio} tone="amber" />
+                <KpiCard label="Leads" value={data.kpis.leadsTotal} tone="primary" />
               </Reveal>
               <Reveal delay={1}>
-                <KpiCard label="Expirados" value={data.kpis.expirados} tone="red" />
+                <KpiCard label="Diagnósticos concluídos" value={data.kpis.diagnosticosConcluidos} tone="green" />
               </Reveal>
               <Reveal delay={2}>
-                <KpiCard label="Cadastrados" value={data.kpis.cadastrados} tone="primary" />
+                <KpiCard label="Relatórios pendentes" value={data.kpis.relatoriosPendentes} tone="amber" />
+              </Reveal>
+              <Reveal delay={3}>
+                <KpiCard label="Relatórios com falha" value={data.kpis.relatoriosFalha} tone="red" />
               </Reveal>
             </div>
           )}
 
           {/* Table */}
-          <Reveal delay={3}>
+          <Reveal delay={4}>
             <div className="card mt-8 overflow-hidden">
               <div className="flex items-center justify-between border-b border-rhema-lavender-light px-6 py-4">
                 <h2 className="font-poppins text-lg font-semibold text-rhema-institutional">
@@ -550,7 +437,7 @@ function DashboardView({
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-rhema-lavender-light bg-rhema-lavender-light/30">
-                        {["Nome", "Empresa", "Email", "Status Token", "Token", "Ações"].map(
+                        {["Nome", "Empresa", "Email", "Diagnóstico", "Análise", "Ações"].map(
                           (h, i) => (
                             <th
                               key={h}
@@ -580,14 +467,10 @@ function DashboardView({
                             {row.email}
                           </td>
                           <td className="px-6 py-3.5">
-                            <StatusBadge status={row.tokenStatus ?? null} />
+                            <DiagnosticBadge hasDiagnostic={row.hasDiagnostic} />
                           </td>
                           <td className="px-6 py-3.5">
-                            <TokenField
-                              token={generatedTokens[row.leadId] ?? null}
-                              valid={row.tokenStatus === "disponivel"}
-                              onCopy={onCopyToken}
-                            />
+                            <AnalysisBadge status={row.analysisStatus} />
                           </td>
                           <td className="px-6 py-3.5 text-right">
                             <RowActionMenu
@@ -597,11 +480,7 @@ function DashboardView({
                                 setOpenMenu(openMenu === row.leadId ? null : row.leadId)
                               }
                               loadingKey={actionLoading}
-                              onGenerate={onGenerate}
-                              onSend={onSend}
-                              onCancel={onCancel}
-                              onRegenerate={onRegenerate}
-                              onReprocess={onReprocess}
+                              onGenerateReport={onGenerateReport}
                             />
                           </td>
                         </tr>
@@ -645,8 +524,8 @@ function TableSkeleton() {
             <div className="skeleton h-5 w-32" />
             <div className="skeleton h-5 w-40" />
             <div className="skeleton h-5 w-44" />
-            <div className="skeleton h-5 w-20" />
-            <div className="skeleton h-7 w-28" />
+            <div className="skeleton h-5 w-24" />
+            <div className="skeleton h-5 w-24" />
             <div className="ml-auto skeleton h-7 w-7" />
           </div>
         ))}
@@ -668,8 +547,8 @@ function EmptyState() {
         Nenhum cliente cadastrado
       </h3>
       <p className="mt-2 max-w-sm font-inter text-sm leading-relaxed text-rhema-dark/60">
-        Quando um lead solicitar acesso pelo site, ele aparece aqui para você
-        gerar e enviar o token.
+        Quando um lead se cadastrar e concluir o diagnóstico pelo site, ele
+        aparece aqui para você gerar o relatório de análise.
       </p>
     </div>
   );
@@ -704,11 +583,12 @@ function KpiCard({
 }: {
   label: string;
   value: number;
-  tone: "amber" | "red" | "primary";
+  tone: "amber" | "red" | "green" | "primary";
 }) {
   const tones: Record<string, string> = {
     amber: "text-amber-600",
     red: "text-red-600",
+    green: "text-green-600",
     primary: "text-rhema-primary",
   };
 
@@ -726,107 +606,43 @@ function KpiCard({
   );
 }
 
-function StatusBadge({ status }: { status: string | null }) {
-  if (!status) {
-    return <span className="font-inter text-xs text-rhema-dark/40">—</span>;
-  }
-
-  const map: Record<string, string> = {
-    pendente: "bg-amber-100 text-amber-700",
-    token_gerado: "bg-blue-100 text-blue-700",
-    diagnosticado: "bg-green-100 text-green-700",
-    disponivel: "bg-blue-100 text-blue-700",
-    usado: "bg-green-100 text-green-700",
-    expirado: "bg-red-100 text-red-700",
-    cancelado: "bg-gray-100 text-gray-600",
-  };
-
-  const labels: Record<string, string> = {
-    disponivel: "Disponível",
-    usado: "Usado",
-    expirado: "Expirado",
-    cancelado: "Cancelado",
-  };
-
-  return (
-    <span
-      className={`inline-block rounded-full px-2.5 py-1 font-inter text-xs font-medium ${
-        map[status] ?? "bg-gray-100 text-gray-600"
-      }`}
-    >
-      {labels[status] ?? status}
+function DiagnosticBadge({ hasDiagnostic }: { hasDiagnostic: boolean }) {
+  return hasDiagnostic ? (
+    <span className="inline-block rounded-full bg-green-100 px-2.5 py-1 font-inter text-xs font-medium text-green-700">
+      Concluído
+    </span>
+  ) : (
+    <span className="inline-block rounded-full bg-gray-100 px-2.5 py-1 font-inter text-xs font-medium text-gray-600">
+      Pendente
     </span>
   );
 }
 
-function TokenField({
-  token,
-  valid,
-  onCopy,
-}: {
-  token: string | null;
-  valid: boolean;
-  onCopy: (token: string) => void;
-}) {
-  const [revealed, setRevealed] = useState(false);
-
-  if (!token) {
+function AnalysisBadge({ status }: { status: AnalysisStatus }) {
+  if (!status) {
     return <span className="font-inter text-xs text-rhema-dark/40">—</span>;
   }
 
-  const tone = valid
-    ? "text-rhema-primary bg-rhema-lavender-light/40 border-rhema-lavender"
-    : "text-red-700 bg-red-50 border-red-200";
+  const map: Record<Exclude<AnalysisStatus, null>, string> = {
+    pendente: "bg-amber-100 text-amber-700",
+    processando: "bg-blue-100 text-blue-700",
+    analisado: "bg-green-100 text-green-700",
+    falha: "bg-red-100 text-red-700",
+  };
 
-  const eyeTone = valid
-    ? "border-rhema-lavender bg-white text-rhema-primary hover:bg-rhema-lavender-light"
-    : "border-red-200 bg-red-50 text-red-700 hover:bg-red-100";
+  const labels: Record<Exclude<AnalysisStatus, null>, string> = {
+    pendente: "Pendente",
+    processando: "Processando",
+    analisado: "Analisado",
+    falha: "Falha",
+  };
 
   return (
-    <div className="inline-flex items-center gap-2">
-      <span
-        title={valid ? "Token válido" : "Token expirado/cancelado — não vale mais"}
-        onClick={() => onCopy(token)}
-        className={`inline-block w-28 cursor-pointer select-all rounded-lg border px-2.5 py-1.5 text-center font-mono text-sm font-semibold tracking-[0.18em] transition-colors duration-200 ${tone}`}
-      >
-        {revealed ? token : "••••••"}
-      </span>
-      <button
-        type="button"
-        aria-label={revealed ? "Ocultar token" : "Mostrar token"}
-        title={revealed ? "Ocultar token" : "Mostrar token"}
-        onClick={() => setRevealed((v) => !v)}
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors duration-200 active:scale-[0.97] ${eyeTone}`}
-      >
-        {revealed ? (
-          <svg
-            className="h-4 w-4"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M1 8s2.5-4 7-4 7 4 7 4-2.5 4-7 4-7-4-7-4z" />
-            <path d="M6.5 8a1.5 1.5 0 0 0 3 0 1.5 1.5 0 0 0-3 0z" />
-          </svg>
-        ) : (
-          <svg
-            className="h-4 w-4"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M1 8s2.5-4 7-4 7 4 7 4-2.5 4-7 4-7-4-7-4z" />
-            <path d="M4 12l8-8" />
-          </svg>
-        )}
-      </button>
-    </div>
+    <span
+      className={`inline-block rounded-full px-2.5 py-1 font-inter text-xs font-medium ${map[status]}`}
+    >
+      {labels[status]}
+    </span>
   );
 }
 
@@ -835,27 +651,16 @@ function RowActionMenu({
   open,
   onToggle,
   loadingKey,
-  onGenerate,
-  onSend,
-  onCancel,
-  onRegenerate,
-  onReprocess,
+  onGenerateReport,
 }: {
   row: AdminLeadRow;
   open: boolean;
   onToggle: () => void;
   loadingKey: string | null;
-  onGenerate: (leadId: string) => void;
-  onSend: (row: AdminLeadRow) => void;
-  onCancel: (tokenId: string) => void;
-  onRegenerate: (tokenId: string) => void;
-  onReprocess: (leadId: string) => void;
+  onGenerateReport: (leadId: string) => void;
 }) {
-  const hasToken = !!row.tokenId;
-  const canReprocess =
-    row.leadStatus === "analisado" ||
-    row.leadStatus === "falha" ||
-    row.leadStatus === "analise_pendente";
+  const canGenerate =
+    row.hasDiagnostic && row.analysisStatus !== "processando";
 
   return (
     <div className="relative inline-block" data-action-menu>
@@ -878,77 +683,21 @@ function RowActionMenu({
 
       {open && (
         <div className="action-menu" role="menu">
-          {canReprocess && (
+          {canGenerate && (
             <button
               role="menuitem"
               className="action-item"
-              disabled={loadingKey === `reproc-${row.leadId}`}
-              onClick={() => onReprocess(row.leadId)}
+              disabled={loadingKey === `report-${row.leadId}`}
+              onClick={() => onGenerateReport(row.leadId)}
             >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9" />
-                <path d="M13.5 2v2.5H11" />
-              </svg>
-              {loadingKey === `reproc-${row.leadId}` ? "Reprocessando..." : "Reprocessar análise"}
-            </button>
-          )}
-
-          {!hasToken && (
-            <button
-              role="menuitem"
-              className="action-item"
-              disabled={loadingKey === `gen-${row.leadId}`}
-              onClick={() => onGenerate(row.leadId)}
-            >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <rect x="3" y="3" width="10" height="10" rx="2" />
-                <path d="M8 5.5v5" />
+              <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 1.5h5.5L13 5v9.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-12a1 1 0 0 1 1-1z" />
+                <path d="M9.5 1.5V5H13" />
                 <path d="M5.5 8h5" />
+                <path d="M5.5 11h5" />
               </svg>
-              {loadingKey === `gen-${row.leadId}` ? "Gerando..." : "Gerar token"}
+              {loadingKey === `report-${row.leadId}` ? "Gerando..." : "Gerar relatório"}
             </button>
-          )}
-
-          {hasToken && (
-            <>
-              <button
-                role="menuitem"
-                className="action-item"
-                disabled={loadingKey === `send-${row.tokenId}` || row.tokenStatus !== "disponivel"}
-                onClick={() => onSend(row)}
-              >
-                <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M1 8l13-6-5 12-2-5z" />
-                  <path d="M7 9l7-7" />
-                </svg>
-                {loadingKey === `send-${row.tokenId}` ? "Enviando..." : "Enviar"}
-              </button>
-              <button
-                role="menuitem"
-                className="action-item"
-                disabled={loadingKey === `regen-${row.tokenId}`}
-                onClick={() => onRegenerate(row.tokenId!)}
-              >
-                <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9" />
-                  <path d="M13.5 2v2.5H11" />
-                </svg>
-                {loadingKey === `regen-${row.tokenId}` ? "Regenerando..." : "Regenerar"}
-              </button>
-              <button
-                role="menuitem"
-                className="action-item action-item--danger"
-                disabled={loadingKey === `cancel-${row.tokenId}`}
-                onClick={() => onCancel(row.tokenId!)}
-              >
-                <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M3 4h10" />
-                  <path d="M6 4V2h4v2" />
-                  <path d="M4 4l1 10h6l1-10" />
-                </svg>
-                {loadingKey === `cancel-${row.tokenId}` ? "Cancelando..." : "Cancelar"}
-              </button>
-            </>
           )}
         </div>
       )}

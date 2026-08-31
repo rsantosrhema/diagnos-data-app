@@ -4,26 +4,19 @@ export interface AdminLeadRowDTO {
   company: string;
   email: string;
   leadStatus: string;
-  tokenId: string | null;
-  tokenStatus: string | null;
-  tokenExpiresAt: string | null;
-  tokenSentAt: string | null;
+  hasDiagnostic: boolean;
+  analysisStatus: "pendente" | "processando" | "analisado" | "falha" | null;
+  analysisUpdatedAt: string | null;
 }
 
 export interface AdminKpisDTO {
-  pendentesEnvio: number;
-  expirados: number;
-  cadastrados: number;
+  leadsTotal: number;
+  diagnosticosConcluidos: number;
+  relatoriosPendentes: number;
+  relatoriosFalha: number;
 }
 
-export interface AdminTokensResponseDTO {
+export interface AdminDashboardResponseDTO {
   kpis: AdminKpisDTO;
   rows: AdminLeadRowDTO[];
-}
-
-export interface TokenActionDTO {
-  ok?: boolean;
-  token?: string;
-  sentAt?: string;
-  mailto?: string;
 }

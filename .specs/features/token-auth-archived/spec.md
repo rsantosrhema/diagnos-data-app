@@ -1,5 +1,7 @@
 # Token Authentication Specification
 
+> **⚠️ SUPERSEDED — Não aplicar.** Este spec descreve o fluxo antigo de token de acesso único, removido do produto na migration `0008_remove_token_flow` (2026-08-31). O lead agora se cadastra na landing e inicia o diagnóstico direto, sem token nem sessão; o relatório passa a ser gerado sob demanda pelo gerente no painel admin. O bloqueio de reenvio é por email único (constraint `leads.email` + 409 quando o lead já concluiu o diagnóstico). Veja `docs/decisions/003-usar-token-de-acesso-unico.md` (status: Superseded), `docs/architecture.md` (seção "Visão Geral") e `AGENTS.md` (seção 4). Este arquivo é mantido apenas por razões históricas.
+
 ## Problem Statement
 
 Hoje não há controle de acesso ao formulário de diagnóstico: qualquer pessoa com o link poderia responder. Precisamos de um fluxo em que o cliente solicita acesso, o time gerencial (comercial) gera e envia um token de uso único, e só com esse token o cliente abre o formulário — garantindo um diagnóstico por cliente e rastreabilidade do funil comercial.

@@ -18,8 +18,8 @@ function mockLeadRepo(overrides: Partial<LeadRepository> = {}): LeadRepository {
 
 describe("LeadService", () => {
   describe("createLead", () => {
-    it("creates a new lead", async () => {
-      const create = vi.fn();
+    it("creates a new lead and returns its id", async () => {
+      const create = vi.fn().mockResolvedValue("lead-new");
       const service = createLeadService({
         leadRepo: mockLeadRepo({
           findByEmail: vi.fn().mockResolvedValue(null),
@@ -35,16 +35,43 @@ describe("LeadService", () => {
         role: "CTO",
       });
 
-      expect(result).toEqual({ ok: true });
+      expect(result).toEqual({ ok: true, leadId: "lead-new" });
       expect(create).toHaveBeenCalledWith(
         expect.objectContaining({ email: "joao@corp.com" }),
       );
     });
 
-    it("rejects duplicate lead (qualquer status)", async () => {
+    it("reuses existing lead when status is not concluido", async () => {
+      const create = vi.fn();
       const service = createLeadService({
         leadRepo: mockLeadRepo({
-          findByEmail: vi.fn().mockResolvedValue({ id: "existing" }),
+          findByEmail: vi.fn().mockResolvedValue({
+            id: "lead-existing",
+            status: "token_gerado",
+          }),
+          create,
+        }),
+      });
+
+      const result = await service.createLead({
+        name: "João",
+        company: "Corp",
+        phone: "12345678",
+        email: "joao@corp.com",
+        role: "CTO",
+      });
+
+      expect(result).toEqual({ ok: true, leadId: "lead-existing" });
+      expect(create).not.toHaveBeenCalled();
+    });
+
+    it("rejects lead already concluido", async () => {
+      const service = createLeadService({
+        leadRepo: mockLeadRepo({
+          findByEmail: vi.fn().mockResolvedValue({
+            id: "lead-done",
+            status: "concluido",
+          }),
         }),
       });
 
@@ -59,11 +86,37 @@ describe("LeadService", () => {
       ).rejects.toMatchObject({ status: 409 });
     });
 
-    it("handles unique constraint violation (23505)", async () => {
+    it("race on unique constraint: reuses pending lead", async () => {
       const error = Object.assign(new Error("duplicate"), { code: "23505" });
       const service = createLeadService({
         leadRepo: mockLeadRepo({
-          findByEmail: vi.fn().mockResolvedValue(null),
+          findByEmail: vi
+            .fn()
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce({ id: "lead-race", status: "pendente" }),
+          create: vi.fn().mockRejectedValue(error),
+        }),
+      });
+
+      const result = await service.createLead({
+        name: "João",
+        company: "Corp",
+        phone: "12345678",
+        email: "joao@corp.com",
+        role: "CTO",
+      });
+
+      expect(result).toEqual({ ok: true, leadId: "lead-race" });
+    });
+
+    it("race on unique constraint: 409 when lead is concluido", async () => {
+      const error = Object.assign(new Error("duplicate"), { code: "23505" });
+      const service = createLeadService({
+        leadRepo: mockLeadRepo({
+          findByEmail: vi
+            .fn()
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce({ id: "lead-done", status: "concluido" }),
           create: vi.fn().mockRejectedValue(error),
         }),
       });
@@ -80,7 +133,7 @@ describe("LeadService", () => {
     });
 
     it("normalizes email to lowercase", async () => {
-      const create = vi.fn();
+      const create = vi.fn().mockResolvedValue("lead-new");
       const service = createLeadService({
         leadRepo: mockLeadRepo({
           findByEmail: vi.fn().mockResolvedValue(null),

@@ -1,7 +1,12 @@
-import type { TokenRepository } from "@/lib/repository/token-repo";
 import type { LeadRepository } from "@/lib/repository/lead-repo";
 import type { AssessmentRepository } from "@/lib/repository/assessment-repo";
-import type { AdminTokensResponseDTO, AdminLeadRowDTO, AdminKpisDTO } from "@/lib/dto/admin";
+import type { MarketInsightsRepository } from "@/lib/repository/market-insights-repo";
+import type {
+  AdminDashboardResponseDTO,
+  AdminLeadRowDTO,
+  AdminKpisDTO,
+} from "@/lib/dto/admin";
+import type { MarketInsightsStatus } from "@/lib/repository/market-insights-repo";
 
 export class AdminServiceError extends Error {
   constructor(
@@ -13,58 +18,56 @@ export class AdminServiceError extends Error {
   }
 }
 
-const REPROCESSABLE_STATUSES = ["analisado", "falha", "analise_pendente"];
+const ENQUEUEABLE_STATUSES = new Set([
+  "concluido",
+  "analisado",
+  "falha",
+  "analise_pendente",
+]);
 
 export function createAdminService(deps: {
-  tokenRepo: TokenRepository;
   leadRepo: LeadRepository;
   assessmentRepo: AssessmentRepository;
+  marketInsightsRepo: MarketInsightsRepository;
   analysisService: { enqueue(leadId: string): Promise<void> };
 }) {
-  const { tokenRepo, leadRepo, assessmentRepo, analysisService } = deps;
+  const { leadRepo, assessmentRepo, marketInsightsRepo, analysisService } = deps;
 
   return {
-    async getTokensDashboard(): Promise<AdminTokensResponseDTO> {
-      await tokenRepo.markExpiredTokens();
-
-      const [leads, tokens] = await Promise.all([
-        leadRepo.findAll(),
-        tokenRepo.findAll(),
+    async getDashboard(): Promise<AdminDashboardResponseDTO> {
+      const leads = await leadRepo.findAll();
+      const [assessments, insights] = await Promise.all([
+        Promise.all(leads.map((l) => assessmentRepo.existsForLead(l.id))),
+        Promise.all(leads.map((l) => marketInsightsRepo.findByLeadId(l.id))),
       ]);
 
-      const latestTokenByLead = new Map<string, (typeof tokens)[number]>();
-      for (const t of tokens) {
-        if (!latestTokenByLead.has(t.lead_id)) latestTokenByLead.set(t.lead_id, t);
-      }
-
-      const now = Date.now();
-      const rows: AdminLeadRowDTO[] = leads.map((lead) => {
-        const token = latestTokenByLead.get(lead.id) ?? null;
+      const rows: AdminLeadRowDTO[] = leads.map((lead, i) => {
+        const insight = insights[i];
         return {
           leadId: lead.id,
           name: lead.name,
           company: lead.company,
           email: lead.email,
           leadStatus: lead.status,
-          tokenId: token?.id ?? null,
-          tokenStatus: token?.status ?? null,
-          tokenExpiresAt: token?.expires_at ?? null,
-          tokenSentAt: token?.sent_at ?? null,
+          hasDiagnostic: assessments[i],
+          analysisStatus: insight ? (insight.status as MarketInsightsStatus) : null,
+          analysisUpdatedAt: insight ? insight.updated_at : null,
         };
       });
 
       const kpis: AdminKpisDTO = {
-        pendentesEnvio: tokens.filter(
-          (t) => t.status === "disponivel" && !t.sent_at && new Date(t.expires_at).getTime() > now,
+        leadsTotal: leads.length,
+        diagnosticosConcluidos: rows.filter((r) => r.hasDiagnostic).length,
+        relatoriosPendentes: rows.filter(
+          (r) => r.analysisStatus === "pendente" || r.analysisStatus === "processando",
         ).length,
-        expirados: tokens.filter((t) => t.status === "expirado").length,
-        cadastrados: leads.length,
+        relatoriosFalha: rows.filter((r) => r.analysisStatus === "falha").length,
       };
 
       return { kpis, rows };
     },
 
-    async reprocessAnalysis(leadId: string): Promise<{ ok: true }> {
+    async generateReport(leadId: string): Promise<{ ok: true }> {
       const lead = await leadRepo.findById(leadId);
       if (!lead) {
         throw new AdminServiceError("Lead não encontrado ou sem diagnóstico", 400);
@@ -75,8 +78,8 @@ export function createAdminService(deps: {
         throw new AdminServiceError("Lead não encontrado ou sem diagnóstico", 400);
       }
 
-      if (!REPROCESSABLE_STATUSES.includes(lead.status)) {
-        throw new AdminServiceError("Lead sem análise reprocessável", 400);
+      if (!ENQUEUEABLE_STATUSES.has(lead.status)) {
+        throw new AdminServiceError("Lead sem relatório gerável", 400);
       }
 
       await analysisService.enqueue(leadId);

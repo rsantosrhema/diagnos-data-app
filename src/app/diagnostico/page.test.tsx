@@ -5,16 +5,6 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 vi.mock("@/lib/api/client", () => ({
   submitScreener: vi.fn().mockResolvedValue({ ok: true }),
-  getScreenerProfile: vi.fn().mockResolvedValue({
-    id: "lead-1",
-    name: "João Silva",
-    email: "joao@corp.com",
-    company: "Corp LTDA",
-    role: "CTO",
-    status: "token_gerado",
-    isMaster: false,
-  }),
-  logoutSession: vi.fn().mockResolvedValue({ ok: true }),
   ApiError: class ApiError extends Error {
     status: number;
     constructor(message: string, status: number) {
@@ -78,6 +68,17 @@ let DiagnosticoPage: React.ComponentType;
 
 beforeEach(async () => {
   localStorage.clear();
+  sessionStorage.clear();
+  sessionStorage.setItem(
+    "diagnos_lead",
+    JSON.stringify({
+      leadId: "lead-1",
+      name: "João Silva",
+      email: "joao@corp.com",
+      company: "Corp LTDA",
+      role: "CTO",
+    }),
+  );
   vi.clearAllMocks();
   const mod = await import("./page");
   DiagnosticoPage = mod.default;
@@ -208,12 +209,17 @@ describe("DiagnosticoPage", () => {
     await waitFor(() => {
       expect(screen.getByText(/diagnóstico enviado/i)).toBeTruthy();
       expect(submitScreener).toHaveBeenCalledWith(
-        expect.objectContaining({ leadId: "lead-1", name: "João Silva" }),
+        expect.objectContaining({
+          leadId: "lead-1",
+          name: "João Silva",
+          email: "joao@corp.com",
+          company: { name: "Corp LTDA", size: "Até 50" },
+        }),
       );
     });
   });
 
-  it("limpa localStorage após envio bem-sucedido", async () => {
+  it("limpa localStorage e sessionStorage após envio bem-sucedido", async () => {
     localStorage.setItem(
       "diagnos_screener_draft",
       JSON.stringify({ name: "test" }),
@@ -228,6 +234,7 @@ describe("DiagnosticoPage", () => {
 
     await waitFor(() => {
       expect(localStorage.getItem("diagnos_screener_draft")).toBeNull();
+      expect(sessionStorage.getItem("diagnos_lead")).toBeNull();
     });
   });
 

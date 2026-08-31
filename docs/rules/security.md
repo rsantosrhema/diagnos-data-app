@@ -4,50 +4,9 @@ Detailed security rules for development. Referenced by AGENTS.md section 8.
 
 ---
 
-## 1. Token Security
+## 1. Secret Handling
 
-### 1.1 Token Generation
-
-- Use `crypto.randomBytes` (CSPRNG) for all token generation. Never use `Math.random()`.
-- Access tokens: minimum 128 bits of entropy for security-sensitive tokens.
-- Session tokens: 256 bits (32 bytes) as hex string (see `src/lib/auth/token.ts`).
-- Use unambiguous alphabets (no 0/O, 1/I/L) for human-readable tokens.
-
-### 1.2 Token Storage
-
-- NEVER store tokens in plaintext in the database.
-- Hash with SHA-256 before storage: `createHash("sha256").update(token).digest("hex")`.
-- Store only the hash; the plaintext token is returned once to the caller and never persisted.
-- Single-use tokens must be marked as consumed immediately after first valid use.
-
-### 1.3 Token Transmission
-
-- NEVER send tokens in URL query strings (visible in logs, referrer headers, browser history).
-- Use `Authorization: Bearer <token>` header for API tokens.
-- Use `HttpOnly` cookies for session tokens (see section 1.4).
-- NEVER return tokens in error responses or log messages.
-- NEVER expose tokens via `console.log`, error messages, or analytics events.
-
-### 1.4 Session Cookie Configuration
-
-Every session cookie MUST have all four attributes:
-
-```typescript
-cookies().set("session", token, {
-  httpOnly: true,    // JavaScript cannot read — prevents XSS token theft
-  secure: true,      // HTTPS only — never sent over plaintext HTTP
-  sameSite: "lax",   // blocks cross-site POST, allows top-level navigation
-  path: "/",
-  expires: expiresAt, // always set an expiry
-});
-```
-
-- `httpOnly: true` is MANDATORY. No exceptions.
-- `secure: true` is MANDATORY in production. Disable only for localhost dev.
-- `sameSite: "lax"` is the default. Use `"strict"` only for high-security admin flows.
-- NEVER use `sameSite: "none"` without explicit justification.
-
-### 1.5 Token Comparison
+### 1.1 Secret Comparison
 
 - Use `crypto.timingSafeEqual` for comparing secret values. Never use `===`.
 - Hash both values before comparison to handle different lengths (see `src/lib/auth/internal-key.ts`).
@@ -63,11 +22,12 @@ return timingSafeEqual(provided, expected);
 return headerValue === expectedKey;
 ```
 
-### 1.6 Token Revocation
+### 1.2 Secrets in Storage
 
-- On logout: delete the session from the database AND clear the cookie. Both.
-- Single-use tokens: mark as consumed in the database on first valid use.
-- Never allow reuse of consumed tokens.
+- NEVER store secrets or one-time tokens in plaintext in the database.
+- If a future feature needs one-time tokens, hash with SHA-256 before storage: `createHash("sha256").update(token).digest("hex")` and mark consumed immediately after first valid use.
+- NEVER expose secrets via `console.log`, error messages, or analytics events.
+- NEVER send secrets in URL query strings (visible in logs, referrer headers, browser history).
 
 ---
 
@@ -82,9 +42,9 @@ return headerValue === expectedKey;
 ```typescript
 // ✅ GOOD: auth verified in the route handler
 export async function POST(req: Request) {
-  const session = await verifySession(req);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const manager = await requireManager(req);
+  if (!manager) {
+    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
   // ... proceed with operation
 }
@@ -100,10 +60,10 @@ export async function POST(req: Request) {
 
 | Mechanism | Where | Verification |
 |---|---|---|
-| Session cookie (`diagnos_session`) | `/api/tokens/validate` (redirect), `/diagnostico` | Hash lookup in `sessions` table |
 | Internal API key (`x-internal-api-key`) | All internal `/api/*` routes | `verifyInternalApiKey()` — timing-safe SHA-256 |
-| Supabase Bearer JWT | Admin routes | `supabase.auth.getUser()` (server-verified) |
-| Access token (6-char) | `/api/tokens/validate` | SHA-256 hash lookup + TTL check |
+| Supabase Bearer JWT | Admin routes (`/api/admin/*`) | `supabase.auth.getUser()` via `requireManager()` (server-verified, `src/lib/auth/guard.ts`) |
+
+> The lead flow has no authentication: the lead self-registers on the landing page and the screener is public, protected by rate limiting, the honeypot field, the email-unique constraint and the one-diagnostic-per-email rule (409). Lead data is private (RLS enabled, service-role only access).
 
 ### 2.3 Frontend Never Handles Auth Directly
 
@@ -114,15 +74,15 @@ export async function POST(req: Request) {
 
 ```typescript
 // ✅ GOOD: frontend calls proxy
-const result = await apiFetch("/public-proxy/tokens/validate", {
+const result = await apiFetch("/public-proxy/screener", {
   method: "POST",
-  body: { token },
+  body: submission,
 });
 
 // ❌ BAD: frontend calls internal route directly
-const result = await fetch("/api/tokens/validate", {
+const result = await fetch("/api/screener", {
   method: "POST",
-  body: JSON.stringify({ token }),
+  body: JSON.stringify(submission),
 });
 ```
 
@@ -130,6 +90,7 @@ const result = await fetch("/api/tokens/validate", {
 
 - Use `supabase.auth.getUser()` (server-verified) — NEVER `supabase.auth.getSession()` (client-parsed).
 - `getUser()` calls the Supabase Auth server to verify the JWT. `getSession()` only decodes the cookie client-side and is not trustworthy for authorization.
+- Note: the admin panel (`src/app/admin/page.tsx`) uses `getSession()` only to obtain the access token for the Bearer header — the actual authorization always happens server-side via `requireManager()` → `getUser()`.
 
 ---
 
@@ -142,6 +103,7 @@ const result = await fetch("/api/tokens/validate", {
   - `SUPABASE_SERVICE_ROLE_KEY` — no prefix (correct)
   - `INTERNAL_API_KEY` — no prefix (correct)
   - `RESEND_API_KEY` — no prefix (correct)
+  - `CRON_SECRET` — no prefix (correct)
   - `NEXT_PUBLIC_SUPABASE_URL` — prefix OK (public, not a secret)
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — prefix OK (designed to be public)
 
@@ -196,7 +158,9 @@ catch (err) {
 | Invalid JSON body | 400 | "JSON inválido" |
 | Zod validation failure | 400 | "Dados inválidos" + structured issues |
 | `ValidationError` | 400 | "Dados inválidos" |
-| `TokenServiceError` | `err.status` | Service-specific message |
+| `LeadServiceError` | `err.status` | Service-specific message |
+| `ScreenServiceError` | `err.status` | Service-specific message |
+| `AdminServiceError` | `err.status` | Service-specific message |
 | `ProviderError` | 502 | "Erro ao processar diagnóstico" |
 | `ReportError` | 500 | "Erro ao gerar relatório" |
 | Unknown | 500 | "Erro interno" |
@@ -212,7 +176,6 @@ All public-facing routes have rate limiting via `src/middleware.ts`:
 | Route | Limit | Window |
 |---|---|---|
 | `/api/public-proxy/leads` | 5 req | 10 min |
-| `/api/public-proxy/tokens/validate` | 10 req | 10 min |
 | `/api/public-proxy/screener` | 5 req | 10 min |
 
 ### 5.2 Rules
@@ -231,32 +194,19 @@ All public-facing routes have rate limiting via `src/middleware.ts`:
 | Client | File | Key | Usage |
 |---|---|---|---|
 | Service role | `src/lib/supabase/server.ts` | `SUPABASE_SERVICE_ROLE_KEY` | Server-only: bypasses RLS |
-| Browser (anon) | `src/lib/supabase/browser.ts` | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Auth flows only, never for data queries |
+| Browser (anon) | `src/lib/supabase/browser.ts` | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Auth flows only (admin login), never for data queries |
 
 ### 6.2 Rules
 
 - Service role client MUST only be imported in server-side modules.
 - Add `import "server-only"` to `src/lib/supabase/server.ts` to enforce at build time.
-- NEVER use user-provided IDs as privileged query parameters — always use the authenticated session's userId.
 - RLS enabled on all tables as defense-in-depth (even if authorization is checked in code).
+- No policies for `anon`/`authenticated` — all data access goes through the server (service-role bypasses RLS).
 
-### 6.3 Query Pattern
+### 6.3 Idempotent Writes
 
-```typescript
-// ✅ GOOD: userId from authenticated session
-const session = await verifySession(req);
-const { data } = await supabase
-  .from("assessments")
-  .select("*")
-  .eq("user_id", session.userId);
-
-// ❌ BAD: userId from request body (IDOR vulnerability)
-const { userId } = await req.json();
-const { data } = await supabase
-  .from("assessments")
-  .select("*")
-  .eq("user_id", userId);
-```
+- Write operations validate existence at the service layer before inserting (e.g. duplicate lead email → reuse or 409).
+- Unique constraints in the database are the last line of defense — always handle `23505` with a friendly 409 response, never leak the raw error.
 
 ---
 
@@ -301,12 +251,12 @@ const nameSchema = z.string()
 ## 9. Pre-Deploy Security Checklist
 
 - [ ] No `NEXT_PUBLIC_` prefix on secret env vars
-- [ ] All API routes have auth verification
+- [ ] All API routes have auth verification (`INTERNAL_API_KEY` + `requireManager` on admin routes)
 - [ ] All inputs validated with Zod at the boundary
 - [ ] Error responses never leak stack traces or internal details
 - [ ] Rate limiting on all public-facing endpoints
-- [ ] Session cookies have `httpOnly`, `secure`, `sameSite`, `expires`
-- [ ] Tokens never appear in logs, error messages, or client code
+- [ ] Secrets never appear in logs, error messages, or client code
 - [ ] `npm audit` passes with no critical vulnerabilities
 - [ ] `import "server-only"` on server-only modules
 - [ ] Supabase service role never imported in client components
+- [ ] RLS enabled on all tables (no policies for anon/authenticated)
