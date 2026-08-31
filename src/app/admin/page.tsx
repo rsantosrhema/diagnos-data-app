@@ -10,9 +10,9 @@ import {
   sendToken,
   cancelToken,
   regenerateToken,
+  reprocessAnalysis,
   type AdminTokensResponse,
   type AdminLeadRow,
-  ApiError,
 } from "@/lib/api/client";
 
 type View = "login" | "dashboard";
@@ -204,6 +204,22 @@ export default function AdminPage() {
     }
   }
 
+  async function handleReprocess(leadId: string) {
+    setActionLoading(`reproc-${leadId}`);
+    try {
+      const authToken = await getAuthToken();
+      if (!authToken) return;
+      await reprocessAnalysis(leadId, authToken);
+      await loadData();
+      pushToast("success", "Análise reprocessada em background");
+    } catch (err) {
+      pushToast("error", err instanceof Error ? err.message : "Não foi possível reprocessar a análise");
+    } finally {
+      setActionLoading(null);
+      setOpenMenu(null);
+    }
+  }
+
   const handleCopyToken = useCallback(
     async (token: string) => {
       try {
@@ -250,6 +266,7 @@ export default function AdminPage() {
           onSend={handleSend}
           onCancel={handleCancel}
           onRegenerate={handleRegenerate}
+          onReprocess={handleReprocess}
           onCopyToken={handleCopyToken}
         />
       )}
@@ -419,6 +436,7 @@ function DashboardView({
   onSend,
   onCancel,
   onRegenerate,
+  onReprocess,
   onCopyToken,
 }: {
   data: AdminTokensResponse | null;
@@ -433,6 +451,7 @@ function DashboardView({
   onSend: (row: AdminLeadRow) => void;
   onCancel: (tokenId: string) => void;
   onRegenerate: (tokenId: string) => void;
+  onReprocess: (leadId: string) => void;
   onCopyToken: (token: string) => void;
 }) {
   const [now, setNow] = useState(new Date());
@@ -582,6 +601,7 @@ function DashboardView({
                               onSend={onSend}
                               onCancel={onCancel}
                               onRegenerate={onRegenerate}
+                              onReprocess={onReprocess}
                             />
                           </td>
                         </tr>
@@ -819,6 +839,7 @@ function RowActionMenu({
   onSend,
   onCancel,
   onRegenerate,
+  onReprocess,
 }: {
   row: AdminLeadRow;
   open: boolean;
@@ -828,8 +849,13 @@ function RowActionMenu({
   onSend: (row: AdminLeadRow) => void;
   onCancel: (tokenId: string) => void;
   onRegenerate: (tokenId: string) => void;
+  onReprocess: (leadId: string) => void;
 }) {
   const hasToken = !!row.tokenId;
+  const canReprocess =
+    row.leadStatus === "analisado" ||
+    row.leadStatus === "falha" ||
+    row.leadStatus === "analise_pendente";
 
   return (
     <div className="relative inline-block" data-action-menu>
@@ -852,6 +878,21 @@ function RowActionMenu({
 
       {open && (
         <div className="action-menu" role="menu">
+          {canReprocess && (
+            <button
+              role="menuitem"
+              className="action-item"
+              disabled={loadingKey === `reproc-${row.leadId}`}
+              onClick={() => onReprocess(row.leadId)}
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9" />
+                <path d="M13.5 2v2.5H11" />
+              </svg>
+              {loadingKey === `reproc-${row.leadId}` ? "Reprocessando..." : "Reprocessar análise"}
+            </button>
+          )}
+
           {!hasToken && (
             <button
               role="menuitem"

@@ -251,13 +251,14 @@ Client + UI da página admin.
 - Skill: NONE
 
 **Done when**:
-- [ ] Handler `handleReprocess(leadId)` chama `reprocessAnalysis(leadId, token)`, toast de sucesso/erro, `loadData()`
-- [ ] `RowActionMenu` exibe "Reprocessar análise" quando `row.leadStatus` elegível (com loading)
-- [ ] Sem teste de componente dedicado (página admin sem teste existente; feature de ação admin) — **confirmed**: `page.tsx` não tem teste atual
-- [ ] `npm run build` passa
+- [x] Handler `handleReprocess(leadId)` chama `reprocessAnalysis(leadId, token)`, toast de sucesso/erro, `loadData()`
+- [x] `RowActionMenu` exibe "Reprocessar análise" quando `row.leadStatus` elegível (com loading)
+- [x] Sem teste de componente dedicado (página admin sem teste existente; feature de ação admin) — **confirmed**: `page.tsx` não tem teste atual
+- [x] `npm run build` passa (typecheck ok)
 
-**Tests**: none (UI admin sem suíte atual)
-**Gate**: build
+**Tests**: none ✅ (UI admin sem suíte atual)
+**Gate**: build ✅ (`npm run typecheck` + `npm run build` passaram; `npm run test` 326 passed)
+**Commit**: `feat(admin): add reprocess analysis button to admin page`
 
 ---
 
