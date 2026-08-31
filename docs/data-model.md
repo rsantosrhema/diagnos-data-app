@@ -54,6 +54,19 @@ erDiagram
         text error
         timestamptz created_at
         timestamptz updated_at
+        timestamptz queued_at
+        timestamptz processing_started_at
+        timestamptz completed_at
+        integer attempts
+    }
+    leads ||--o| analysis_job_logs : "registra"
+    analysis_job_logs {
+        uuid id PK
+        uuid lead_id FK
+        text step
+        text message
+        integer duration_ms
+        timestamptz created_at
     }
 ```
 
@@ -141,12 +154,33 @@ Todas as tabelas têm **RLS habilitado sem policies** para `anon`/`authenticated
 | `error` | `text` | nullable |
 | `created_at` | `timestamptz` | not null, default `now()` |
 | `updated_at` | `timestamptz` | not null, default `now()` |
+| `queued_at` | `timestamptz` | nullable (preenchido no enqueue) |
+| `processing_started_at` | `timestamptz` | nullable (preenchido no `read` da fila) |
+| `completed_at` | `timestamptz` | nullable (preenchido no ack de sucesso) |
+| `attempts` | `integer` | not null, default `0` (incrementado a cada `read`) |
 
 **Índices**: `market_insights_lead_id_idx`.
 
 **RLS**: habilitado, sem policies (service-role only).
 
-**Fila**: os jobs de análise são enfileirados na fila `analysis_jobs` (extensão `pgmq`) via wrappers `security definer` `analysis_queue_enqueue(uuid)` / `analysis_queue_pop()`, chamados pelo service-role através de `supabase.rpc`. A fila é independente do PostgREST (não exposta a `anon`/`authenticated`).
+**Fila**: os jobs de análise são enfileirados na fila `analysis_jobs` (extensão `pgmq`) via wrappers `security definer` `analysis_queue_enqueue(uuid)` / `analysis_queue_read()` / `analysis_queue_ack(...)` / `analysis_queue_requeue(...)` / `analysis_queue_stats()`, chamados pelo service-role através de `supabase.rpc`. Semântica **read + ack/archive** (ADR-010): `read` usa visibility timeout de 600s (a mensagem não é apagada ao ler; se o worker cair, ela volta à fila), e `ack` arquiva a mensagem em `pgmq_archived` preservando histórico. A fila é independente do PostgREST (não exposta a `anon`/`authenticated`).
+
+### `analysis_job_logs`
+
+| Coluna | Tipo | Constraints |
+| --- | --- | --- |
+| `id` | `uuid` | PK, default `gen_random_uuid()` |
+| `lead_id` | `uuid` | not null, **FK** → `leads(id)` `on delete cascade` |
+| `step` | `text` | not null, **check** in (`enqueued`,`started`,`researcher`,`analyst`,`writer`,`pdf`,`email`,`completed`,`failed`) |
+| `message` | `text` | nullable (ex.: mensagem de erro no `failed`) |
+| `duration_ms` | `integer` | nullable (duração da etapa, quando aplicável) |
+| `created_at` | `timestamptz` | not null, default `now()` |
+
+**Índices**: `analysis_job_logs_lead_created_idx`, `analysis_job_logs_created_idx`.
+
+**RLS**: habilitado, sem policies (service-role only).
+
+**Ciclo de eventos**: `enqueued` (no enqueue) → `started`/`researcher`/`analyst`/`writer`/`pdf`/`email` (durante o processamento) → `completed` (sucesso) ou `failed` (falha, com a mensagem de erro).
 
 ---
 
