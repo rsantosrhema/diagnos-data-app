@@ -96,25 +96,25 @@ As fatias 1 (pipeline de agentes) e 2 (PDF com análise + bullets priorizados) j
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| RADAR-01 | P1: Seção "Radar de Maturidade" com `<Svg>` no PDF | Design | Pending |
-| RADAR-02 | P1: Grid de 5 anéis (níveis 1–5) | Design | Pending |
-| RADAR-03 | P1: Polígono do nível por dimensão | Design | Pending |
-| RADAR-04 | P1: Clamp de nível fora de 1–5 | Design | Pending |
-| RADAR-05 | P1: Labels das dimensões nos eixos | Design | Pending |
-| RADAR-06 | P1: Sem dependência externa (lib) | Design | Pending |
-| REPRO-01 | P2: Enfileira e responde `{ ok: true }` para lead elegível | Design | Pending |
-| REPRO-02 | P2: 400 quando lead sem diagnóstico | Design | Pending |
-| REPRO-03 | P2: 400 quando status inelegível | Design | Pending |
-| REPRO-04 | P2: 500 quando enfileiramento falha | Design | Pending |
-| REPRO-05 | P2: Auth de gerente + `INTERNAL_API_KEY` em toda rota | Design | Pending |
-| REPRO-06 | P2: Schema `.strict()` no body | Design | Pending |
+| RADAR-01 | P1: Seção "Radar de Maturidade" com `<Svg>` no PDF | Design | ✅ Verified |
+| RADAR-02 | P1: Grid de 5 anéis (níveis 1–5) | Design | ✅ Verified |
+| RADAR-03 | P1: Polígono do nível por dimensão | Design | ✅ Verified |
+| RADAR-04 | P1: Clamp de nível fora de 1–5 | Design | ✅ Verified |
+| RADAR-05 | P1: Labels das dimensões nos eixos | Design | ✅ Verified |
+| RADAR-06 | P1: Sem dependência externa (lib) | Design | ✅ Verified |
+| REPRO-01 | P2: Enfileira e responde `{ ok: true }` para lead elegível | Design | ✅ Verified |
+| REPRO-02 | P2: 400 quando lead sem diagnóstico | Design | ✅ Verified |
+| REPRO-03 | P2: 400 quando status inelegível | Design | ✅ Verified |
+| REPRO-04 | P2: 500 quando enfileiramento falha | Design | ✅ Verified |
+| REPRO-05 | P2: Auth de gerente + `INTERNAL_API_KEY` em toda rota | Design | ✅ Verified |
+| REPRO-06 | P2: Schema `.strict()` no body | Design | ✅ Verified |
 
-**Coverage:** 12 total, 0 mapped to tasks, 12 unmapped
+**Coverage:** 12 total, 12 mapped to tasks, 0 unmapped
 
 ---
 
 ## Success Criteria
 
-- [ ] O PDF de um lead analisado contém o radar de aranha (10 eixos, grid 1–5, polígono dos níveis, labels), sem dependência extra
-- [ ] Um admin consegue reprocessar a análise de um lead com status `analise_pendente`/`falha`/`analisado` via endpoint, e o worker a regenera em background
-- [ ] Leads sem diagnóstico ou com status não-elegível são rejeitados com 400; enfileiramento falho retorna 500 para o admin
+- [x] O PDF de um lead analisado contém o radar de aranha (10 eixos, grid 1–5, polígono dos níveis, labels), sem dependência extra
+- [x] Um admin consegue reprocessar a análise de um lead com status `analise_pendente`/`falha`/`analisado` via endpoint, e o worker a regenera em background
+- [x] Leads sem diagnóstico ou com status não-elegível são rejeitados com 400; enfileiramento falho retorna 500 para o admin
