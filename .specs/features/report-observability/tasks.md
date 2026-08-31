@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/report-observability/design.md`
-**Status**: Draft
+**Status**: In Progress
 
 ---
 
@@ -79,6 +79,7 @@ T8
 **Depends on**: None
 **Reuses**: padrão RPC `security definer` da migration 0007; RLS sem policies
 **Requirement**: OBS-01, OBS-02, OBS-03, OBS-04, OBS-07, OBS-08
+**Status**: ✅ Done (`aca1ed8`)
 
 **Tools**:
 
@@ -107,6 +108,7 @@ T8
 **Depends on**: T1
 **Reuses**: padrão `createXRepository(supabase)` existente
 **Requirement**: OBS-01, OBS-02, OBS-03, OBS-04, OBS-05, OBS-07, OBS-08, OBS-11
+**Status**: ✅ Done (`d0cffff`)
 
 **Tools**:
 
