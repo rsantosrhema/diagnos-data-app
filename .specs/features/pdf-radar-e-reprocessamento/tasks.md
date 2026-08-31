@@ -178,16 +178,17 @@ Client + UI da página admin.
 - Skill: NONE
 
 **Done when**:
-- [ ] 401 sem internal key / sem gerente
-- [ ] 400 body inválido (`leadId` não-uuid, campos extras)
-- [ ] 400 quando `AdminServiceError(400)` (lead sem diagnóstico / status inelegível)
-- [ ] 500 quando `enqueue` falha (erro genérico)
-- [ ] 200 `{ ok: true }` em sucesso
-- [ ] Unit tests de rota cobrem os 5 caminhos (mocks de service/repos)
-- [ ] `npm run test` passa
+- [x] 401 sem internal key / sem gerente
+- [x] 400 body inválido (`leadId` não-uuid, campos extras)
+- [x] 400 quando `AdminServiceError(400)` (lead sem diagnóstico / status inelegível)
+- [x] 500 quando `enqueue` falha (erro genérico)
+- [x] 200 `{ ok: true }` em sucesso
+- [x] Unit tests de rota cobrem os 5 caminhos (7 testes)
+- [x] `npm run test` passa (326 passed) + `npm run typecheck` ok
 
-**Tests**: unit
-**Gate**: quick
+**Tests**: unit ✅ (7 testes em `route.test.ts`)
+**Gate**: quick ✅ (`npm run test` 326 passed + `npm run typecheck` ok)
+**Commit**: `feat(admin): add reprocess analysis internal route`
 
 ---
 
