@@ -81,19 +81,19 @@ O pipeline de relatórios (agentes de mercado + PDF + e-mail) é processado por 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| REL-01 | P1: Disparo imediato | Design | Pending |
-| REL-02 | P1: Disparo imediato | Design | Pending |
-| REL-03 | P1: Disparo imediato | Design | Pending |
-| REL-04 | P1: Disparo imediato | Design | Pending |
-| REL-05 | P1: Resposta imediata | Design | Pending |
-| REL-06 | P1: Resposta imediata | Design | Pending |
-| REL-07 | P1: Resposta imediata | Design | Pending |
+| REL-01 | P1: Disparo imediato | Design | Verified |
+| REL-02 | P1: Disparo imediato | Design | Verified |
+| REL-03 | P1: Disparo imediato | Design | Verified |
+| REL-04 | P1: Disparo imediato | Design | Verified |
+| REL-05 | P1: Resposta imediata | Design | Verified |
+| REL-06 | P1: Resposta imediata | Design | Verified |
+| REL-07 | P1: Resposta imediata | Design | Verified |
 
 **ID format:** `REL-[NUMBER]`
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 7 total, 0 mapped to tasks, 7 unmapped ⚠️
+**Coverage:** 7 total, 7 mapped to tasks, 0 unmapped ✅
 
 ---
 

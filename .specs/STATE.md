@@ -12,13 +12,14 @@
 | AD-006 | Radar de aranha no PDF desenhado com SVG nativo do @react-pdf/renderer (sem lib extra); reprocessamento de análise via enfileiramento reutilizando analysis-service.enqueue | active | 2026-08-30 | Fatia 3 (ADR-009): radar + admin reprocessar |
 | AD-007 | Reprocessamento admin aceita somente leads com diagnóstico E status analisado/falha/analise_pendente | active | 2026-08-30 | ADR-009 fallback/reprocessamento; evita reprocessar leads sem pipeline |
 | AD-008 | Observabilidade do pipeline de relatórios: fila pgmq com read()+ack/archive (VT 600s) e log por etapa em analysis_job_logs | active | 2026-08-31 | Relatórios assíncronos invisíveis; fila com pop() perdia jobs; painel admin ganha Fila + Log |
+| AD-009 | Relatório sob demanda (sem cron): endpoint de reprocess enfileira e dispara fire-and-forget `POST /api/analysis-worker` com `x-internal-api-key`; resposta imediata `{ok,queued}`; sem depender de agendador externo | active | 2026-08-31 | Cron Hobby da Vercel bloqueado/removido; pipeline dos agentes (~50s) roda em background no clique do gerente |
 
 ## Handoff
 
-- **Feature**: report-observability (.specs/features/report-observability) — **DONE**
-- **Phase / Task**: Execute complete — 6 feature commits (T1-T8 agrupados) + Verifier PASS (13/13 ACs, 3/3 mutants), validation.md escrito + traceability OBS-01..13 → Verified
-- **Completed**: T1-T8; baseline 0008 commitado como `6b9de6d`
-- **Next step**: aplicar a migration `supabase/migrations/0009_report_observability.sql` no Supabase remoto (gate manual via supabase-mcp/psql) e rodar `validate_data_model.sql`; UAT opcional das seções Fila/Log no admin
+- **Feature**: relatorio-sob-demanda (.specs/features/relatorio-sob-demanda) — **DONE**
+- **Phase / Task**: Execute complete — T1 commitado como `ab204e2` + Verifier PASS (5/7 ACs com asserção no diff, 3/3 mutants killed), validation.md escrito + traceability REL-01..07 → Verified
+- **Completed**: T1 (fire-and-forget no reprocess + 11 testes co-locados); AD-009 registrado
+- **Next step**: aplicar o código no ambiente Vercel (redeploy via API — autorização pendente); DNS do subdomínio `diagnosdata.rhemadata.com` na Hostinger (bloqueio externo); opcional: rodar a suite completa em CI
 - **Blockers**: none
-- **Uncommitted files**: `validation.md` + `spec.md` traceability + `LESSONS.md`/`lessons.json` + `.specs/STATE.md` (a commitar pelo orquestrador)
+- **Uncommitted files**: `validation.md` + `tasks.md` status + `.specs/STATE.md` (a commitar pelo orquestrador)
 - **Branch**: main
