@@ -37,7 +37,10 @@ const output: AgentOutput = {
 function mockQueueRepo(overrides: Partial<AnalysisQueueRepository> = {}): AnalysisQueueRepository {
   return {
     enqueue: vi.fn(),
-    pop: vi.fn(),
+    read: vi.fn(),
+    ack: vi.fn(),
+    requeue: vi.fn(),
+    stats: vi.fn(),
     ...overrides,
   };
 }
@@ -47,6 +50,7 @@ function mockInsightsRepo(overrides: Partial<MarketInsightsRepository> = {}): Ma
     upsert: vi.fn(),
     findByLeadId: vi.fn(),
     markStatus: vi.fn(),
+    logEvent: vi.fn(),
     ...overrides,
   };
 }
@@ -94,27 +98,28 @@ function createService(deps: {
 
 describe("AnalysisService", () => {
   describe("enqueue", () => {
-    it("chama queueRepo.enqueue com o leadId", async () => {
-      const enqueue = vi.fn().mockResolvedValue(undefined);
+    it("chama queueRepo.enqueue com o leadId e retorna {ok, queued}", async () => {
+      const enqueue = vi.fn().mockResolvedValue({ ok: true, queued: true });
       const service = createService({ queueRepo: mockQueueRepo({ enqueue }) });
 
-      await service.enqueue("lead-1");
+      const result = await service.enqueue("lead-1");
 
       expect(enqueue).toHaveBeenCalledWith("lead-1");
+      expect(result).toEqual({ ok: true, queued: true });
     });
 
-    it("não lança quando o enfileiramento falha (AC INS-03)", async () => {
+    it("propaga erro do enfileiramento (não engole)", async () => {
       const enqueue = vi.fn().mockRejectedValue(new Error("queue down"));
       const service = createService({ queueRepo: mockQueueRepo({ enqueue }) });
 
-      await expect(service.enqueue("lead-1")).resolves.toBeUndefined();
+      await expect(service.enqueue("lead-1")).rejects.toThrow("queue down");
       expect(enqueue).toHaveBeenCalledWith("lead-1");
     });
   });
 
   describe("processNext", () => {
     it("fila vazia: retorna { processed: false }", async () => {
-      const queueRepo = mockQueueRepo({ pop: vi.fn().mockResolvedValue(null) });
+      const queueRepo = mockQueueRepo({ read: vi.fn().mockResolvedValue(null) });
       const insightsRepo = mockInsightsRepo();
       const service = createService({ queueRepo, insightsRepo });
 
@@ -125,14 +130,16 @@ describe("AnalysisService", () => {
       expect(insightsRepo.markStatus).not.toHaveBeenCalled();
     });
 
-    it("happy path: pop → payloadLoader → orchestrator → upsert analisado + e-mail com PDF enriquecido", async () => {
+    it("happy path: read → payloadLoader → orchestrator → upsert analisado + ack + log de etapas + e-mail", async () => {
       const queueRepo = mockQueueRepo({
-        pop: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        ack: vi.fn().mockResolvedValue(undefined),
       });
       const payloadLoader = vi.fn().mockResolvedValue(payload);
       const orchestrator = mockOrchestrator(async () => output);
       const upsert = vi.fn().mockResolvedValue(undefined);
-      const insightsRepo = mockInsightsRepo({ upsert });
+      const logEvent = vi.fn().mockResolvedValue(undefined);
+      const insightsRepo = mockInsightsRepo({ upsert, logEvent });
       const generatePdf = mockGeneratePdf();
       const sendEmail = mockSendEmail();
 
@@ -158,6 +165,12 @@ describe("AnalysisService", () => {
         sources: output.research.sources,
         status: "analisado",
       });
+      expect(logEvent).toHaveBeenCalledWith("lead-1", "researcher", undefined, expect.any(Number));
+      expect(logEvent).toHaveBeenCalledWith("lead-1", "analyst", undefined, expect.any(Number));
+      expect(logEvent).toHaveBeenCalledWith("lead-1", "writer", undefined, expect.any(Number));
+      expect(logEvent).toHaveBeenCalledWith("lead-1", "pdf", undefined, expect.any(Number));
+      expect(logEvent).toHaveBeenCalledWith("lead-1", "email", undefined, expect.any(Number));
+      expect(queueRepo.ack).toHaveBeenCalledWith("42", "lead-1", "analisado", undefined, expect.any(Number));
       expect(insightsRepo.markStatus).not.toHaveBeenCalled();
       // EMAIL-02: e-mail com PDF enriquecido (insights/analysis no input)
       expect(generatePdf).toHaveBeenCalledWith(
@@ -175,13 +188,14 @@ describe("AnalysisService", () => {
       );
     });
 
-    it("payload ausente: marca falha e NÃO envia e-mail", async () => {
+    it("payload ausente: ack falha + log failed e NÃO envia e-mail", async () => {
       const queueRepo = mockQueueRepo({
-        pop: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        ack: vi.fn().mockResolvedValue(undefined),
       });
       const payloadLoader = vi.fn().mockResolvedValue(null);
-      const markStatus = vi.fn().mockResolvedValue(undefined);
-      const insightsRepo = mockInsightsRepo({ markStatus });
+      const logEvent = vi.fn().mockResolvedValue(undefined);
+      const insightsRepo = mockInsightsRepo({ logEvent });
       const orchestrator = mockOrchestrator(async () => output);
       const sendEmail = mockSendEmail();
 
@@ -196,20 +210,21 @@ describe("AnalysisService", () => {
       const result = await service.processNext();
 
       expect(result).toEqual({ processed: true });
-      expect(markStatus).toHaveBeenCalledWith("lead-1", "falha", expect.any(String));
+      expect(logEvent).toHaveBeenCalledWith("lead-1", "failed", "agent_payload não encontrado para o lead");
+      expect(queueRepo.ack).toHaveBeenCalledWith("42", "lead-1", "falha", "agent_payload não encontrado para o lead", expect.any(Number));
       expect(orchestrator.run).not.toHaveBeenCalled();
       expect(sendEmail).not.toHaveBeenCalled();
     });
-
-    it("falha do orchestrator: marca falha, lead analise_pendente, envia PDF básico, retorna processed true", async () => {
+    it("falha do orchestrator: ack falha, log failed, lead analise_pendente, envia PDF básico, retorna processed true", async () => {
       const queueRepo = mockQueueRepo({
-        pop: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        ack: vi.fn().mockResolvedValue(undefined),
       });
       const orchestrator = mockOrchestrator(async () => {
         throw new Error("llm down");
       });
-      const markStatus = vi.fn().mockResolvedValue(undefined);
-      const insightsRepo = mockInsightsRepo({ markStatus });
+      const logEvent = vi.fn().mockResolvedValue(undefined);
+      const insightsRepo = mockInsightsRepo({ logEvent });
       const updateStatus = vi.fn().mockResolvedValue(undefined);
       const leadRepo: { updateStatus(id: string, status: string): Promise<void> } = {
         updateStatus,
@@ -229,7 +244,8 @@ describe("AnalysisService", () => {
       const result = await service.processNext();
 
       expect(result).toEqual({ processed: true });
-      expect(markStatus).toHaveBeenCalledWith("lead-1", "falha", expect.stringContaining("llm down"));
+      expect(logEvent).toHaveBeenCalledWith("lead-1", "failed", expect.stringContaining("llm down"), expect.any(Number));
+      expect(queueRepo.ack).toHaveBeenCalledWith("42", "lead-1", "falha", expect.stringContaining("llm down"), expect.any(Number));
       expect(insightsRepo.upsert).not.toHaveBeenCalled();
       // EMAIL-03: fallback — PDF básico (sem insights/analysis) + analise_pendente
       expect(updateStatus).toHaveBeenCalledWith("lead-1", "analise_pendente");
@@ -241,11 +257,13 @@ describe("AnalysisService", () => {
 
     it("falha de e-mail no worker: não lança e mantém status analisado (EMAIL-04)", async () => {
       const queueRepo = mockQueueRepo({
-        pop: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        ack: vi.fn().mockResolvedValue(undefined),
       });
       const orchestrator = mockOrchestrator(async () => output);
       const upsert = vi.fn().mockResolvedValue(undefined);
-      const insightsRepo = mockInsightsRepo({ upsert });
+      const logEvent = vi.fn().mockResolvedValue(undefined);
+      const insightsRepo = mockInsightsRepo({ upsert, logEvent });
       const generatePdf = mockGeneratePdf();
       const sendEmail = mockSendEmail();
       sendEmail.mockRejectedValue(new Error("resend down"));
@@ -262,6 +280,7 @@ describe("AnalysisService", () => {
 
       expect(result).toEqual({ processed: true });
       expect(upsert).toHaveBeenCalledWith(expect.objectContaining({ status: "analisado" }));
+      expect(queueRepo.ack).toHaveBeenCalledWith("42", "lead-1", "analisado", undefined, expect.any(Number));
       expect(insightsRepo.markStatus).not.toHaveBeenCalled();
     });
   });

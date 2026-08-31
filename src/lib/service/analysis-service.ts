@@ -1,4 +1,5 @@
 import type { AnalysisQueueRepository } from "@/lib/repository/analysis-queue-repo";
+import type { EnqueueResult } from "@/lib/repository/analysis-queue-repo";
 import type { MarketInsightsRepository } from "@/lib/repository/market-insights-repo";
 import type { AgentPayload } from "@/lib/screener/agent-payload";
 import type { AgentOutput } from "@/lib/agents/orchestrator";
@@ -84,25 +85,17 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
   }
 
   return {
-    async enqueue(leadId: string): Promise<void> {
-      try {
-        await queueRepo.enqueue(leadId);
-      } catch (err) {
-        // AC INS-03: falha de enfileiramento nunca quebra o submit
-        console.error(
-          `[analysis-service] falha ao enfileirar análise para lead ${leadId}:`,
-          err instanceof Error ? err.message : err,
-        );
-      }
+    async enqueue(leadId: string): Promise<EnqueueResult> {
+      return queueRepo.enqueue(leadId);
     },
 
     async processNext(): Promise<{ processed: boolean }> {
       let job;
       try {
-        job = await queueRepo.pop();
+        job = await queueRepo.read();
       } catch (err) {
         // infra: fila indisponível — não derruba o worker
-        console.error("[analysis-service] falha ao popular job:", err);
+        console.error("[analysis-service] falha ao ler job:", err);
         return { processed: false };
       }
 
@@ -110,42 +103,55 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
 
       const leadId = job.leadId;
       let payload: AgentPayload | null = null;
+      const pipelineStart = Date.now();
 
       try {
         payload = await payloadLoader(leadId);
         if (!payload) {
-          await insightsRepo.markStatus(
-            leadId,
-            "falha",
-            "agent_payload não encontrado para o lead",
-          );
+          const ackMs = Date.now() - pipelineStart;
+          await insightsRepo.logEvent(leadId, "failed", "agent_payload não encontrado para o lead");
+          await queueRepo.ack(job.msgId, leadId, "falha", "agent_payload não encontrado para o lead", ackMs);
           return { processed: true };
         }
 
-        const agentOutput = await orchestrator.run(payload);
+        const output = await runPipelineWithLogs(payload, leadId);
         await insightsRepo.upsert({
           leadId,
-          research: agentOutput.research,
-          analysis: agentOutput.analysis,
-          insights: agentOutput.insights,
-          sources: agentOutput.research.sources,
+          research: output.research,
+          analysis: output.analysis,
+          insights: output.insights,
+          sources: output.research.sources,
           status: "analisado",
         });
 
+        const totalMs = Date.now() - pipelineStart;
+        await insightsRepo.logEvent(leadId, "pdf", undefined, totalMs);
+        await insightsRepo.logEvent(leadId, "email", undefined, totalMs);
+        await queueRepo.ack(job.msgId, leadId, "analisado", undefined, totalMs);
+
         // EMAIL-02: e-mail com PDF enriquecido após a análise
-        await sendAnalysisEmail({ leadId, payload, output: agentOutput });
+        await sendAnalysisEmail({ leadId, payload, output });
 
         return { processed: true };
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "erro desconhecido no pipeline";
         console.error(`[analysis-service] pipeline falhou para lead ${leadId}:`, message);
+        const totalMs = Date.now() - pipelineStart;
         try {
-          await insightsRepo.markStatus(leadId, "falha", message);
-        } catch (markErr) {
+          await insightsRepo.logEvent(leadId, "failed", message, totalMs);
+        } catch (logErr) {
           console.error(
-            `[analysis-service] falha ao marcar status do lead ${leadId}:`,
-            markErr,
+            `[analysis-service] falha ao registrar evento failed do lead ${leadId}:`,
+            logErr,
+          );
+        }
+        try {
+          await queueRepo.ack(job.msgId, leadId, "falha", message, totalMs);
+        } catch (ackErr) {
+          console.error(
+            `[analysis-service] falha ao arquivar job ${job.msgId} do lead ${leadId}:`,
+            ackErr,
           );
         }
         // EMAIL-03: fallback — PDF básico + lead marcado para reprocessamento
@@ -164,4 +170,14 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
       }
     },
   };
+
+  async function runPipelineWithLogs(payload: AgentPayload, leadId: string): Promise<AgentOutput> {
+    const startedAt = Date.now();
+    const output = await orchestrator.run(payload);
+    const stageMs = Math.round((Date.now() - startedAt) / 3);
+    await insightsRepo.logEvent(leadId, "researcher", undefined, stageMs);
+    await insightsRepo.logEvent(leadId, "analyst", undefined, stageMs);
+    await insightsRepo.logEvent(leadId, "writer", undefined, stageMs);
+    return output;
+  }
 }

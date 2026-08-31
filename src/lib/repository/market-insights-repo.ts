@@ -11,6 +11,10 @@ export interface MarketInsightsRow {
   error: string | null;
   created_at: string;
   updated_at: string;
+  queued_at: string | null;
+  processing_started_at: string | null;
+  completed_at: string | null;
+  attempts: number;
 }
 
 export interface UpsertMarketInsightsParams {
@@ -23,6 +27,17 @@ export interface UpsertMarketInsightsParams {
 }
 
 export type MarketInsightsStatus = "pendente" | "processando" | "analisado" | "falha";
+
+export type AnalysisJobLogStep =
+  | "enqueued"
+  | "started"
+  | "researcher"
+  | "analyst"
+  | "writer"
+  | "pdf"
+  | "email"
+  | "completed"
+  | "failed";
 
 export function createMarketInsightsRepository(supabase: SupabaseClient) {
   return {
@@ -45,7 +60,7 @@ export function createMarketInsightsRepository(supabase: SupabaseClient) {
       const { data, error } = await supabase
         .from("market_insights")
         .select(
-          "id, lead_id, research, analysis, insights, sources, status, error, created_at, updated_at",
+          "id, lead_id, research, analysis, insights, sources, status, error, created_at, updated_at, queued_at, processing_started_at, completed_at, attempts",
         )
         .eq("lead_id", leadId)
         .maybeSingle();
@@ -60,13 +75,31 @@ export function createMarketInsightsRepository(supabase: SupabaseClient) {
     ): Promise<void> {
       const { error: updateError } = await supabase
         .from("market_insights")
-        .update({
-          status,
-          ...(error !== undefined ? { error } : {}),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("lead_id", leadId);
+        .upsert(
+          {
+            lead_id: leadId,
+            status,
+            ...(error !== undefined ? { error } : {}),
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "lead_id" },
+        );
       if (updateError) throw updateError;
+    },
+
+    async logEvent(
+      leadId: string,
+      step: AnalysisJobLogStep,
+      message?: string,
+      durationMs?: number,
+    ): Promise<void> {
+      const { error } = await supabase.from("analysis_job_logs").insert({
+        lead_id: leadId,
+        step,
+        ...(message !== undefined ? { message } : {}),
+        ...(durationMs !== undefined ? { duration_ms: durationMs } : {}),
+      });
+      if (error) throw error;
     },
   };
 }

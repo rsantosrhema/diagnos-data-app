@@ -29,7 +29,7 @@ export function createAdminService(deps: {
   leadRepo: LeadRepository;
   assessmentRepo: AssessmentRepository;
   marketInsightsRepo: MarketInsightsRepository;
-  analysisService: { enqueue(leadId: string): Promise<void> };
+  analysisService: { enqueue(leadId: string): Promise<{ ok: boolean; queued: boolean }> };
 }) {
   const { leadRepo, assessmentRepo, marketInsightsRepo, analysisService } = deps;
 
@@ -67,7 +67,7 @@ export function createAdminService(deps: {
       return { kpis, rows };
     },
 
-    async generateReport(leadId: string): Promise<{ ok: true }> {
+    async generateReport(leadId: string): Promise<{ ok: true; queued: true }> {
       const lead = await leadRepo.findById(leadId);
       if (!lead) {
         throw new AdminServiceError("Lead não encontrado ou sem diagnóstico", 400);
@@ -82,8 +82,14 @@ export function createAdminService(deps: {
         throw new AdminServiceError("Lead sem relatório gerável", 400);
       }
 
-      await analysisService.enqueue(leadId);
-      return { ok: true };
+      const enqueued = await analysisService.enqueue(leadId);
+      if (!enqueued.queued) {
+        throw new AdminServiceError(
+          "Relatório já está na fila ou em processamento",
+          409,
+        );
+      }
+      return { ok: true, queued: true };
     },
   };
 }

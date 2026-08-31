@@ -35,6 +35,7 @@ function mockMarketInsightsRepo(
     upsert: vi.fn(),
     findByLeadId: vi.fn().mockResolvedValue(null),
     markStatus: vi.fn(),
+    logEvent: vi.fn(),
     ...overrides,
   };
 }
@@ -51,13 +52,17 @@ function insightRow(overrides: Partial<MarketInsightsRow> = {}): MarketInsightsR
     error: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    queued_at: null,
+    processing_started_at: null,
+    completed_at: null,
+    attempts: 0,
     ...overrides,
   };
 }
 
-function mockAnalysisService(overrides: { enqueue?: (leadId: string) => Promise<void> } = {}) {
+function mockAnalysisService(overrides: { enqueue?: (leadId: string) => Promise<{ ok: boolean; queued: boolean }> } = {}) {
   return {
-    enqueue: overrides.enqueue ?? vi.fn().mockResolvedValue(undefined),
+    enqueue: overrides.enqueue ?? vi.fn().mockResolvedValue({ ok: true, queued: true }),
   };
 }
 
@@ -157,7 +162,7 @@ describe("AdminService", () => {
     it("enfileira para lead recém-concluído sem análise anterior (GER-01)", async () => {
       const findById = vi.fn().mockResolvedValue(leadBase);
       const existsForLead = vi.fn().mockResolvedValue(true);
-      const enqueue = vi.fn().mockResolvedValue(undefined);
+      const enqueue = vi.fn().mockResolvedValue({ ok: true, queued: true });
       const service = createAdminService({
         leadRepo: mockLeadRepo({ findById }),
         assessmentRepo: mockAssessmentRepo({ existsForLead }),
@@ -167,14 +172,14 @@ describe("AdminService", () => {
 
       const result = await service.generateReport("l1");
 
-      expect(result).toEqual({ ok: true });
+      expect(result).toEqual({ ok: true, queued: true });
       expect(findById).toHaveBeenCalledWith("l1");
       expect(existsForLead).toHaveBeenCalledWith("l1");
       expect(enqueue).toHaveBeenCalledWith("l1");
     });
 
-    it("enfileira para status de regeração (analisado/falha/analise_pendente)", async () => {
-      const enqueue = vi.fn().mockResolvedValue(undefined);
+    it("rejeita com 409 quando já existe job pendente/processando (dedup)", async () => {
+      const enqueue = vi.fn().mockResolvedValue({ ok: true, queued: false });
       const service = createAdminService({
         leadRepo: mockLeadRepo({
           findById: vi.fn().mockResolvedValue({ ...leadBase, status: "analisado" }),
@@ -184,7 +189,24 @@ describe("AdminService", () => {
         analysisService: mockAnalysisService({ enqueue }),
       });
 
-      await expect(service.generateReport("l1")).resolves.toEqual({ ok: true });
+      await expect(service.generateReport("l1")).rejects.toMatchObject({
+        name: "AdminServiceError",
+        status: 409,
+      });
+    });
+
+    it("enfileira para status de regeração (analisado/falha/analise_pendente)", async () => {
+      const enqueue = vi.fn().mockResolvedValue({ ok: true, queued: true });
+      const service = createAdminService({
+        leadRepo: mockLeadRepo({
+          findById: vi.fn().mockResolvedValue({ ...leadBase, status: "analisado" }),
+        }),
+        assessmentRepo: mockAssessmentRepo({ existsForLead: vi.fn().mockResolvedValue(true) }),
+        marketInsightsRepo: mockMarketInsightsRepo(),
+        analysisService: mockAnalysisService({ enqueue }),
+      });
+
+      await expect(service.generateReport("l1")).resolves.toEqual({ ok: true, queued: true });
       expect(enqueue).toHaveBeenCalledWith("l1");
     });
 

@@ -7,6 +7,9 @@ function mockSupabase(response: { data?: unknown; error?: unknown }) {
   builder.upsert = vi
     .fn()
     .mockResolvedValue({ data: null, error: response.error ?? null });
+  builder.insert = vi
+    .fn()
+    .mockResolvedValue({ data: null, error: response.error ?? null });
   builder.select = vi.fn().mockReturnValue(builder);
   builder.eq = vi.fn().mockReturnValue(builder);
   builder.maybeSingle = vi.fn().mockResolvedValue(response);
@@ -36,6 +39,10 @@ const row = {
   error: null,
   created_at: "2026-08-29T00:00:00Z",
   updated_at: "2026-08-29T00:00:00Z",
+  queued_at: "2026-08-29T00:00:00Z",
+  processing_started_at: null,
+  completed_at: null,
+  attempts: 1,
 };
 
 describe("MarketInsightsRepository", () => {
@@ -115,36 +122,83 @@ describe("MarketInsightsRepository", () => {
 
   describe("markStatus", () => {
     it("atualiza status e erro na linha do lead", async () => {
-      const { sb, update, updateEq } = mockSupabase({ error: null });
+      const { sb, from, upsert } = mockSupabase({ error: null });
       const repo = createMarketInsightsRepository(sb);
 
       await repo.markStatus("lead-1", "falha", "boom");
 
-      expect(update).toHaveBeenCalledWith({
-        status: "falha",
-        error: "boom",
-        updated_at: expect.any(String),
-      });
-      expect(updateEq).toHaveBeenCalledWith("lead_id", "lead-1");
+      expect(from).toHaveBeenCalledWith("market_insights");
+      expect(upsert).toHaveBeenCalledWith(
+        {
+          lead_id: "lead-1",
+          status: "falha",
+          error: "boom",
+          updated_at: expect.any(String),
+        },
+        { onConflict: "lead_id" },
+      );
     });
 
     it("atualiza apenas o status quando não há erro", async () => {
-      const { sb, update } = mockSupabase({ error: null });
+      const { sb, upsert } = mockSupabase({ error: null });
       const repo = createMarketInsightsRepository(sb);
 
       await repo.markStatus("lead-1", "processando");
 
-      expect(update).toHaveBeenCalledWith({
-        status: "processando",
-        updated_at: expect.any(String),
-      });
+      expect(upsert).toHaveBeenCalledWith(
+        {
+          lead_id: "lead-1",
+          status: "processando",
+          updated_at: expect.any(String),
+        },
+        { onConflict: "lead_id" },
+      );
     });
 
-    it("propaga erro do update", async () => {
+    it("propaga erro do upsert", async () => {
       const { sb } = mockSupabase({ error: new Error("update failed") });
       const repo = createMarketInsightsRepository(sb);
 
       await expect(repo.markStatus("lead-1", "falha")).rejects.toThrow("update failed");
+    });
+  });
+
+  describe("logEvent", () => {
+    it("insere evento em analysis_job_logs com mensagem e duração", async () => {
+      const { sb, from } = mockSupabase({ error: null });
+      const repo = createMarketInsightsRepository(sb);
+
+      await repo.logEvent("lead-1", "researcher", "ok", 1500);
+
+      expect(from).toHaveBeenCalledWith("analysis_job_logs");
+      const insert = (from as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const builder = sb.from("analysis_job_logs");
+      const inserted = (builder.insert as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(inserted).toEqual({
+        lead_id: "lead-1",
+        step: "researcher",
+        message: "ok",
+        duration_ms: 1500,
+      });
+      expect(insert).toBe("analysis_job_logs");
+    });
+
+    it("insere sem mensagem/duração quando ausentes", async () => {
+      const { sb } = mockSupabase({ error: null });
+      const repo = createMarketInsightsRepository(sb);
+
+      await repo.logEvent("lead-1", "started");
+
+      const builder = sb.from("analysis_job_logs");
+      const inserted = (builder.insert as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(inserted).toEqual({ lead_id: "lead-1", step: "started" });
+    });
+
+    it("propaga erro do insert", async () => {
+      const { sb } = mockSupabase({ error: new Error("insert failed") });
+      const repo = createMarketInsightsRepository(sb);
+
+      await expect(repo.logEvent("lead-1", "failed")).rejects.toThrow("insert failed");
     });
   });
 });
