@@ -10,6 +10,24 @@ import { createAnalysisQueueRepository } from "@/lib/repository/analysis-queue-r
 import { createAdminService, AdminServiceError } from "@/lib/service/admin-service";
 import type { AdminLogEntryDTO } from "@/lib/dto/admin";
 
+function getWorkerBaseUrl(req: Request): string {
+  const envBase = process.env.NEXT_PUBLIC_APP_URL;
+  if (envBase) return envBase.replace(/\/+$/, "");
+  const proto = req.headers.get("x-forwarded-proto") ?? new URL(req.url).protocol.replace(":", "");
+  const host = req.headers.get("host") ?? new URL(req.url).host;
+  return `${proto}://${host}`;
+}
+
+function dispatchWorker(req: Request): void {
+  const key = process.env.INTERNAL_API_KEY;
+  if (!key) return;
+  const url = `${getWorkerBaseUrl(req)}/api/analysis-worker`;
+  void fetch(url, {
+    method: "POST",
+    headers: { "x-internal-api-key": key },
+  }).catch(() => {});
+}
+
 export async function POST(req: Request) {
   if (!verifyInternalApiKey(req)) {
     return NextResponse.json({ error: "Chave interna inválida" }, { status: 401 });
@@ -44,13 +62,16 @@ export async function POST(req: Request) {
     },
   });
 
+  let result: { ok: true; queued: true } | undefined;
   try {
-    const result = await adminService.generateReport(parsed.data.leadId);
-    return NextResponse.json(result, { status: 200 });
+    result = await adminService.generateReport(parsed.data.leadId);
   } catch (err) {
     if (err instanceof AdminServiceError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
+
+  dispatchWorker(req);
+  return NextResponse.json(result, { status: 200 });
 }

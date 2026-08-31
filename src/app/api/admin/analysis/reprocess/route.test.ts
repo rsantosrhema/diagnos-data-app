@@ -62,10 +62,21 @@ function makeRequest(body: unknown) {
     headers: {
       "content-type": "application/json",
       "x-internal-api-key": process.env.INTERNAL_API_KEY!,
+      host: "localhost",
     },
     body: JSON.stringify(body),
   });
 }
+
+function mockFetchOnce(impl: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>) {
+  const fetchMock = vi.fn(impl);
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
+beforeEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("POST /api/admin/analysis/reprocess", () => {
   it("retorna 401 sem internal key (REPRO-05)", async () => {
@@ -118,12 +129,63 @@ describe("POST /api/admin/analysis/reprocess", () => {
   });
 
   it("retorna 200 { ok: true } em sucesso (REPRO-01)", async () => {
-    mockGenerateReport.mockResolvedValue({ ok: true });
+    mockGenerateReport.mockResolvedValue({ ok: true, queued: true });
     const { POST } = await import("./route");
     const res = await POST(makeRequest({ leadId: VALID_UUID }));
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({ ok: true });
+    expect(body).toEqual({ ok: true, queued: true });
     expect(mockGenerateReport).toHaveBeenCalledWith(VALID_UUID);
+  });
+
+  it("dispara o worker fire-and-forget com INTERNAL_API_KEY após enfileirar (REL-01/REL-02/REL-05)", async () => {
+    mockGenerateReport.mockResolvedValue({ ok: true, queued: true });
+    const fetchMock = mockFetchOnce(() => Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 })));
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest({ leadId: VALID_UUID }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({ ok: true, queued: true });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("http://localhost/api/analysis-worker");
+    expect(init?.method).toBe("POST");
+    const headers = init?.headers as Record<string, string>;
+    expect(headers["x-internal-api-key"]).toBe(process.env.INTERNAL_API_KEY);
+  });
+
+  it("usa NEXT_PUBLIC_APP_URL como base do worker quando disponível (REL-04)", async () => {
+    mockGenerateReport.mockResolvedValue({ ok: true, queued: true });
+    const fetchMock = mockFetchOnce(() => Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 })));
+    const original = process.env.NEXT_PUBLIC_APP_URL;
+    process.env.NEXT_PUBLIC_APP_URL = "https://diagnosdata.rhemadata.com/";
+    const { POST } = await import("./route");
+    await POST(makeRequest({ leadId: VALID_UUID }));
+    const [url] = fetchMock.mock.calls[0] as [string];
+    expect(url).toBe("https://diagnosdata.rhemadata.com/api/analysis-worker");
+    process.env.NEXT_PUBLIC_APP_URL = original;
+  });
+
+  it("não bloqueia a resposta quando o fetch do worker rejeita (REL-06)", async () => {
+    mockGenerateReport.mockResolvedValue({ ok: true, queued: true });
+    const fetchMock = mockFetchOnce(() => Promise.reject(new Error("worker down")));
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest({ leadId: VALID_UUID }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({ ok: true, queued: true });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("pula o disparo quando INTERNAL_API_KEY não está configurada e segue com 200 (REL-06)", async () => {
+    mockGenerateReport.mockResolvedValue({ ok: true, queued: true });
+    const fetchMock = mockFetchOnce(() => Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 })));
+    const original = process.env.INTERNAL_API_KEY;
+    delete process.env.INTERNAL_API_KEY;
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest({ leadId: VALID_UUID }));
+    expect(res.status).toBe(200);
+    expect(fetchMock).not.toHaveBeenCalled();
+    process.env.INTERNAL_API_KEY = original;
   });
 });
