@@ -74,6 +74,34 @@ describe("POST /api/analysis-worker", () => {
     expect(res.status).toBe(401);
   });
 
+  it("retorna 401 sem internal key e com cron secret errado", async () => {
+    mockVerifyInternalApiKey.mockReturnValue(false);
+    process.env.CRON_SECRET = "cron-secret-real";
+    const { POST } = await import("./route");
+    const req = new Request("http://localhost/api/analysis-worker", {
+      method: "POST",
+      headers: { authorization: "Bearer cron-secret-errado" },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+    delete process.env.CRON_SECRET;
+  });
+
+  it("retorna 200 com cron secret válido via Authorization", async () => {
+    mockVerifyInternalApiKey.mockReturnValue(false);
+    process.env.CRON_SECRET = "cron-secret-real";
+    const { POST } = await import("./route");
+    const req = new Request("http://localhost/api/analysis-worker", {
+      method: "POST",
+      headers: { authorization: "Bearer cron-secret-real" },
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toMatchObject({ ok: true });
+    delete process.env.CRON_SECRET;
+  });
+
   it("retorna 200 com internal key válida", async () => {
     const { POST } = await import("./route");
     const res = await POST(makeRequest());

@@ -12,9 +12,25 @@ import type { AgentPayload } from "@/lib/screener/agent-payload";
 
 const MAX_JOBS_PER_RUN = 5;
 
+function timingSafeEqualStr(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  const { createHash, timingSafeEqual } = require("node:crypto") as typeof import("node:crypto");
+  return timingSafeEqual(
+    createHash("sha256").update(a).digest(),
+    createHash("sha256").update(b).digest(),
+  );
+}
+
 export async function POST(req: Request) {
   if (!verifyInternalApiKey(req)) {
-    return NextResponse.json({ error: "Chave interna inválida" }, { status: 401 });
+    // Vercel Cron sends the CRON_SECRET header; the internal key header is not
+    // forwarded by the platform cron. Accept either the internal key (manual /
+    // admin reprocess) or the cron secret (scheduled drain).
+    const cronSecret = process.env.CRON_SECRET;
+    const provided = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+    if (!cronSecret || !provided || !timingSafeEqualStr(provided, cronSecret)) {
+      return NextResponse.json({ error: "Chave interna inválida" }, { status: 401 });
+    }
   }
 
   const supabase = getServiceClient();
