@@ -97,6 +97,11 @@ export interface AdminLeadRow {
   hasDiagnostic: boolean;
   analysisStatus: AnalysisStatus;
   analysisUpdatedAt: string | null;
+  analysisQueuedAt: string | null;
+  processingStartedAt: string | null;
+  attempts: number;
+  errorMessage: string | null;
+  ageSeconds: number | null;
 }
 
 export interface AdminKpis {
@@ -104,11 +109,32 @@ export interface AdminKpis {
   diagnosticosConcluidos: number;
   relatoriosPendentes: number;
   relatoriosFalha: number;
+  relatoriosEmProcessamento: number;
+}
+
+export interface AdminQueueStats {
+  queueLength: number;
+  oldestAgeSec: number | null;
+  pendente: number;
+  processando: number;
+  analisado: number;
+  falha: number;
+}
+
+export interface AdminLogEntry {
+  leadId: string;
+  leadName: string | null;
+  step: string;
+  message: string | null;
+  durationMs: number | null;
+  createdAt: string;
 }
 
 export interface AdminDashboardResponse {
   kpis: AdminKpis;
   rows: AdminLeadRow[];
+  queue: AdminQueueStats;
+  logs: AdminLogEntry[];
 }
 
 export async function getAdminDashboard(
@@ -120,7 +146,7 @@ export async function getAdminDashboard(
 export async function generateReport(
   leadId: string,
   authToken: string,
-): Promise<{ ok: true }> {
+): Promise<{ ok: true; queued: boolean }> {
   return apiFetch("/admin-proxy/analysis/reprocess", {
     method: "POST",
     body: { leadId },
