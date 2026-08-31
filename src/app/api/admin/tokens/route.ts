@@ -4,6 +4,10 @@ import { requireManager, unauthorized } from "@/lib/auth/guard";
 import { verifyInternalApiKey } from "@/lib/auth/internal-key";
 import { createTokenRepository } from "@/lib/repository/token-repo";
 import { createLeadRepository } from "@/lib/repository/lead-repo";
+import { createAssessmentRepository } from "@/lib/repository/assessment-repo";
+import { createMarketInsightsRepository } from "@/lib/repository/market-insights-repo";
+import { createAnalysisQueueRepository } from "@/lib/repository/analysis-queue-repo";
+import { createAnalysisService } from "@/lib/service/analysis-service";
 import { createAdminService } from "@/lib/service/admin-service";
 
 export async function GET(req: Request) {
@@ -17,6 +21,20 @@ export async function GET(req: Request) {
   const adminService = createAdminService({
     tokenRepo: createTokenRepository(supabase),
     leadRepo: createLeadRepository(supabase),
+    assessmentRepo: createAssessmentRepository(supabase),
+    analysisService: createAnalysisService({
+      queueRepo: createAnalysisQueueRepository(supabase),
+      insightsRepo: createMarketInsightsRepository(supabase),
+      orchestrator: {
+        run: async () => {
+          throw new Error("orchestrator não usado no dashboard");
+        },
+      },
+      payloadLoader: async () => null,
+      leadRepo: createLeadRepository(supabase),
+      generatePdf: async () => ({ pdf: Buffer.from(""), filename: "" }),
+      sendEmail: async () => undefined,
+    }),
   });
 
   try {

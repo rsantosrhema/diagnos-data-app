@@ -151,16 +151,17 @@ Client + UI da página admin.
 - Skill: NONE
 
 **Done when**:
-- [ ] `reprocessAnalysis(leadId: string)` valida com `reprocessAnalysisSchema` (reusa T3) e retorna `{ ok: true }` após `enqueue` para status `analisado`/`falha`/`analise_pendente` com diagnóstico
-- [ ] `AdminServiceError(400)` para lead inexistente e para lead sem diagnóstico
-- [ ] `AdminServiceError(400)` para status inelegível
-- [ ] Erro de `enqueue` propaga (não capturado) — REPRO-04
-- [ ] Mocks de `admin-service.test.ts` atualizados com os novos deps (testes existentes não quebram)
-- [ ] Unit tests novos: happy path (enqueue chamado), sem diagnóstico 400, status inelegível 400, enqueue rejeitado propaga
-- [ ] `npm run test` passa
+- [x] `reprocessAnalysis(leadId: string)` valida com `reprocessAnalysisSchema` (reusa T3) e retorna `{ ok: true }` após `enqueue` para status `analisado`/`falha`/`analise_pendente` com diagnóstico
+- [x] `AdminServiceError(400)` para lead inexistente e para lead sem diagnóstico
+- [x] `AdminServiceError(400)` para status inelegível
+- [x] Erro de `enqueue` propaga (não capturado) — REPRO-04
+- [x] Mocks de `admin-service.test.ts` atualizados com os novos deps (testes existentes não quebram)
+- [x] Unit tests novos: happy path (enqueue chamado), sem diagnóstico 400, status inelegível 400, enqueue rejeitado propaga
+- [x] `npm run test` passa (319 passed) + `npm run typecheck` passa
 
-**Tests**: unit
-**Gate**: quick
+**Tests**: unit ✅ (5 novos em `admin-service.test.ts`, total 7)
+**Gate**: quick ✅ (`npm run test` 319 passed + `npm run typecheck` ok)
+**Commit**: `feat(admin): add reprocessAnalysis with eligibility to admin service`
 
 ---
 

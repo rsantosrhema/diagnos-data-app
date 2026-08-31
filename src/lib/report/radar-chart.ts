@@ -100,8 +100,7 @@ export function RadarChart({ dimensions }: RadarChartProps): ReturnType<typeof h
       x: anchorX,
       y: anchorY,
       textAnchor,
-      fontSize: 6,
-      fill: LABEL_COLOR,
+      style: { fontSize: 6, fill: LABEL_COLOR },
     }, dim.name);
   });
 

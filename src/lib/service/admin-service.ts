@@ -1,12 +1,27 @@
 import type { TokenRepository } from "@/lib/repository/token-repo";
 import type { LeadRepository } from "@/lib/repository/lead-repo";
+import type { AssessmentRepository } from "@/lib/repository/assessment-repo";
 import type { AdminTokensResponseDTO, AdminLeadRowDTO, AdminKpisDTO } from "@/lib/dto/admin";
+
+export class AdminServiceError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = "AdminServiceError";
+  }
+}
+
+const REPROCESSABLE_STATUSES = ["analisado", "falha", "analise_pendente"];
 
 export function createAdminService(deps: {
   tokenRepo: TokenRepository;
   leadRepo: LeadRepository;
+  assessmentRepo: AssessmentRepository;
+  analysisService: { enqueue(leadId: string): Promise<void> };
 }) {
-  const { tokenRepo, leadRepo } = deps;
+  const { tokenRepo, leadRepo, assessmentRepo, analysisService } = deps;
 
   return {
     async getTokensDashboard(): Promise<AdminTokensResponseDTO> {
@@ -47,6 +62,25 @@ export function createAdminService(deps: {
       };
 
       return { kpis, rows };
+    },
+
+    async reprocessAnalysis(leadId: string): Promise<{ ok: true }> {
+      const lead = await leadRepo.findById(leadId);
+      if (!lead) {
+        throw new AdminServiceError("Lead não encontrado ou sem diagnóstico", 400);
+      }
+
+      const hasDiagnostic = await assessmentRepo.existsForLead(leadId);
+      if (!hasDiagnostic) {
+        throw new AdminServiceError("Lead não encontrado ou sem diagnóstico", 400);
+      }
+
+      if (!REPROCESSABLE_STATUSES.includes(lead.status)) {
+        throw new AdminServiceError("Lead sem análise reprocessável", 400);
+      }
+
+      await analysisService.enqueue(leadId);
+      return { ok: true };
     },
   };
 }
