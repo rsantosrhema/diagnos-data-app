@@ -1,6 +1,7 @@
 import React from "react";
 import { renderToBuffer, Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { GeneratePdfInput } from "@/lib/service/screen-service";
+import { RadarChart } from "./radar-chart";
 
 const COLORS = {
   primary: "#4A2C7D",
@@ -65,6 +66,10 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: COLORS.dark,
     textAlign: "center",
+  },
+  radarBox: {
+    alignItems: "center",
+    marginBottom: 16,
   },
   tableHeader: {
     flexDirection: "row",
@@ -197,6 +202,14 @@ export function buildReportChildren(input: GeneratePdfInput): ReturnType<typeof 
       h(Text, { style: styles.bandLabel }, input.band.rotulo),
       h(Text, { style: styles.bandDescription }, input.band.descricao),
     ),
+    ...(input.dimensionScores.length > 0
+      ? [h(View, { key: "radar", style: styles.section },
+          h(Text, { style: styles.sectionTitle }, "Radar de Maturidade"),
+          h(View, { style: styles.radarBox },
+            h(RadarChart, { dimensions: input.dimensionScores }),
+          ),
+        )]
+      : []),
     h(View, { key: "table", style: styles.section },
       h(Text, { style: styles.sectionTitle }, "Scores por Dimensão"),
       h(View, { style: styles.tableHeader },

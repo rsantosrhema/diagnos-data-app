@@ -102,14 +102,15 @@ Client + UI da página admin.
 - Skill: NONE
 
 **Done when**:
-- [ ] `dimensionScores.length > 0` → children incluem `Text` "Radar de Maturidade" + `RadarChart`
-- [ ] `dimensionScores` vazio → seção Radar omitida
-- [ ] `generateScreenerPdf` com `dimensionScores` produz buffer não-vazio (PDF com radar)
-- [ ] Unit tests em `report-generator.test.ts`: seção presente, seção ausente, buffer gerado
-- [ ] `npm run test` passa
+- [x] `dimensionScores.length > 0` → children incluem `Text` "Radar de Maturidade" + `RadarChart`
+- [x] `dimensionScores` vazio → seção Radar omitida
+- [x] `generateScreenerPdf` com `dimensionScores` produz buffer não-vazio (PDF com radar)
+- [x] Unit tests em `report-generator.test.ts`: seção presente, seção ausente, buffer gerado
+- [x] `npm run test` passa (310 passed)
 
-**Tests**: unit
-**Gate**: quick
+**Tests**: unit ✅ (2 novos em `report-generator.test.ts`, total 14)
+**Gate**: quick ✅ (`npm run test` 310 passed)
+**Commit**: `feat(report): render radar maturity section in pdf`
 
 ---
 

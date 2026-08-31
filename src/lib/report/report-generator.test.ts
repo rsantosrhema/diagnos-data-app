@@ -211,4 +211,16 @@ describe("generateScreenerPdf", () => {
     const result = await generateScreenerPdf(makeInput({ insights: { bullets: [] } }));
     expect(result.pdf.length).toBeGreaterThan(0);
   });
+
+  it("renderiza seção Radar de Maturidade com dimensionScores (RADAR-01)", async () => {
+    const children = buildReportChildren(makeInput());
+    expect(hasText(children, "Radar de Maturidade")).toBe(true);
+    const result = await generateScreenerPdf(makeInput());
+    expect(result.pdf.length).toBeGreaterThan(0);
+  });
+
+  it("omite a seção Radar quando dimensionScores vazio (RADAR-01 edge)", () => {
+    const children = buildReportChildren(makeInput({ dimensionScores: [] }));
+    expect(hasText(children, "Radar de Maturidade")).toBe(false);
+  });
 });
