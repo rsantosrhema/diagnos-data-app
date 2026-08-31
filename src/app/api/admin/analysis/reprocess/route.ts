@@ -7,8 +7,8 @@ import { createLeadRepository } from "@/lib/repository/lead-repo";
 import { createAssessmentRepository } from "@/lib/repository/assessment-repo";
 import { createMarketInsightsRepository } from "@/lib/repository/market-insights-repo";
 import { createAnalysisQueueRepository } from "@/lib/repository/analysis-queue-repo";
-import { createAnalysisService } from "@/lib/service/analysis-service";
 import { createAdminService, AdminServiceError } from "@/lib/service/admin-service";
+import type { AdminLogEntryDTO } from "@/lib/dto/admin";
 
 export async function POST(req: Request) {
   if (!verifyInternalApiKey(req)) {
@@ -30,23 +30,18 @@ export async function POST(req: Request) {
   }
 
   const supabase = getServiceClient();
+  const queueRepo = createAnalysisQueueRepository(supabase);
+  const insightsRepo = createMarketInsightsRepository(supabase);
+
   const adminService = createAdminService({
     leadRepo: createLeadRepository(supabase),
     assessmentRepo: createAssessmentRepository(supabase),
-    marketInsightsRepo: createMarketInsightsRepository(supabase),
-    analysisService: createAnalysisService({
-      queueRepo: createAnalysisQueueRepository(supabase),
-      insightsRepo: createMarketInsightsRepository(supabase),
-      orchestrator: {
-        run: async () => {
-          throw new Error("orchestrator não usado no enfileiramento");
-        },
-      },
-      payloadLoader: async () => null,
-      leadRepo: createLeadRepository(supabase),
-      generatePdf: async () => ({ pdf: Buffer.from(""), filename: "" }),
-      sendEmail: async () => undefined,
-    }),
+    marketInsightsRepo: insightsRepo,
+    queueRepo,
+    logLoader: async () => [],
+    analysisService: {
+      enqueue: async (leadId: string) => queueRepo.enqueue(leadId),
+    },
   });
 
   try {

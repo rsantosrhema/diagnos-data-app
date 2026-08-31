@@ -1,10 +1,13 @@
 import type { LeadRepository } from "@/lib/repository/lead-repo";
 import type { AssessmentRepository } from "@/lib/repository/assessment-repo";
 import type { MarketInsightsRepository } from "@/lib/repository/market-insights-repo";
+import type { AnalysisQueueRepository } from "@/lib/repository/analysis-queue-repo";
 import type {
   AdminDashboardResponseDTO,
   AdminLeadRowDTO,
   AdminKpisDTO,
+  AdminLogEntryDTO,
+  AdminQueueStatsDTO,
 } from "@/lib/dto/admin";
 import type { MarketInsightsStatus } from "@/lib/repository/market-insights-repo";
 
@@ -29,20 +32,29 @@ export function createAdminService(deps: {
   leadRepo: LeadRepository;
   assessmentRepo: AssessmentRepository;
   marketInsightsRepo: MarketInsightsRepository;
+  queueRepo: AnalysisQueueRepository;
+  logLoader: (limit: number) => Promise<AdminLogEntryDTO[]>;
   analysisService: { enqueue(leadId: string): Promise<{ ok: boolean; queued: boolean }> };
 }) {
-  const { leadRepo, assessmentRepo, marketInsightsRepo, analysisService } = deps;
+  const { leadRepo, assessmentRepo, marketInsightsRepo, queueRepo, logLoader, analysisService } = deps;
 
   return {
     async getDashboard(): Promise<AdminDashboardResponseDTO> {
       const leads = await leadRepo.findAll();
-      const [assessments, insights] = await Promise.all([
+      const [assessments, insights, queueStats, logs] = await Promise.all([
         Promise.all(leads.map((l) => assessmentRepo.existsForLead(l.id))),
         Promise.all(leads.map((l) => marketInsightsRepo.findByLeadId(l.id))),
+        queueRepo.stats(),
+        logLoader(50),
       ]);
 
       const rows: AdminLeadRowDTO[] = leads.map((lead, i) => {
         const insight = insights[i];
+        const queuedAt = insight?.queued_at ?? null;
+        const ageSeconds =
+          queuedAt && insight?.status !== "analisado" && insight?.status !== "falha"
+            ? Math.max(0, Math.round((Date.now() - new Date(queuedAt).getTime()) / 1000))
+            : null;
         return {
           leadId: lead.id,
           name: lead.name,
@@ -52,6 +64,11 @@ export function createAdminService(deps: {
           hasDiagnostic: assessments[i],
           analysisStatus: insight ? (insight.status as MarketInsightsStatus) : null,
           analysisUpdatedAt: insight ? insight.updated_at : null,
+          analysisQueuedAt: insight ? insight.queued_at : null,
+          processingStartedAt: insight ? insight.processing_started_at : null,
+          attempts: insight ? insight.attempts : 0,
+          errorMessage: insight ? insight.error : null,
+          ageSeconds,
         };
       });
 
@@ -62,9 +79,19 @@ export function createAdminService(deps: {
           (r) => r.analysisStatus === "pendente" || r.analysisStatus === "processando",
         ).length,
         relatoriosFalha: rows.filter((r) => r.analysisStatus === "falha").length,
+        relatoriosEmProcessamento: rows.filter((r) => r.analysisStatus === "processando").length,
       };
 
-      return { kpis, rows };
+      const queue: AdminQueueStatsDTO = {
+        queueLength: queueStats.queueLength,
+        oldestAgeSec: queueStats.oldestAgeSec,
+        pendente: queueStats.pendente,
+        processando: queueStats.processando,
+        analisado: queueStats.analisado,
+        falha: queueStats.falha,
+      };
+
+      return { kpis, rows, queue, logs };
     },
 
     async generateReport(leadId: string): Promise<{ ok: true; queued: true }> {
