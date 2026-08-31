@@ -15,9 +15,10 @@
 
 ## Handoff
 
-**Last session:** 2026-08-30
-**Feature:** pdf-radar-e-reprocessamento (slice 3: radar de aranha no PDF + admin reprocessar análise) — **DONE**
-**Phase:** Execute complete — 9 commits (T1-T8 + verifier), Verifier PASS (12/12 ACs, 4/4 mutants), validation.md written + spec traceability updated
-**Next step:** ADR-009 concluído (fatias 1-3). Próximas: revisão visual do radar no PDF renderizado (UAT opcional) e deploy do worker/endpoints; retry automático é follow-up de ops
-**Branch:** main
-**Uncommitted changes:** `.specs/STATE.md` (este handoff)
+- **Feature**: report-observability (.specs/features/report-observability) — **DONE**
+- **Phase / Task**: Execute complete — 6 feature commits (T1-T8 agrupados) + Verifier PASS (13/13 ACs, 3/3 mutants), validation.md escrito + traceability OBS-01..13 → Verified
+- **Completed**: T1-T8; baseline 0008 commitado como `6b9de6d`
+- **Next step**: aplicar a migration `supabase/migrations/0009_report_observability.sql` no Supabase remoto (gate manual via supabase-mcp/psql) e rodar `validate_data_model.sql`; UAT opcional das seções Fila/Log no admin
+- **Blockers**: none
+- **Uncommitted files**: `validation.md` + `spec.md` traceability + `LESSONS.md`/`lessons.json` + `.specs/STATE.md` (a commitar pelo orquestrador)
+- **Branch**: main

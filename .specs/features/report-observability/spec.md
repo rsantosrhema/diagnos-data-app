@@ -109,21 +109,21 @@ O relatório é gerado de forma assíncrona: o gerente clica em "Gerar relatóri
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| OBS-01 | P1: Estado por job na fila | Design | Pending |
-| OBS-02 | P1: Estado por job na fila | Design | Pending |
-| OBS-03 | P1: Estado por job na fila | Design | Pending |
-| OBS-04 | P1: Estado por job na fila | Design | Pending |
-| OBS-05 | P1: Estado por job na fila | Design | Pending |
-| OBS-06 | P1: Estado por job na fila | Design | Pending |
-| OBS-07 | P1: Log de processamentos | Design | Pending |
-| OBS-08 | P1: Log de processamentos | Design | Pending |
-| OBS-09 | P1: Log de processamentos | Design | Pending |
-| OBS-10 | P1: Log de processamentos | Design | Pending |
-| OBS-11 | P2: Deduplicação de jobs | Design | Pending |
-| OBS-12 | P2: Deduplicação de jobs | Design | Pending |
-| OBS-13 | P2: Deduplicação de jobs | Design | Pending |
+| OBS-01 | P1: Estado por job na fila | Design | ✅ Verified |
+| OBS-02 | P1: Estado por job na fila | Design | ✅ Verified |
+| OBS-03 | P1: Estado por job na fila | Design | ✅ Verified |
+| OBS-04 | P1: Estado por job na fila | Design | ✅ Verified |
+| OBS-05 | P1: Estado por job na fila | Design | ✅ Verified |
+| OBS-06 | P1: Estado por job na fila | Design | ✅ Verified |
+| OBS-07 | P1: Log de processamentos | Design | ✅ Verified |
+| OBS-08 | P1: Log de processamentos | Design | ✅ Verified |
+| OBS-09 | P1: Log de processamentos | Design | ✅ Verified |
+| OBS-10 | P1: Log de processamentos | Design | ✅ Verified |
+| OBS-11 | P2: Deduplicação de jobs | Design | ✅ Verified |
+| OBS-12 | P2: Deduplicação de jobs | Design | ✅ Verified |
+| OBS-13 | P2: Deduplicação de jobs | Design | ✅ Verified |
 
-**Coverage:** 13 total, 0 mapped to tasks, 13 unmapped ⚠️
+**Coverage:** 13 total, 13 verified ✅
 
 ---
 

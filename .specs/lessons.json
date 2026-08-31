@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 2,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "spec_precision_gap::repository layer sql state transitions queue read marks processando attempts 1 have no js unit test cover rpc bodies or assert them via integration instead of relying on code review",
+      "text": "Repository-layer SQL state transitions (queue read marks processando / attempts+1) have no JS unit test; cover RPC bodies or assert them via integration instead of relying on code review",
+      "signal": "spec_precision_gap",
+      "scope": "",
+      "status": "candidate",
+      "features": [
+        "report-observability"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "validation.md"
+      ],
+      "created": "2026-08-31T15:54:20Z",
+      "last_seen": "2026-08-31T15:54:20Z"
+    }
+  ]
+}
