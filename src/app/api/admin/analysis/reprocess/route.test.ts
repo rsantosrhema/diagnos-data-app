@@ -74,6 +74,10 @@ function mockFetchOnce(impl: (input: RequestInfo | URL, init?: RequestInit) => P
   return fetchMock;
 }
 
+function workerOkResponse(): Response {
+  return new Response(JSON.stringify({ ok: true }), { status: 200 });
+}
+
 beforeEach(() => {
   vi.unstubAllGlobals();
 });
@@ -138,25 +142,33 @@ describe("POST /api/admin/analysis/reprocess", () => {
     expect(mockGenerateReport).toHaveBeenCalledWith(VALID_UUID);
   });
 
-  it("dispara o worker fire-and-forget com INTERNAL_API_KEY após enfileirar (REL-01/REL-02/REL-05)", async () => {
+  it("aguarda e dispara o worker com INTERNAL_API_KEY após enfileirar (REL-01/REL-02/REL-05)", async () => {
     mockGenerateReport.mockResolvedValue({ ok: true, queued: true });
-    const fetchMock = mockFetchOnce(() => Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 })));
+    const fetchMock = mockFetchOnce(() => Promise.resolve(workerOkResponse()));
+    const original = process.env.NEXT_PUBLIC_APP_URL;
+    process.env.NEXT_PUBLIC_APP_URL = "http://localhost";
     const { POST } = await import("./route");
-    const res = await POST(makeRequest({ leadId: VALID_UUID }));
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body).toEqual({ ok: true, queued: true });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("http://localhost/api/analysis-worker");
-    expect(init?.method).toBe("POST");
-    const headers = init?.headers as Record<string, string>;
-    expect(headers["x-internal-api-key"]).toBe(process.env.INTERNAL_API_KEY);
+    try {
+      const res = await POST(makeRequest({ leadId: VALID_UUID }));
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body).toEqual({ ok: true, queued: true });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe("http://localhost/api/analysis-worker");
+      expect(init?.method).toBe("POST");
+      const headers = init?.headers as Record<string, string>;
+      expect(headers["x-internal-api-key"]).toBe(process.env.INTERNAL_API_KEY);
+      expect(init?.signal).toBeInstanceOf(AbortSignal);
+    } finally {
+      if (original === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
+      else process.env.NEXT_PUBLIC_APP_URL = original;
+    }
   });
 
   it("usa NEXT_PUBLIC_APP_URL como base do worker quando disponível (REL-04)", async () => {
     mockGenerateReport.mockResolvedValue({ ok: true, queued: true });
-    const fetchMock = mockFetchOnce(() => Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 })));
+    const fetchMock = mockFetchOnce(() => Promise.resolve(workerOkResponse()));
     const original = process.env.NEXT_PUBLIC_APP_URL;
     process.env.NEXT_PUBLIC_APP_URL = "https://diagnosdata.rhemadata.com/";
     const { POST } = await import("./route");
@@ -166,20 +178,69 @@ describe("POST /api/admin/analysis/reprocess", () => {
     process.env.NEXT_PUBLIC_APP_URL = original;
   });
 
+  it("usa a origem da requisição como base quando NEXT_PUBLIC_APP_URL não está configurada (REL-04)", async () => {
+    mockGenerateReport.mockResolvedValue({ ok: true, queued: true });
+    const fetchMock = mockFetchOnce(() => Promise.resolve(workerOkResponse()));
+    const original = process.env.NEXT_PUBLIC_APP_URL;
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    const req = new Request("https://rhemadata.vercel.app/api/admin/analysis/reprocess", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-internal-api-key": process.env.INTERNAL_API_KEY!,
+        host: "rhemadata.vercel.app",
+      },
+      body: JSON.stringify({ leadId: VALID_UUID }),
+    });
+    const { POST } = await import("./route");
+    try {
+      await POST(req);
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(url).toBe("https://rhemadata.vercel.app/api/analysis-worker");
+    } finally {
+      if (original === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
+      else process.env.NEXT_PUBLIC_APP_URL = original;
+    }
+  });
+
   it("não bloqueia a resposta quando o fetch do worker rejeita (REL-06)", async () => {
     mockGenerateReport.mockResolvedValue({ ok: true, queued: true });
     const fetchMock = mockFetchOnce(() => Promise.reject(new Error("worker down")));
+    const original = process.env.NEXT_PUBLIC_APP_URL;
+    process.env.NEXT_PUBLIC_APP_URL = "http://localhost";
     const { POST } = await import("./route");
-    const res = await POST(makeRequest({ leadId: VALID_UUID }));
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body).toEqual({ ok: true, queued: true });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    try {
+      const res = await POST(makeRequest({ leadId: VALID_UUID }));
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body).toEqual({ ok: true, queued: true });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    } finally {
+      process.env.NEXT_PUBLIC_APP_URL = original;
+    }
+  });
+
+  it("não bloqueia a resposta quando o fetch do worker dá timeout (REL-06)", async () => {
+    mockGenerateReport.mockResolvedValue({ ok: true, queued: true });
+    const fetchMock = mockFetchOnce(
+      () => new Promise<Response>((resolve) => setTimeout(() => resolve(workerOkResponse()), 500)),
+    );
+    const original = process.env.NEXT_PUBLIC_APP_URL;
+    process.env.NEXT_PUBLIC_APP_URL = "http://localhost";
+    const { POST } = await import("./route");
+    try {
+      const res = await POST(makeRequest({ leadId: VALID_UUID }));
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body).toEqual({ ok: true, queued: true });
+    } finally {
+      process.env.NEXT_PUBLIC_APP_URL = original;
+    }
   });
 
   it("pula o disparo quando INTERNAL_API_KEY não está configurada e segue com 200 (REL-06)", async () => {
     mockGenerateReport.mockResolvedValue({ ok: true, queued: true });
-    const fetchMock = mockFetchOnce(() => Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 })));
+    const fetchMock = mockFetchOnce(() => Promise.resolve(workerOkResponse()));
     const original = process.env.INTERNAL_API_KEY;
     delete process.env.INTERNAL_API_KEY;
     const { POST } = await import("./route");
@@ -187,5 +248,25 @@ describe("POST /api/admin/analysis/reprocess", () => {
     expect(res.status).toBe(200);
     expect(fetchMock).not.toHaveBeenCalled();
     process.env.INTERNAL_API_KEY = original;
+  });
+
+  it("responde 200 e loga quando o worker responde com erro (REL-06)", async () => {
+    mockGenerateReport.mockResolvedValue({ ok: true, queued: true });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const fetchMock = mockFetchOnce(() => Promise.resolve(new Response("worker quebrou", { status: 500 })));
+    const original = process.env.NEXT_PUBLIC_APP_URL;
+    process.env.NEXT_PUBLIC_APP_URL = "http://localhost";
+    const { POST } = await import("./route");
+    try {
+      const res = await POST(makeRequest({ leadId: VALID_UUID }));
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body).toEqual({ ok: true, queued: true });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(errorSpy).toHaveBeenCalled();
+    } finally {
+      process.env.NEXT_PUBLIC_APP_URL = original;
+      errorSpy.mockRestore();
+    }
   });
 });

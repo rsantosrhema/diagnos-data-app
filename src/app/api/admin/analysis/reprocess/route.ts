@@ -10,6 +10,8 @@ import { createAnalysisQueueRepository } from "@/lib/repository/analysis-queue-r
 import { createAdminService, AdminServiceError } from "@/lib/service/admin-service";
 import type { AdminLogEntryDTO } from "@/lib/dto/admin";
 
+const WORKER_FETCH_TIMEOUT_MS = 4_000;
+
 function getWorkerBaseUrl(req: Request): string {
   const envBase = process.env.NEXT_PUBLIC_APP_URL;
   if (envBase) return envBase.replace(/\/+$/, "");
@@ -18,14 +20,25 @@ function getWorkerBaseUrl(req: Request): string {
   return `${proto}://${host}`;
 }
 
-function dispatchWorker(req: Request): void {
+async function dispatchWorker(req: Request): Promise<void> {
   const key = process.env.INTERNAL_API_KEY;
   if (!key) return;
   const url = `${getWorkerBaseUrl(req)}/api/analysis-worker`;
-  void fetch(url, {
-    method: "POST",
-    headers: { "x-internal-api-key": key },
-  }).catch(() => {});
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "x-internal-api-key": key },
+      signal: AbortSignal.timeout(WORKER_FETCH_TIMEOUT_MS),
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      console.error(
+        `[reprocess] worker respondeu ${res.status}${detail ? `: ${detail}` : ""}`,
+      );
+    }
+  } catch (err) {
+    console.error("[reprocess] falha ao acionar worker:", err);
+  }
 }
 
 export async function POST(req: Request) {
@@ -72,6 +85,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 
-  dispatchWorker(req);
+  await dispatchWorker(req);
   return NextResponse.json(result, { status: 200 });
 }
