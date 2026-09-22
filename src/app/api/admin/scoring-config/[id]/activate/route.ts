@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase/server";
 import { verifyInternalApiKey } from "@/lib/auth/internal-key";
+import { requireManager, unauthorized } from "@/lib/auth/guard";
 import { createScoringConfigRepository } from "@/lib/repository/scoring-config-repo";
 import { createScoringConfigService, ScoringConfigServiceError } from "@/lib/service/scoring-config-service";
 
@@ -11,6 +12,8 @@ export async function PATCH(
   if (!verifyInternalApiKey(req)) {
     return NextResponse.json({ error: "Chave interna inválida" }, { status: 401 });
   }
+  const manager = await requireManager(req);
+  if (!manager) return unauthorized();
 
   const { id } = params;
   if (!id) {

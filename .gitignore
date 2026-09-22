@@ -35,3 +35,15 @@ vercel.json
 *.tsbuildinfo
 next-env.d.ts
 
+# opencode (config local — contém tokens, não versionar)
+.opencode/
+
+# auditoria de segurança (venv local e gráficos intermediários)
+/docs/security-audit/.venv/
+/docs/security-audit/_charts/
+
+# agent tool caches (não versionar)
+graphify-out/
+.codegraph/
+.omo/
+

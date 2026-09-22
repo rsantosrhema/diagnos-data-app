@@ -12,6 +12,7 @@ import type {
   InsightsBrief,
 } from "@/lib/agents/types";
 import type { GeneratePdfInput } from "@/lib/service/screen-service";
+import { stripControlChars } from "@/lib/agents/sanitize";
 
 export class AnalysisServiceError extends Error {
   constructor(message: string) {
@@ -146,10 +147,11 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
       await insightsRepo.logEvent(opts.leadId, "pdf", undefined, pdfMs);
 
       const to = process.env.MANAGER_NOTIFICATION_EMAIL ?? "comercial@rhemadata.com";
+      const solicitanteNome = stripControlChars(opts.payload!.solicitante.nome);
       const emailStart = Date.now();
       await sendEmail({
         to,
-        subject: `Diagnóstico de Maturidade — ${opts.payload!.solicitante.nome}`,
+        subject: `Diagnóstico de Maturidade — ${solicitanteNome}`,
         html: `<p>Diagnóstico recebido de <strong>${escapeHtml(opts.payload!.solicitante.nome)}</strong> (${escapeHtml(opts.payload!.solicitante.cargo)}).</p><p>Faixa: <strong>${escapeHtml(opts.payload!.score.faixa)}</strong></p>`,
         attachment: { filename: pdfResult.filename, content: pdfResult.pdf },
       });

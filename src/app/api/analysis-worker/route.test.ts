@@ -79,7 +79,7 @@ describe("POST /api/analysis-worker", () => {
     expect(res.status).toBe(401);
   });
 
-  it("retorna 500 claro quando CRON_SECRET não está configurado", async () => {
+  it("retorna 401 genérico quando CRON_SECRET não está configurado (sem revelar config)", async () => {
     mockVerifyInternalApiKey.mockReturnValue(false);
     const original = process.env.CRON_SECRET;
     delete process.env.CRON_SECRET;
@@ -88,9 +88,9 @@ describe("POST /api/analysis-worker", () => {
       method: "POST",
     });
     const res = await POST(req);
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(401);
     const body = await res.json();
-    expect(body).toMatchObject({ error: expect.stringContaining("CRON_SECRET") });
+    expect(body).toMatchObject({ error: "Não autorizado" });
     process.env.CRON_SECRET = original;
   });
 

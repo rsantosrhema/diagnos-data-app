@@ -16,6 +16,14 @@
       "type": "remote",
       "enabled": true,
       "url": "https://mcp.supabase.com/mcp?features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching"
+    },
+    "coolify": {
+      "type": "remote",
+      "enabled": true,
+      "url": "http://187.127.55.238:8000/mcp",
+      "headers": {
+        "Authorization": "Bearer 4|N1Gmq4aM9wpN3IaMfdfWgvQAnupciJjgGsmgloVx898a813c"
+      }
     }
   }
 }

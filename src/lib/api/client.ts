@@ -3,11 +3,10 @@ const API_BASE = "/api";
 interface ApiOptions {
   method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: unknown;
-  token?: string;
 }
 
 async function apiFetch<T>(path: string, opts: ApiOptions = {}): Promise<T> {
-  const { method = "GET", body, token } = opts;
+  const { method = "GET", body } = opts;
 
   const headers: Record<string, string> = {};
 
@@ -15,14 +14,11 @@ async function apiFetch<T>(path: string, opts: ApiOptions = {}): Promise<T> {
     headers["Content-Type"] = "application/json";
   }
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
   const res = await fetch(`${API_BASE}${path}`, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
+    credentials: "same-origin",
   });
 
   const data = await res.json().catch(() => null);
@@ -137,19 +133,37 @@ export interface AdminDashboardResponse {
   logs: AdminLogEntry[];
 }
 
-export async function getAdminDashboard(
-  authToken: string,
-): Promise<AdminDashboardResponse> {
-  return apiFetch("/admin-proxy/dashboard", { token: authToken });
+export async function getAdminDashboard(): Promise<AdminDashboardResponse> {
+  return apiFetch("/admin-proxy/dashboard");
 }
 
 export async function generateReport(
   leadId: string,
-  authToken: string,
 ): Promise<{ ok: true; queued: boolean }> {
   return apiFetch("/admin-proxy/analysis/reprocess", {
     method: "POST",
     body: { leadId },
-    token: authToken,
   });
+}
+
+// ─── Admin session (cookie-based, httpOnly) ───
+
+export interface AdminSessionInfo {
+  authenticated: boolean;
+  email: string | null;
+}
+
+export async function loginAdminSession(
+  email: string,
+  password: string,
+): Promise<AdminSessionInfo> {
+  return apiFetch("/admin-proxy/session", { method: "POST", body: { email, password } });
+}
+
+export async function getAdminSessionInfo(): Promise<AdminSessionInfo> {
+  return apiFetch("/admin-proxy/session");
+}
+
+export async function logoutAdminSession(): Promise<{ ok: boolean }> {
+  return apiFetch("/admin-proxy/session", { method: "DELETE" });
 }

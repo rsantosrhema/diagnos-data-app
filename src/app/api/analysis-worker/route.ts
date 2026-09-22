@@ -11,13 +11,14 @@ import { sendReportEmail } from "@/lib/email/send-report";
 import { agentPayloadSchema } from "@/lib/schemas/agent-payload";
 import type { AgentPayload } from "@/lib/screener/agent-payload";
 
+import { createHash, timingSafeEqual } from "node:crypto";
+
 const MAX_JOBS_PER_RUN = 5;
 
 /** Tempo máximo que um job pode ficar na fila antes de ser marcado como falha. */
 const MAX_STALE_MINUTES = 30;
 
 function timingSafeEqualStr(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
   const { createHash, timingSafeEqual } = require("node:crypto") as typeof import("node:crypto");
   return timingSafeEqual(
     createHash("sha256").update(a).digest(),
@@ -25,31 +26,21 @@ function timingSafeEqualStr(a: string, b: string): boolean {
   );
 }
 
-function isAuthorized(req: Request): { ok: boolean; reason?: "internal" | "cron" | "missing-cron-secret" } {
-  if (verifyInternalApiKey(req)) return { ok: true, reason: "internal" };
+function isAuthorized(req: Request): boolean {
+  if (verifyInternalApiKey(req)) return true;
 
   const cronSecret = process.env.CRON_SECRET;
   const provided = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!cronSecret || !provided || !timingSafeEqualStr(provided, cronSecret)) {
-    if (!cronSecret) return { ok: false, reason: "missing-cron-secret" };
-    return { ok: false, reason: "internal" };
+    return false;
   }
-  return { ok: true, reason: "cron" };
+  return true;
 }
 
 export async function POST(req: Request) {
-  const auth = isAuthorized(req);
-  if (!auth.ok) {
-    if (auth.reason === "missing-cron-secret") {
-      console.error(
-        "[analysis-worker] CRON_SECRET não configurado — sem fallback de autorização para o cron.",
-      );
-      return NextResponse.json(
-        { error: "Erro interno: CRON_SECRET não configurado" },
-        { status: 500 },
-      );
-    }
-    return NextResponse.json({ error: "Chave interna inválida" }, { status: 401 });
+  if (!isAuthorized(req)) {
+    console.error("[analysis-worker] tentativa de acesso não autorizada.");
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
   const supabase = getServiceClient();
@@ -121,15 +112,8 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-  const auth = isAuthorized(req);
-  if (!auth.ok) {
-    if (auth.reason === "missing-cron-secret") {
-      return NextResponse.json(
-        { ok: false, error: "CRON_SECRET não configurado" },
-        { status: 200 },
-      );
-    }
-    return NextResponse.json({ error: "Chave interna inválida" }, { status: 401 });
+  if (!isAuthorized(req)) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
   return NextResponse.json(

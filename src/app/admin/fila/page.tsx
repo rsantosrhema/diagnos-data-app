@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { RhemaLogo } from "../../components/RhemaLogo";
 import { WaveDivider } from "../../components/WaveDivider";
-import { supabase } from "@/lib/supabase/browser";
 import { getAdminDashboard } from "@/lib/api/client";
 import {
   AnalysisBadge,
@@ -21,17 +20,10 @@ export default function AdminFilaPage() {
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
-  const getAuthToken = useCallback(async (): Promise<string | null> => {
-    const { data: session } = await supabase.auth.getSession();
-    return session.session?.access_token ?? null;
-  }, []);
-
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const token = await getAuthToken();
-      if (!token) return;
-      const result = await getAdminDashboard(token);
+      const result = await getAdminDashboard();
       setData(result);
       setLastRefresh(new Date());
       setError(null);
@@ -40,7 +32,7 @@ export default function AdminFilaPage() {
     } finally {
       setLoading(false);
     }
-  }, [getAuthToken]);
+  }, []);
 
   useEffect(() => {
     void loadData();

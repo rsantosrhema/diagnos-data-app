@@ -9,18 +9,19 @@ export interface ProxyOptions {
   requireManager?: boolean;
 }
 
-const ORIGINAL_URL_HEADER = "x-internal-original-url";
+const MAX_BODY_BYTES = 256 * 1024;
 
-function getOrigin(req: Request): string {
-  const proto = req.headers.get("x-forwarded-proto") ?? new URL(req.url).protocol.replace(":", "");
-  const host = req.headers.get("host") ?? new URL(req.url).host;
-  return `${proto}://${host}`;
+function resolveInternalOrigin(req: Request): string {
+  const base = process.env.NEXT_PUBLIC_APP_URL;
+  if (base) return base.replace(/\/+$/, "");
+  return new URL(req.url).origin;
 }
 
-async function readBody(req: Request): Promise<Buffer | null> {
+async function readBody(req: Request): Promise<Buffer | null | "too-large"> {
   if (req.method === "GET" || req.method === "HEAD") return null;
   try {
     const ab = await req.arrayBuffer();
+    if (ab.byteLength > MAX_BODY_BYTES) return "too-large";
     return Buffer.from(ab);
   } catch {
     return null;
@@ -33,12 +34,10 @@ export async function proxyToInternal(req: Request, opts: ProxyOptions): Promise
     return NextResponse.json({ error: "INTERNAL_API_KEY não configurada" }, { status: 500 });
   }
 
-  const origin = getOrigin(req);
-  const targetUrl = `${origin}/api/${opts.target}`;
+  const targetUrl = `${resolveInternalOrigin(req)}/api/${opts.target}`;
 
   const headers = new Headers();
   headers.set("x-internal-api-key", internalKey);
-  headers.set(ORIGINAL_URL_HEADER, targetUrl);
 
   const contentType = req.headers.get("content-type");
   if (contentType) headers.set("content-type", contentType);
@@ -50,6 +49,10 @@ export async function proxyToInternal(req: Request, opts: ProxyOptions): Promise
   if (cookie) headers.set("cookie", cookie);
 
   const body = await readBody(req);
+  if (body === "too-large") {
+    return NextResponse.json({ error: "Corpo da requisição muito grande" }, { status: 413 });
+  }
+
   const method = (opts.method ?? req.method).toUpperCase();
   const bodyArg: BodyInit | undefined =
     body && body.length > 0 ? new Uint8Array(body) : undefined;
@@ -62,10 +65,8 @@ export async function proxyToInternal(req: Request, opts: ProxyOptions): Promise
       body: bodyArg,
     });
   } catch (err) {
-    return NextResponse.json(
-      { error: "Falha ao chamar API interna", detail: String(err) },
-      { status: 502 }
-    );
+    console.error("[proxy] falha ao chamar API interna:", err);
+    return NextResponse.json({ error: "Falha ao chamar API interna" }, { status: 502 });
   }
 
   const resHeaders = new Headers();
@@ -74,7 +75,10 @@ export async function proxyToInternal(req: Request, opts: ProxyOptions): Promise
     if (
       lower === "content-encoding" ||
       lower === "content-length" ||
-      lower === "transfer-encoding"
+      lower === "transfer-encoding" ||
+      lower === "connection" ||
+      lower === "keep-alive" ||
+      lower.startsWith("x-internal-")
     ) {
       return;
     }

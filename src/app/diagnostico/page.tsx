@@ -17,6 +17,12 @@ import {
 } from "@/lib/lead-storage";
 
 const STORAGE_KEY = "diagnos_screener_draft";
+const DRAFT_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+
+interface DraftEnvelope {
+  savedAt: number;
+  data: FormData;
+}
 
 interface FormData {
   leadId: string;
@@ -62,7 +68,17 @@ function loadDraft(): FormData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return EMPTY_FORM;
-    return { ...EMPTY_FORM, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw) as Partial<DraftEnvelope> | FormData;
+    // envelope novo: expira após DRAFT_TTL_MS (PII não deve persistir indefinidamente)
+    if ("savedAt" in parsed && parsed.savedAt && parsed.data) {
+      if (Date.now() - parsed.savedAt > DRAFT_TTL_MS) {
+        localStorage.removeItem(STORAGE_KEY);
+        return EMPTY_FORM;
+      }
+      return { ...EMPTY_FORM, ...(parsed.data as FormData) };
+    }
+    // formato legado (sem TTL): descartar para forçar re-save com envelope
+    return { ...EMPTY_FORM, ...(parsed as FormData) };
   } catch {
     return EMPTY_FORM;
   }
@@ -70,7 +86,8 @@ function loadDraft(): FormData {
 
 function saveDraft(data: FormData): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    const envelope: DraftEnvelope = { savedAt: Date.now(), data };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(envelope));
   } catch {
     // ignore
   }

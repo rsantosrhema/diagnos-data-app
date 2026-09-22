@@ -1,4 +1,5 @@
 import type { AgentPayload } from "@/lib/screener/agent-payload";
+import { sanitizeUntrusted } from "./sanitize";
 import type { Exa } from "exa-js";
 import type {
   MarketResearch,
@@ -46,9 +47,9 @@ function mapResult(result: {
   highlights?: string[];
 }): ResearchResult {
   return {
-    title: result.title ?? "",
+    title: sanitizeUntrusted(result.title ?? "", 200),
     url: result.url,
-    snippet: result.highlights?.join(" ") ?? "",
+    snippet: sanitizeUntrusted(result.highlights?.join(" ") ?? "", 400),
   };
 }
 
@@ -79,7 +80,13 @@ export function createResearcherAgent({ exa }: { exa: Pick<Exa, "search"> }) {
       const sections: ResearchSection[] = queries.map(({ key, query }, index) => {
         const outcome = settled[index];
         if (outcome.status === "rejected") {
-          return buildSection(key, query, "erro", [], String(outcome.reason));
+          const reason =
+            outcome.reason instanceof Error
+              ? outcome.reason.message
+              : typeof outcome.reason === "string"
+                ? outcome.reason
+                : "erro desconhecido";
+          return buildSection(key, query, "erro", [], sanitizeUntrusted(reason, 200));
         }
         const results = outcome.value.results.map(mapResult);
         return buildSection(key, query, "ok", results);

@@ -173,7 +173,7 @@ describe("DiagnosticoPage", () => {
     });
   });
 
-  it("salva dados no localStorage", async () => {
+  it("salva dados no localStorage com envelope TTL", async () => {
     render(React.createElement(DiagnosticoPage));
     await waitFor(() => {
       expect(screen.getByText(/olá, joão silva/i)).toBeTruthy();
@@ -182,7 +182,8 @@ describe("DiagnosticoPage", () => {
       const draft = JSON.parse(
         localStorage.getItem("diagnos_screener_draft") || "{}",
       );
-      expect(draft.name).toBe("João Silva");
+      expect(draft.savedAt).toBeTruthy();
+      expect(draft.data.name).toBe("João Silva");
     });
   });
 

@@ -3,10 +3,12 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { RhemaLogo } from "../components/RhemaLogo";
 import { WaveDivider } from "../components/WaveDivider";
-import { supabase } from "@/lib/supabase/browser";
 import {
   getAdminDashboard,
   generateReport,
+  loginAdminSession,
+  getAdminSessionInfo,
+  logoutAdminSession,
   type AdminDashboardResponse,
   type AdminLeadRow,
 } from "@/lib/api/client";
@@ -49,36 +51,28 @@ export default function AdminPage() {
     }, 4000);
   }, []);
 
-  const getAuthToken = useCallback(async (): Promise<string | null> => {
-    const { data: session } = await supabase.auth.getSession();
-    return session.session?.access_token ?? null;
-  }, []);
-
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const token = await getAuthToken();
-      if (!token) {
-        setView("login");
-        return;
-      }
-      const result = await getAdminDashboard(token);
+      const result = await getAdminDashboard();
       setData(result);
     } catch {
       setView("login");
     } finally {
       setLoading(false);
     }
-  }, [getAuthToken]);
+  }, []);
 
   useEffect(() => {
     if (view === "dashboard") loadData();
   }, [view, loadData]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: session }) => {
-      if (session.session) setView("dashboard");
-    });
+    getAdminSessionInfo()
+      .then((info) => {
+        if (info.authenticated) setView("dashboard");
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -103,23 +97,27 @@ export default function AdminPage() {
     setLoginError("");
     setLoginLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-
-    setLoginLoading(false);
-
-    if (error) {
-      setLoginError("Email ou senha inválidos");
-      return;
+    try {
+      const info = await loginAdminSession(email.trim(), password);
+      if (!info.authenticated) {
+        setLoginError("Email ou senha inválidos");
+        setLoginLoading(false);
+        return;
+      }
+      setView("dashboard");
+    } catch (err) {
+      setLoginError(
+        err instanceof Error && err.message
+          ? err.message
+          : "Email ou senha inválidos",
+      );
+    } finally {
+      setLoginLoading(false);
     }
-
-    setView("dashboard");
   }
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    await logoutAdminSession().catch(() => {});
     setData(null);
     setView("login");
   }
@@ -127,9 +125,7 @@ export default function AdminPage() {
   async function handleGenerateReport(leadId: string) {
     setActionLoading(`report-${leadId}`);
     try {
-      const authToken = await getAuthToken();
-      if (!authToken) return;
-      const result = await generateReport(leadId, authToken);
+      const result = await generateReport(leadId);
       await loadData();
       if (result.queued) {
         pushToast("success", "Relatório enfileirado — você receberá por email");
