@@ -118,6 +118,8 @@ T16 -> T18
 
 ### T2: Create share-token repository
 
+**Status**: Complete
+
 **What**: Implement `createShareTokenRepository` with hash-based lookup and single-active-token semantics.
 **Where**: `src/lib/repository/share-token-repo.ts`
 **Depends on**: T1
