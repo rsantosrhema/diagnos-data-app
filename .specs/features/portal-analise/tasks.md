@@ -504,6 +504,8 @@ T16 -> T18
 
 ### T15: Build CompetitorsGrid and SourcesList
 
+**Status**: Complete
+
 **What**: Create competitor cards and the research sources list with empty states.
 **Where**: `src/components/portal/CompetitorsGrid.tsx`
 **Depends on**: None
@@ -517,10 +519,10 @@ T16 -> T18
 
 **Done when**:
 
-- [ ] `CompetitorsGrid.tsx`: cards with nome + contexto + diferencial + outbound link when `url` present
-- [ ] `SourcesList.tsx` (same task, cohesive pair): linked source list; empty arrays render friendly empty-state instead of blank section
-- [ ] Co-located tests for both incl. empty-state paths
-- [ ] Gate check passes: both test files green
+- [x] `CompetitorsGrid.tsx`: cards with nome + contexto + diferencial + outbound link when `url` present
+- [x] `SourcesList.tsx` (same task, cohesive pair): linked source list; empty arrays render friendly empty-state instead of blank section
+- [x] Co-located tests for both incl. empty-state paths
+- [x] Gate check passes: both test files green (7 tests)
 
 **Tests**: unit
 **Gate**: quick
