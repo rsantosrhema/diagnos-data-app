@@ -237,6 +237,8 @@ T16 -> T18
 
 ### T6: Create CMMI stage content map
 
+**Status**: Complete
+
 **What**: Implement static `getStageByFaixa` mapping each score band to hero content.
 **Where**: `src/lib/cmmi/stages.ts`
 **Depends on**: None
