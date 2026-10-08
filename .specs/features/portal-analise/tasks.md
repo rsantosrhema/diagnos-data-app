@@ -592,6 +592,8 @@ T16 -> T18
 
 ### T18: Build public portal page
 
+**Status**: Complete
+
 **What**: Compose `/r/[token]` with public chrome, no PII, and token-state handling.
 **Where**: `src/app/r/[token]/page.tsx`
 **Depends on**: T12, T13, T14, T15, T16
@@ -605,10 +607,10 @@ T16 -> T18
 
 **Done when**:
 
-- [ ] Page renders the same 6 sections without email/phone anywhere and without admin actions
-- [ ] Loading, invalid/expired (generic copy), and fetch-error states covered
-- [ ] Co-located `page.test.tsx` asserts no email/phone strings in the document on happy path plus each error state
-- [ ] Gate check passes: `npm run test` (full — page integration)
+- [x] Page renders the same 6 sections without email/phone anywhere and without admin actions
+- [x] Loading, invalid/expired (generic copy), and fetch-error states covered
+- [x] Co-located `page.test.tsx` asserts no email/phone strings in the document on happy path plus each error state (5 tests)
+- [x] Gate check passes: `npm run test` (full — 456 passed, 1 skipped opt-in smoke) + build gate `typecheck && lint && build`
 
 **Tests**: unit
 **Gate**: full
