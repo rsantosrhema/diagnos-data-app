@@ -533,6 +533,8 @@ T16 -> T18
 
 ### T16: Build InsightsBoard and AnalysisPlaceholder
 
+**Status**: Complete
+
 **What**: Create priority-grouped insight cards with dimension filter plus pipeline-state placeholders.
 **Where**: `src/components/portal/InsightsBoard.tsx`
 **Depends on**: None
@@ -546,10 +548,10 @@ T16 -> T18
 
 **Done when**:
 
-- [ ] `InsightsBoard.tsx`: cards grouped by priority with titulo + texto + proximo_passo; `dimensao_ids` drive the bar filter callback; missing enriched fields fall back to "—" without breakage
-- [ ] `AnalysisPlaceholder.tsx` (same task, cohesive pair): states for pendente/processando (spinner + copy) and falha (copy + reprocess slot)
-- [ ] Co-located tests for both incl. legacy-insight fallback and each placeholder state
-- [ ] Gate check passes: both test files green
+- [x] `InsightsBoard.tsx`: cards grouped by priority with titulo + texto + proximo_passo; `dimensao_ids` drive the bar filter callback; missing enriched fields fall back to "—" without breakage
+- [x] `AnalysisPlaceholder.tsx` (same task, cohesive pair): states for pendente/processando (spinner + copy) and falha (copy + reprocess slot)
+- [x] Co-located tests for both incl. legacy-insight fallback and each placeholder state
+- [x] Gate check passes: both test files green (9 tests)
 
 **Tests**: unit
 **Gate**: quick
