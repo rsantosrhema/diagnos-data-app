@@ -192,6 +192,16 @@ export async function getManagerPortal(
   return apiFetch(`/admin-proxy/portal/${leadId}`);
 }
 
+export async function createShareLink(
+  leadId: string,
+): Promise<{ url: string; expiresAt: string }> {
+  return apiFetch(`/admin-proxy/portal/${leadId}/share`, { method: "POST" });
+}
+
+export async function revokeShareLink(leadId: string): Promise<{ ok: true }> {
+  return apiFetch(`/admin-proxy/portal/${leadId}/share`, { method: "DELETE" });
+}
+
 export interface PublicPortalResponse {
   lead: { id: string; name: string; company: string };
   score: { valor: number; faixa: string; descricao: string };

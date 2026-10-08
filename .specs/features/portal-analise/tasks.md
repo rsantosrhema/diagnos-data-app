@@ -358,6 +358,8 @@ T16 -> T18
 
 ### T10: Add share-link route
 
+**Status**: Complete
+
 **What**: Expose `POST` (create) and `DELETE` (revoke) on `/api/admin/portal/[leadId]/share` with proxy and client functions.
 **Where**: `src/app/api/admin/portal/[leadId]/share/route.ts`
 **Depends on**: T8
@@ -371,10 +373,10 @@ T16 -> T18
 
 **Done when**:
 
-- [ ] `POST` returns `{ url: "/r/[token]", expiresAt }` (raw token crosses the boundary exactly once); `DELETE` revokes; both require manager + internal key
-- [ ] Thin admin-proxy companion created; client functions added
-- [ ] Co-located `route.test.ts`: 401 paths, POST 200 shape, DELETE 200, service 404 mapped
-- [ ] Gate check passes: `npx vitest run src/app/api/admin/portal/[leadId]/share/route.test.ts`
+- [x] `POST` returns `{ url: "/r/[token]", expiresAt }` (raw token crosses the boundary exactly once); `DELETE` revokes; both require manager + internal key
+- [x] Thin admin-proxy companion created; client functions added
+- [x] Co-located `route.test.ts`: 401 paths, POST 200 shape, DELETE 200, service 404 mapped
+- [x] Gate check passes: `npx vitest run src/app/api/admin/portal/[leadId]/share/route.test.ts` (9 tests)
 
 **Tests**: unit
 **Gate**: quick
