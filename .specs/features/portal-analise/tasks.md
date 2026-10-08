@@ -208,6 +208,8 @@ T16 -> T18
 
 ### T5: Update writer prompt for card-ready bullets
 
+**Status**: Complete
+
 **What**: Teach the writer prompt to produce titled, dimension-linked, actionable bullets.
 **Where**: `src/lib/agents/writer.ts`
 **Depends on**: T3

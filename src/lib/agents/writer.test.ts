@@ -133,4 +133,41 @@ describe("createWriterAgent", () => {
       agent.run({ analysis: makeAnalysis(), payload: makePayload() }),
     ).rejects.toBeInstanceOf(WriterError);
   });
+
+  it("passa adiante brief enriquecido com titulo, dimensao_ids e proximo_passo intactos", async () => {
+    const enriched = {
+      bullets: [
+        {
+          texto: "Governança ad hoc",
+          prioridade: "alta" as const,
+          titulo: "Definir dono de dados",
+          dimensao_ids: ["d01", "d02"],
+          proximo_passo: "Nomear responsável em 30 dias",
+        },
+      ],
+    };
+    generateObjectMock.mockResolvedValue({ object: enriched });
+
+    const llm = { modelId: "x", doGenerate: vi.fn() } as never;
+    const agent = createWriterAgent({ llm, generateObject: generateObjectMock });
+
+    const brief = await agent.run({ analysis: makeAnalysis(), payload: makePayload() });
+
+    expect(brief).toEqual(enriched);
+    expect(insightsBriefSchema.safeParse(brief).success).toBe(true);
+  });
+
+  it("prompt exige titulo <= 70 chars, dimensao_ids válidos e proximo_passo por bullet", async () => {
+    generateObjectMock.mockResolvedValue({ object: { bullets: [] } });
+
+    const llm = { modelId: "x", doGenerate: vi.fn() } as never;
+    const agent = createWriterAgent({ llm, generateObject: generateObjectMock });
+
+    await agent.run({ analysis: makeAnalysis(), payload: makePayload() });
+
+    const promptText = String(generateObjectMock.mock.calls[0][0].prompt);
+    expect(promptText).toContain("70");
+    expect(promptText).toContain("dimensao_ids");
+    expect(promptText).toContain("proximo_passo");
+  });
 });

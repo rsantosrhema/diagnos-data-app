@@ -132,6 +132,9 @@ const WRITER_JSON_EXAMPLE = {
     {
       texto: "A empresa ainda não tem um dono definido para os dados críticos, enquanto o mercado já trata isso como pré-requisito.",
       prioridade: "alta",
+      titulo: "Definir dono de dados",
+      dimensao_ids: ["d01"],
+      proximo_passo: "Nomear responsável pelos dados críticos em 30 dias.",
     },
   ],
 };
@@ -148,6 +151,9 @@ const WRITER_OUTPUT_SCHEMA_HINT = JSON.stringify(
           properties: {
             texto: { type: "string" },
             prioridade: { type: "string", enum: ["alta", "media", "baixa"] },
+            titulo: { type: "string" },
+            dimensao_ids: { type: "array", items: { type: "string" } },
+            proximo_passo: { type: "string" },
           },
           required: ["texto", "prioridade"],
         },
@@ -177,6 +183,9 @@ function buildWriterPrompt(analysis: MarketAnalysis, payload: AgentPayload): str
   return [
     "Regras: no máximo 10 bullets, em português do Brasil, linguagem clara e objetiva para um comercial (não-técnico).",
     "Cada bullet deve ter uma prioridade entre 'alta', 'media' e 'baixa', baseada na dor da empresa combinada com a evidência de mercado.",
+    "REGRA: cada bullet deve ter um `titulo` de no máximo 70 caracteres, curto e comercial.",
+    "REGRA: quando aplicável, informe `dimensao_ids` apenas com ids válidos das dores citadas na análise; não invente ids.",
+    "REGRA: cada bullet deve ter um `proximo_passo` de no máximo 300 caracteres, uma ação concreta com prazo ou referência.",
     "",
     `## Empresa: ${sanitizeUntrusted(payload.empresa.nome ?? "não informada", 200)}`,
     "",
