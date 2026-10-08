@@ -268,6 +268,8 @@ T16 -> T18
 
 ### T7: Create PortalDTO schemas
 
+**Status**: Complete
+
 **What**: Define strict Zod schemas and inferred types for the portal payload, including PII stripping.
 **Where**: `src/lib/dto/portal.ts`
 **Depends on**: T3
@@ -281,10 +283,10 @@ T16 -> T18
 
 **Done when**:
 
-- [ ] `portalDTOSchema.strict()` with `lead, score, dimensions[], risk, imbalance, stage, analysisStatus, analysis?, insights?, sources[], commercialAnswer`; `ManagerPortalDTO = PortalDTO + email + share`; `PublicPortalDTO` excludes email/phone by construction
-- [ ] `stripPii` helper removes `email/phone` keys (service applies it; schema type makes leakage a compile error)
-- [ ] Co-located `portal.test.ts`: full DTO validates; legacy analysis without enriched fields validates (PORTAL-12); stripped payload contains no `email`/`phone` keys
-- [ ] Gate check passes: `npx vitest run src/lib/dto/portal.test.ts`
+- [x] `portalDTOSchema.strict()` with `lead, score, dimensions[], risk, imbalance, stage, analysisStatus, analysis?, insights?, sources[], commercialAnswer`; `ManagerPortalDTO = PortalDTO + email + share`; `PublicPortalDTO` excludes email/phone by construction
+- [x] `stripPii` helper removes `email/phone` keys (service applies it; schema type makes leakage a compile error)
+- [x] Co-located `portal.test.ts`: full DTO validates; legacy analysis without enriched fields validates (PORTAL-12); stripped payload contains no `email`/`phone` keys
+- [x] Gate check passes: `npx vitest run src/lib/dto/portal.test.ts`
 
 **Tests**: unit
 **Gate**: quick
