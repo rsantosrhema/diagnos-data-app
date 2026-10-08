@@ -22,7 +22,7 @@
 - **Feature**: portal-analise (.specs/features/portal-analise) — **DONE**
 - **Phase / Task**: Execute complete — T1–T18 commitados (c286ae3..41ee30e) + Fix 1 PORTAL-09 (middleware.test.ts) + Verifier PASS (14/14 ACs com evidência, sensor 4/4 mutants killed), validation.md atualizado para PASS
 - **Completed**: migration 0016 share_tokens, share-token-repo, schemas de agentes enriquecidos (aditivos), portal service/DTO, rotas admin/public + proxies + rate-limit, componentes UI (StageHero, RadarSpider, MaturityBars, AnswersAccordion, CompetitorsGrid, InsightsBoard, SourcesList, AnalysisPlaceholder), páginas /admin/leads/[leadId] e /r/[token], suite 459 testes
-- **Next step**: aplicar migration 0016 no Supabase (share_tokens) e fazer deploy (Coolify importa do git após push); botão Ver resultado + Copiar link já na tabela admin
-- **Blockers**: migration 0016 deve rodar antes do primeiro uso do "Copiar link" (tabela nova); campos novos dos agentes só aparecem em análises geradas após o deploy (back-fill não exigido)
+- **Next step**: feature entregue — deploy Coolify concluído (commit c1da277) e migration 0016 aplicada no Supabase self-hosted (API do portal respondendo 404 genérico, tabela share_tokens ativa)
+- **Blockers**: none
 - **Uncommitted files**: none (fix + specs commitados juntos)
 - **Branch**: main
