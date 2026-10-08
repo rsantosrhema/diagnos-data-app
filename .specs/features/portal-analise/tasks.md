@@ -90,6 +90,8 @@ T16 -> T18
 
 ### T1: Create share_tokens migration
 
+**Status**: Complete
+
 **What**: Create migration `0016_portal_share_tokens.sql` with table, index, and RLS; sync `docs/data-model.md` in the same commit.
 **Where**: `supabase/migrations/0016_portal_share_tokens.sql`
 **Depends on**: None

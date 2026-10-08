@@ -148,8 +148,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PORTAL-01 | P1: Portal do gerente | Design | In Design |
 | PORTAL-02 | P1: Portal do gerente | Design | In Design |
 | PORTAL-03 | P1: Portal do gerente | Design | In Design |
-| PORTAL-04 | P1: Link compartilhável | Design | In Design |
-| PORTAL-05 | P1: Link compartilhável | Design | In Design |
+| PORTAL-04 | P1: Link compartilhável | Design | Implementing |
+| PORTAL-05 | P1: Link compartilhável | Design | Implementing |
 | PORTAL-06 | P1: Link compartilhável | Design | In Design |
 | PORTAL-07 | P1: Visão pública | Design | In Design |
 | PORTAL-08 | P1: Visão pública | Design | In Design |

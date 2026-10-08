@@ -68,6 +68,16 @@ erDiagram
         integer duration_ms
         timestamptz created_at
     }
+    leads ||--o{ share_tokens : "compartilha"
+    share_tokens {
+        uuid id PK
+        uuid lead_id FK
+        text token_hash UK
+        timestamptz expires_at
+        timestamptz revoked_at "nullable"
+        uuid created_by "nullable"
+        timestamptz created_at
+    }
 ```
 
 ## Visão Geral
@@ -181,6 +191,24 @@ Todas as tabelas têm **RLS habilitado sem policies** para `anon`/`authenticated
 **RLS**: habilitado, sem policies (service-role only).
 
 **Ciclo de eventos**: `enqueued` (no enqueue) → `started`/`researcher`/`analyst`/`writer`/`pdf`/`email` (durante o processamento) → `completed` (sucesso) ou `failed` (falha, com a mensagem de erro).
+
+### `share_tokens`
+
+| Coluna | Tipo | Constraints |
+| --- | --- | --- |
+| `id` | `uuid` | PK, default `gen_random_uuid()` |
+| `lead_id` | `uuid` | not null, **FK** → `leads(id)` `on delete cascade` |
+| `token_hash` | `text` | not null, **unique** (persistido apenas o hash SHA-256 do token) |
+| `expires_at` | `timestamptz` | not null (TTL de 90 dias) |
+| `revoked_at` | `timestamptz` | nullable (setado na revogação) |
+| `created_by` | `uuid` | nullable |
+| `created_at` | `timestamptz` | not null, default `now()` |
+
+**Índices**: `share_tokens_lead_id_idx`.
+
+**Relacionamento**: `leads 1—0..1` token ativo por lead; histórico preservado com `revoked_at`/`expires_at`. Um novo token invalida o anterior ativo.
+
+**RLS**: habilitado, sem policies (service-role only). Migration: `0016_portal_share_tokens`.
 
 ---
 
