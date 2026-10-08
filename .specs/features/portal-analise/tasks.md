@@ -419,6 +419,8 @@ T16 -> T18
 
 ### T12: Build RadarSpider component
 
+**Status**: Complete
+
 **What**: Create interactive SVG radar ported from the PDF math with hover tooltips.
 **Where**: `src/components/portal/RadarSpider.tsx`
 **Depends on**: None
