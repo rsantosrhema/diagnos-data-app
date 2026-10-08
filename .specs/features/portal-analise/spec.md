@@ -145,9 +145,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| PORTAL-01 | P1: Portal do gerente | Design | In Design |
-| PORTAL-02 | P1: Portal do gerente | Design | In Design |
-| PORTAL-03 | P1: Portal do gerente | Design | In Design |
+| PORTAL-01 | P1: Portal do gerente | Design | Implementing |
+| PORTAL-02 | P1: Portal do gerente | Design | Implementing |
+| PORTAL-03 | P1: Portal do gerente | Design | Implementing |
 | PORTAL-04 | P1: Link compartilhável | Design | Implementing |
 | PORTAL-05 | P1: Link compartilhável | Design | Implementing |
 | PORTAL-06 | P1: Link compartilhável | Design | Implementing |

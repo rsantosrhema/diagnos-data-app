@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, type FormEvent } from "react";
+import Link from "next/link";
 import { RhemaLogo } from "../components/RhemaLogo";
 import { WaveDivider } from "../components/WaveDivider";
 import {
@@ -629,6 +630,22 @@ function RowActionMenu({
 
       {open && (
         <div className="action-menu" role="menu">
+          {row.hasDiagnostic && (
+            <Link
+              role="menuitem"
+              href={`/admin/leads/${row.leadId}`}
+              className="action-item"
+              onClick={() => setOpenMenu(null)}
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" />
+                <path d="M4.5 5.5h4" />
+                <path d="M4.5 8h7" />
+                <path d="M4.5 10.5h5" />
+              </svg>
+              Ver resultado
+            </Link>
+          )}
           {canGenerate && (
             <button
               role="menuitem"

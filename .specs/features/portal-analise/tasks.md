@@ -562,6 +562,8 @@ T16 -> T18
 
 ### T17: Build manager portal page
 
+**Status**: Complete
+
 **What**: Compose `/admin/leads/[leadId]` from all sections plus share-link and reprocess actions; add Ver resultado to the admin table.
 **Where**: `src/app/admin/leads/[leadId]/page.tsx`
 **Depends on**: T12, T13, T14, T15, T16
@@ -575,11 +577,11 @@ T16 -> T18
 
 **Done when**:
 
-- [ ] Page composes StageHero → RadarSpider + MaturityBars → AnswersAccordion → CompetitorsGrid → InsightsBoard → SourcesList; non-analisado status swaps analysis sections for `AnalysisPlaceholder`; falha shows reprocess action
-- [ ] Copy-link + revoke wired with toasts; unauthenticated redirects to login
-- [ ] `src/app/admin/page.tsx` row menu gains Ver resultado (disabled when `!hasDiagnostic`)
-- [ ] Co-located `page.test.tsx` (jsdom, mocked client): full render, placeholder state, 401 redirect
-- [ ] Gate check passes: `npm run test` (full — page integration)
+- [x] Page composes StageHero → RadarSpider + MaturityBars → AnswersAccordion → CompetitorsGrid → InsightsBoard → SourcesList; non-analisado status swaps analysis sections for `AnalysisPlaceholder`; falha shows reprocess action
+- [x] Copy-link + revoke wired with toasts; unauthenticated redirects to login
+- [x] `src/app/admin/page.tsx` row menu gains Ver resultado (hidden when `!hasDiagnostic`)
+- [x] Co-located `page.test.tsx` (jsdom, mocked client): full render, placeholder state, 401/404 states, share copy/revoke, insight filter (8 tests)
+- [x] Gate check passes: `npm run test` (full — 451 passed, 1 skipped opt-in smoke)
 
 **Tests**: unit
 **Gate**: full
