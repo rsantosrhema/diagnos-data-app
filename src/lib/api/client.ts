@@ -146,6 +146,66 @@ export async function generateReport(
   });
 }
 
+// ─── Portal (admin) ───
+
+export interface PortalShareState {
+  active: boolean;
+  url: string | null;
+  expiresAt: string | null;
+}
+
+export interface ManagerPortalResponse {
+  lead: { id: string; name: string; company: string };
+  email: string;
+  score: { valor: number; faixa: string; descricao: string };
+  dimensions: {
+    id: string;
+    name: string;
+    nivel: number;
+    peso: number;
+    score: number;
+    pergunta: string;
+    resposta: string;
+  }[];
+  risk: { id: string; name: string; nivel: number };
+  imbalance: boolean;
+  stage: {
+    rotulo: string;
+    cor: string;
+    range: { min: number; max: number };
+    descricaoExecutiva: string;
+    caracteristicas: string[];
+    sinaisRisco: string[];
+    comoSubir: string[];
+  };
+  analysisStatus: "pendente" | "processando" | "analisado" | "falha";
+  analysis?: unknown;
+  insights?: unknown;
+  sources: { url: string; titulo?: string }[];
+  commercialAnswer: string;
+  share: PortalShareState;
+}
+
+export async function getManagerPortal(
+  leadId: string,
+): Promise<ManagerPortalResponse> {
+  return apiFetch(`/admin-proxy/portal/${leadId}`);
+}
+
+export interface PublicPortalResponse {
+  lead: { id: string; name: string; company: string };
+  score: { valor: number; faixa: string; descricao: string };
+  dimensions: ManagerPortalResponse["dimensions"];
+  risk: ManagerPortalResponse["risk"];
+  imbalance: boolean;
+  stage: ManagerPortalResponse["stage"];
+  analysisStatus: ManagerPortalResponse["analysisStatus"];
+  analysis?: unknown;
+  insights?: unknown;
+  sources: { url: string; titulo?: string }[];
+  commercialAnswer: string;
+}
+
 // ─── Admin session (cookie-based, httpOnly) ───
 
 export interface AdminSessionInfo {

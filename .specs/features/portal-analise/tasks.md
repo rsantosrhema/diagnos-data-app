@@ -329,6 +329,8 @@ T16 -> T18
 
 ### T9: Add manager portal route
 
+**Status**: Complete
+
 **What**: Expose `GET /api/admin/portal/[leadId]` behind internal-key + manager auth, with proxy and client function.
 **Where**: `src/app/api/admin/portal/[leadId]/route.ts`
 **Depends on**: T8
@@ -342,10 +344,10 @@ T16 -> T18
 
 **Done when**:
 
-- [ ] Route verifies `x-internal-api-key`, requires manager, maps `PortalServiceError` status, returns generic 500 otherwise
-- [ ] Thin admin-proxy companion created; `getManagerPortal(leadId)` client function added
-- [ ] Co-located `route.test.ts`: 401 without key, 401 without manager, 404 no-diagnostic, 200 happy path — mocked `admin-service`-style (mock `portal-service`)
-- [ ] Gate check passes: `npx vitest run src/app/api/admin/portal/[leadId]/route.test.ts`
+- [x] Route verifies `x-internal-api-key`, requires manager, maps `PortalServiceError` status, returns generic 500 otherwise
+- [x] Thin admin-proxy companion created; `getManagerPortal(leadId)` client function added
+- [x] Co-located `route.test.ts`: 401 without key, 401 without manager, 404 no-diagnostic, 200 happy path — mocked `admin-service`-style (mock `portal-service`)
+- [x] Gate check passes: `npx vitest run src/app/api/admin/portal/[leadId]/route.test.ts` (5 tests)
 
 **Tests**: unit
 **Gate**: quick
