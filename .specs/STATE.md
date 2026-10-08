@@ -14,12 +14,15 @@
 | AD-008 | Observabilidade do pipeline de relatórios: fila pgmq com read()+ack/archive (VT 600s) e log por etapa em analysis_job_logs | active | 2026-08-31 | Relatórios assíncronos invisíveis; fila com pop() perdia jobs; painel admin ganha Fila + Log |
 | AD-009 | Relatório sob demanda (sem cron): endpoint de reprocess enfileira e dispara fire-and-forget `POST /api/analysis-worker` com `x-internal-api-key`; resposta imediata `{ok,queued}`; sem depender de agendador externo | active | 2026-08-31 | Cron Hobby da Vercel bloqueado/removido; pipeline dos agentes (~50s) roda em background no clique do gerente |
 
+| AD-009 | Relatório sob demanda (sem cron): endpoint de reprocess enfileira e dispara fire-and-forget `POST /api/analysis-worker` com `x-internal-api-key`; resposta imediata `{ok,queued}`; sem depender de agendador externo | active | 2026-08-31 | Cron Hobby da Vercel bloqueado/removido; pipeline dos agentes (~50s) roda em background no clique do gerente |
+| AD-010 | Links públicos compartilháveis usam token opaco 256-bit com somente hash SHA-256 persistido, TTL 90 dias, um ativo por lead (novo invalida anterior), comparação com timingSafeEqual e 404 genérico idêntico para inválido/expirado/revogado | active | 2026-10-08 | Portal-analise: link do cliente /r/[token]; não distinguir motivo evita enumeração; revogação é delete lógico |
+
 ## Handoff
 
-- **Feature**: relatorio-sob-demanda (.specs/features/relatorio-sob-demanda) — **DONE**
-- **Phase / Task**: Execute complete — T1 commitado como `ab204e2` + Verifier PASS (5/7 ACs com asserção no diff, 3/3 mutants killed), validation.md escrito + traceability REL-01..07 → Verified
-- **Completed**: T1 (fire-and-forget no reprocess + 11 testes co-locados); AD-009 registrado
-- **Next step**: aplicar o código no ambiente Vercel (redeploy via API — autorização pendente); DNS do subdomínio `diagnosdata.rhemadata.com` na Hostinger (bloqueio externo); opcional: rodar a suite completa em CI
-- **Blockers**: none
-- **Uncommitted files**: `validation.md` + `tasks.md` status + `.specs/STATE.md` (a commitar pelo orquestrador)
+- **Feature**: portal-analise (.specs/features/portal-analise) — **DONE**
+- **Phase / Task**: Execute complete — T1–T18 commitados (c286ae3..41ee30e) + Fix 1 PORTAL-09 (middleware.test.ts) + Verifier PASS (14/14 ACs com evidência, sensor 4/4 mutants killed), validation.md atualizado para PASS
+- **Completed**: migration 0016 share_tokens, share-token-repo, schemas de agentes enriquecidos (aditivos), portal service/DTO, rotas admin/public + proxies + rate-limit, componentes UI (StageHero, RadarSpider, MaturityBars, AnswersAccordion, CompetitorsGrid, InsightsBoard, SourcesList, AnalysisPlaceholder), páginas /admin/leads/[leadId] e /r/[token], suite 459 testes
+- **Next step**: aplicar migration 0016 no Supabase (share_tokens) e fazer deploy (Coolify importa do git após push); botão Ver resultado + Copiar link já na tabela admin
+- **Blockers**: migration 0016 deve rodar antes do primeiro uso do "Copiar link" (tabela nova); campos novos dos agentes só aparecem em análises geradas após o deploy (back-fill não exigido)
+- **Uncommitted files**: none (fix + specs commitados juntos)
 - **Branch**: main

@@ -773,3 +773,24 @@ Before approving tasks, verify EVERY task's `Tests` field is consistent with the
 ## Task Verification Standards
 
 Every task MUST follow the `Done when` + `Tests` + `Gate` fields defined in the **Task Breakdown** template above. Each `Done when` entry must be specific, testable (binary pass/fail), and reference the gate check command from the `Gate Check Commands` section. Include the expected test count to prevent silent deletions.
+
+---
+
+## Fix Round 1 (post-Verifier)
+
+### T19: Cover PORTAL-09 middleware rate limit
+
+**Status**: Complete
+**What**: Integration test asserting 30 req/min throttle + 429 with Retry-After on `/api/public-proxy/portal`.
+**Where**: `src/middleware.test.ts`
+**Depends on**: T11
+**Requirement**: PORTAL-09
+
+**Done when**:
+
+- [x] 30 requests pass, 31st returns 429 with Retry-After, different IP unaffected
+- [x] Gate: `npx vitest run src/middleware.test.ts` 3/3 + `npm run test` 459 green
+
+**Tests**: unit
+**Gate**: quick
+**Commit**: `test(portal): cover PORTAL-09 rate limit in middleware`

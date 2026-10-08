@@ -145,20 +145,20 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| PORTAL-01 | P1: Portal do gerente | Design | Implementing |
-| PORTAL-02 | P1: Portal do gerente | Design | Implementing |
-| PORTAL-03 | P1: Portal do gerente | Design | Implementing |
-| PORTAL-04 | P1: Link compartilhável | Design | Implementing |
-| PORTAL-05 | P1: Link compartilhável | Design | Implementing |
-| PORTAL-06 | P1: Link compartilhável | Design | Implementing |
-| PORTAL-07 | P1: Visão pública | Design | Implementing |
-| PORTAL-08 | P1: Visão pública | Design | Implementing |
-| PORTAL-09 | P1: Visão pública | Design | Implementing |
-| PORTAL-10 | P1: Seções do dashboard | Design | Implementing |
-| PORTAL-11 | P1: Seções do dashboard | Design | Implementing |
-| PORTAL-12 | P1: Seções do dashboard | Design | Implementing |
-| PORTAL-13 | P1: Compatibilidade | Design | In Design |
-| PORTAL-14 | P1: Compatibilidade | Design | In Design |
+| PORTAL-01 | P1: Portal do gerente | Design | Verified |
+| PORTAL-02 | P1: Portal do gerente | Design | Verified |
+| PORTAL-03 | P1: Portal do gerente | Design | Verified |
+| PORTAL-04 | P1: Link compartilhável | Design | Verified |
+| PORTAL-05 | P1: Link compartilhável | Design | Verified |
+| PORTAL-06 | P1: Link compartilhável | Design | Verified |
+| PORTAL-07 | P1: Visão pública | Design | Verified |
+| PORTAL-08 | P1: Visão pública | Design | Verified |
+| PORTAL-09 | P1: Visão pública | Design | Verified |
+| PORTAL-10 | P1: Seções do dashboard | Design | Verified |
+| PORTAL-11 | P1: Seções do dashboard | Design | Verified |
+| PORTAL-12 | P1: Seções do dashboard | Design | Verified |
+| PORTAL-13 | P1: Compatibilidade | Design | Verified |
+| PORTAL-14 | P1: Compatibilidade | Design | Verified |
 
 **ID format:** `PORTAL-[NUMBER]`
 
