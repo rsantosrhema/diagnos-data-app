@@ -400,7 +400,13 @@ export default function LeadPortalPage() {
                     Análise de mercado
                   </h2>
                   <AnalysisPlaceholder
-                    status={analysisStatus === "falha" ? "falha" : analysisStatus === "analisado" ? "processando" : analysisStatus}
+                    status={
+                      analysisStatus === "falha"
+                        ? "falha"
+                        : analysisStatus === "analisado"
+                          ? "processando"
+                          : (analysisStatus ?? "pendente")
+                    }
                     onReprocess={
                       analysisStatus === "falha" && !reprocessBusy
                         ? handleReprocess

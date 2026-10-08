@@ -635,7 +635,7 @@ function RowActionMenu({
               role="menuitem"
               href={`/admin/leads/${row.leadId}`}
               className="action-item"
-              onClick={() => setOpenMenu(null)}
+              onClick={() => onToggle()}
             >
               <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" />
