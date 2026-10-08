@@ -222,7 +222,7 @@ export default function BrandKitPage() {
               </li>
               <li className="flex gap-3">
                 <span className="text-rhema-primary mt-0.5">&#8226;</span>
-                Mantenha uma margem de proteção equivalente à altura da letra "rhema" ao redor da marca.
+                Mantenha uma margem de proteção equivalente à altura da letra &ldquo;rhema&rdquo; ao redor da marca.
               </li>
               <li className="flex gap-3">
                 <span className="text-rhema-primary mt-0.5">&#8226;</span>

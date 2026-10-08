@@ -47,13 +47,17 @@ export const config = {
 };
 
 function getClientIp(req: NextRequest): string {
-  // Na Vercel o upstream SOBRESCREVE x-forwarded-for com o IP real do cliente;
-  // usar a ÚLTIMA entrada (a mais próxima da edge) é a mais confiável e resiste
-  // a clientes que enviam o header próprio (spoof de XFF).
+  // Em produção o app roda atrás do Traefik (Coolify), que sobrescreve
+  // x-real-ip com o IP da conexão (o cliente real) — por isso ele é a fonte
+  // primária. x-forwarded-for é controlável pelo cliente; usamos apenas como
+  // fallback a ÚLTIMA entrada (a acrescentada pelo proxy).
+  const realIp = req.headers.get("x-real-ip");
+  if (realIp) return realIp.trim();
+
   const fwd = req.headers.get("x-forwarded-for");
   if (fwd) {
     const parts = fwd.split(",").map((p) => p.trim()).filter(Boolean);
     if (parts.length > 0) return parts[parts.length - 1];
   }
-  return req.headers.get("x-real-ip") ?? "unknown";
+  return "unknown";
 }

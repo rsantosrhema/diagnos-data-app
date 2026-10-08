@@ -45,7 +45,11 @@ async function buildPipeline() {
   };
 }
 
-describe("Smoke E2E — fluxo real (Supabase + Resend + Exa + LLM)", () => {
+const runSmoke = process.env.RUN_SMOKE_E2E === "1";
+
+// Teste de integração real (Supabase + Resend + Exa + LLM). Fica desligado por
+// padrão para manter a suíte determinística; rode com `npm run test:smoke`.
+describe.skipIf(!runSmoke)("Smoke E2E — fluxo real (Supabase + Resend + Exa + LLM)", () => {
   beforeAll(() => {
     assertEnv([
       "NEXT_PUBLIC_SUPABASE_URL",
