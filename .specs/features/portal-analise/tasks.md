@@ -297,6 +297,8 @@ T16 -> T18
 
 ### T8: Create portal service
 
+**Status**: Complete
+
 **What**: Implement `createPortalService` assembling the DTO from the four lead tables plus share-token issuance.
 **Where**: `src/lib/service/portal-service.ts`
 **Depends on**: T2, T7
@@ -310,13 +312,13 @@ T16 -> T18
 
 **Done when**:
 
-- [ ] `getForManager` returns full DTO incl. email + share state; throws 404 when lead lacks diagnostic
-- [ ] `getByToken` hashes with SHA-256 + `timingSafeEqual`, returns public DTO; invalid/expired/revoked all throw generic 404
-- [ ] `createShareToken` generates `randomBytes(32)` base64url, persists only the hash with 90-day expiry, invalidates previous active token; `revokeShareToken` sets `revoked_at`
-- [ ] `agent_payload` validated with `safeParse`; invalid payload throws 404 (logged server-side, never leaked)
-- [ ] Co-located `portal-service.test.ts` with mocked repos covers: manager ok, no-diagnostic 404, token ok without email/phone keys, invalid/expired/revoked 404, raw token never passed to repo (hash asserted), create-then-revoke
-- [ ] Gate check passes: `npx vitest run src/lib/service/portal-service.test.ts`
-- [ ] Test count: 10+ tests pass (no silent deletions)
+- [x] `getForManager` returns full DTO incl. email + share state; throws 404 when lead lacks diagnostic
+- [x] `getByToken` hashes with SHA-256 + `timingSafeEqual`, returns public DTO; invalid/expired/revoked all throw generic 404
+- [x] `createShareToken` generates `randomBytes(32)` base64url, persists only the hash with 90-day expiry, invalidates previous active token; `revokeShareToken` sets `revoked_at`
+- [x] `agent_payload` validated with `safeParse`; invalid payload throws 404 (logged server-side, never leaked)
+- [x] Co-located `portal-service.test.ts` with mocked repos covers: manager ok, no-diagnostic 404, token ok without email/phone keys, invalid/expired/revoked 404, raw token never passed to repo (hash asserted), create-then-revoke
+- [x] Gate check passes: `npx vitest run src/lib/service/portal-service.test.ts`
+- [x] Test count: 10+ tests pass (no silent deletions) (18 tests)
 
 **Tests**: unit
 **Gate**: quick
