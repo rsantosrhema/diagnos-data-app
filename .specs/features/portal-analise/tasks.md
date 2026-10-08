@@ -447,6 +447,8 @@ T16 -> T18
 
 ### T13: Build MaturityBars component
 
+**Status**: Complete
+
 **What**: Create vertical bar chart (levels 1–5) with risk highlight and dimension filtering.
 **Where**: `src/components/portal/MaturityBars.tsx`
 **Depends on**: None
