@@ -179,6 +179,8 @@ T16 -> T18
 
 ### T4: Update analyst prompt for enriched output
 
+**Status**: Complete
+
 **What**: Teach the analyst prompt to fill the new optional fields with dimension binding and evidence calibration.
 **Where**: `src/lib/agents/analyst.ts`
 **Depends on**: T3

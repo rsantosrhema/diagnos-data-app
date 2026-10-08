@@ -162,4 +162,59 @@ describe("createAnalystAgent", () => {
     expect(typeof LLM_INPUT.system).toBe("string");
     expect(typeof LLM_INPUT.prompt).toBe("string");
   });
+
+  it("passa adiante análise enriquecida com campos novos intactos", async () => {
+    const enriched = {
+      resumo: "A empresa enfrenta dores típicas.",
+      dores: [
+        {
+          dimensao_id: "d01",
+          dimensao: "Governança",
+          dor: "Governança ad hoc",
+          evidencia_mercado: true,
+          confianca: 0.85,
+          nivel_atual: 2,
+          impacto_negocio: "Decisões lentas e retrabalho em relatórios",
+          recomendacao_curta: "Definir dono de dados",
+        },
+      ],
+      contexto_concorrentes: [
+        {
+          nome: "Concorrente",
+          contexto: "Investe em analytics",
+          url: "https://concorrente.com",
+          diferencial: "Plataforma de BI própria",
+        },
+      ],
+      posicionamento_setor: "Líder regional em analytics",
+      oportunidade_principal: "Governança como diferencial competitivo",
+    };
+    generateObjectMock.mockResolvedValue({ object: enriched });
+
+    const llm = { modelId: "x", doGenerate: vi.fn() } as never;
+    const skillLoader = vi.fn(() => "Skill de Indústria");
+    const agent = createAnalystAgent({ llm, generateObject: generateObjectMock, skillLoader });
+
+    const analysis = await agent.run({ research: makeResearch(), payload: makePayload() });
+
+    expect(analysis).toEqual(enriched);
+    expect(marketAnalysisSchema.safeParse(analysis).success).toBe(true);
+  });
+
+  it("prompt exige dimensao_id válido, confianca condicionada a evidência e url da evidência", async () => {
+    generateObjectMock.mockResolvedValue({ object: ANALYSIS_OUTPUT });
+
+    const llm = { modelId: "x", doGenerate: vi.fn() } as never;
+    const skillLoader = vi.fn(() => "skill");
+    const agent = createAnalystAgent({ llm, generateObject: generateObjectMock, skillLoader });
+
+    await agent.run({ research: makeResearch(), payload: makePayload() });
+
+    const promptText = String(generateObjectMock.mock.calls[0][0].prompt);
+    expect(promptText).toContain("dimensao_id");
+    expect(promptText).toContain("confianca");
+    expect(promptText).toContain("evidencia_mercado");
+    expect(promptText).toContain("url");
+    expect(promptText).toContain("nivel_atual");
+  });
 });

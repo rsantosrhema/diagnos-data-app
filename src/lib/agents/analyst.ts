@@ -31,11 +31,21 @@ const ANALYST_JSON_EXAMPLE = {
       dor: "Descrição objetiva da dor em 1 frase.",
       evidencia_mercado: true,
       confianca: 0.7,
+      nivel_atual: 2,
+      impacto_negocio: "Impacto comercial da dor em 1 frase.",
+      recomendacao_curta: "Próximo passo direto para a empresa.",
     },
   ],
   contexto_concorrentes: [
-    { nome: "Concorrente X", contexto: "Como o concorrente atua nesse tema em 1 frase." },
+    {
+      nome: "Concorrente X",
+      contexto: "Como o concorrente atua nesse tema em 1 frase.",
+      url: "https://exemplo.com/concorrente-x",
+      diferencial: "Diferencial do concorrente em 1 frase.",
+    },
   ],
+  posicionamento_setor: "Posição da empresa no setor em 1 frase.",
+  oportunidade_principal: "Oportunidade comercial principal em 1 frase.",
 };
 
 const ANALYST_OUTPUT_SCHEMA_HINT = JSON.stringify(
@@ -53,6 +63,9 @@ const ANALYST_OUTPUT_SCHEMA_HINT = JSON.stringify(
             dor: { type: "string" },
             evidencia_mercado: { type: "boolean" },
             confianca: { type: "number" },
+            nivel_atual: { type: "integer" },
+            impacto_negocio: { type: "string" },
+            recomendacao_curta: { type: "string" },
           },
           required: ["dimensao_id", "dimensao", "dor", "evidencia_mercado", "confianca"],
         },
@@ -61,10 +74,17 @@ const ANALYST_OUTPUT_SCHEMA_HINT = JSON.stringify(
         type: "array",
         items: {
           type: "object",
-          properties: { nome: { type: "string" }, contexto: { type: "string" } },
+          properties: {
+            nome: { type: "string" },
+            contexto: { type: "string" },
+            url: { type: "string" },
+            diferencial: { type: "string" },
+          },
           required: ["nome", "contexto"],
         },
       },
+      posicionamento_setor: { type: "string" },
+      oportunidade_principal: { type: "string" },
     },
     required: ["resumo", "dores", "contexto_concorrentes"],
   },
@@ -257,5 +277,10 @@ function buildAnalystPrompt(
     JSON.stringify(ANALYST_JSON_EXAMPLE, null, 2),
     "```",
     "A `confianca` deve ser um número entre 0 e 1. `evidencia_mercado` deve ser `true` somente se a dor foi confirmada nas evidências de mercado.",
+    "REGRA: `confianca` maior que 0.7 somente quando `evidencia_mercado` for `true`; sem evidência de mercado, use confianca de 0.5 ou menos.",
+    "REGRA: cada `dores[].dimensao_id` DEVE ser um id válido dos scores do diagnóstico listados acima; cite a dimensão correspondente.",
+    "REGRA: preencha `dores[].nivel_atual` com o nível atual (1 a 5) da dimensão citada, conforme os scores do diagnóstico.",
+    "REGRA: copie cada `contexto_concorrentes[].url` diretamente da evidência de mercado pesquisada (seção concorrentes); nunca invente URL.",
+    "REGRA: `impacto_negocio`, `recomendacao_curta`, `diferencial` e `oportunidade_principal` devem ter no máximo 300 caracteres; `posicionamento_setor` no máximo 500.",
   ].join("\n");
 }
