@@ -475,6 +475,8 @@ T16 -> T18
 
 ### T14: Build StageHero and AnswersAccordion
 
+**Status**: Complete
+
 **What**: Create the CMMI stage hero and the questionnaire answer accordion.
 **Where**: `src/components/portal/StageHero.tsx`
 **Depends on**: None
@@ -488,10 +490,10 @@ T16 -> T18
 
 **Done when**:
 
-- [ ] `StageHero.tsx`: faixa + cor + range + descrição executiva + características + sinais de risco + como subir
-- [ ] `AnswersAccordion.tsx` (same task, cohesive pair): pergunta + resposta + nível badge per dimension, expandable
-- [ ] Co-located tests for both: hero renders all stage fields; accordion expands/collapses with all 10 answers
-- [ ] Gate check passes: `npx vitest run src/components/portal/StageHero.test.tsx && npx vitest run src/components/portal/AnswersAccordion.test.tsx`
+- [x] `StageHero.tsx`: faixa + cor + range + descrição executiva + características + sinais de risco + como subir
+- [x] `AnswersAccordion.tsx` (same task, cohesive pair): pergunta + resposta + nível badge per dimension, expandable
+- [x] Co-located tests for both: hero renders all stage fields; accordion expands/collapses with all 10 answers
+- [x] Gate check passes: `npx vitest run src/components/portal/StageHero.test.tsx && npx vitest run src/components/portal/AnswersAccordion.test.tsx` (9 tests)
 
 **Tests**: unit
 **Gate**: quick
