@@ -154,9 +154,9 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PORTAL-07 | P1: Visão pública | Design | In Design |
 | PORTAL-08 | P1: Visão pública | Design | In Design |
 | PORTAL-09 | P1: Visão pública | Design | In Design |
-| PORTAL-10 | P1: Seções do dashboard | Design | In Design |
-| PORTAL-11 | P1: Seções do dashboard | Design | In Design |
-| PORTAL-12 | P1: Seções do dashboard | Design | In Design |
+| PORTAL-10 | P1: Seções do dashboard | Design | Implementing |
+| PORTAL-11 | P1: Seções do dashboard | Design | Implementing |
+| PORTAL-12 | P1: Seções do dashboard | Design | Implementing |
 | PORTAL-13 | P1: Compatibilidade | Design | In Design |
 | PORTAL-14 | P1: Compatibilidade | Design | In Design |
 

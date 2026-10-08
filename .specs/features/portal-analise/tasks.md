@@ -147,6 +147,8 @@ T16 -> T18
 
 ### T3: Extend agent schemas with portal fields
 
+**Status**: Complete
+
 **What**: Add optional portal-linkable fields to analyst/writer Zod schemas (purely additive).
 **Where**: `src/lib/agents/types.ts`
 **Depends on**: None

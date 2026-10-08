@@ -207,6 +207,147 @@ describe("insightBulletSchema", () => {
   });
 });
 
+describe("campos opcionais do portal (back-compat)", () => {
+  it("fixture antiga de dor sem campos novos continua validando", () => {
+    const legado = {
+      dimensao_id: "d01",
+      dimensao: "Governança",
+      dor: "x",
+      evidencia_mercado: true,
+      confianca: 0.8,
+    };
+    expect(analysisPainSchema.safeParse(legado).success).toBe(true);
+  });
+
+  it("dor enriquecida valida com nivel_atual, impacto_negocio e recomendacao_curta", () => {
+    const enriquecida = {
+      dimensao_id: "d01",
+      dimensao: "Governança",
+      dor: "x",
+      evidencia_mercado: true,
+      confianca: 0.8,
+      nivel_atual: 2,
+      impacto_negocio: "Decisões lentas",
+      recomendacao_curta: "Definir dono de dados",
+    };
+    const parsed = analysisPainSchema.safeParse(enriquecida);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.nivel_atual).toBe(2);
+      expect(parsed.data.impacto_negocio).toBe("Decisões lentas");
+      expect(parsed.data.recomendacao_curta).toBe("Definir dono de dados");
+    }
+  });
+
+  it("rejeita nivel_atual fora de 1..5", () => {
+    expect(
+      analysisPainSchema.safeParse({
+        dimensao_id: "d01",
+        dimensao: "Governança",
+        dor: "x",
+        evidencia_mercado: true,
+        confianca: 0.8,
+        nivel_atual: 6,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejeita impacto_negocio acima de 300 chars", () => {
+    expect(
+      analysisPainSchema.safeParse({
+        dimensao_id: "d01",
+        dimensao: "Governança",
+        dor: "x",
+        evidencia_mercado: true,
+        confianca: 0.8,
+        impacto_negocio: "a".repeat(301),
+      }).success,
+    ).toBe(false);
+  });
+
+  it("concorrente legado valida; enriquecido aceita url e diferencial", () => {
+    const legado = { nome: "Concorrente X", contexto: "Investe em dados" };
+    expect(competitorContextSchema.safeParse(legado).success).toBe(true);
+
+    const enriquecido = {
+      ...legado,
+      url: "https://concorrente.com",
+      diferencial: "Atua com analytics avançado",
+    };
+    const parsed = competitorContextSchema.safeParse(enriquecido);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.url).toBe("https://concorrente.com");
+      expect(parsed.data.diferencial).toBe("Atua com analytics avançado");
+    }
+  });
+
+  it("análise legada valida e mantém .strict() para chaves desconhecidas; enriched valida", () => {
+    expect(marketAnalysisSchema.safeParse(MARKET_ANALYSIS).success).toBe(true);
+    const enriquecida = {
+      ...MARKET_ANALYSIS,
+      posicionamento_setor: "Líder regional em analytics",
+      oportunidade_principal: "Governança de dados como diferencial",
+    };
+    const parsed = marketAnalysisSchema.safeParse(enriquecida);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.posicionamento_setor).toBe("Líder regional em analytics");
+      expect(parsed.data.oportunidade_principal).toBe(
+        "Governança de dados como diferencial",
+      );
+    }
+    expect(
+      marketAnalysisSchema.safeParse({ ...enriquecida, extra: 1 }).success,
+    ).toBe(false);
+  });
+
+  it("rejeita posicionamento_setor acima de 500 chars", () => {
+    expect(
+      marketAnalysisSchema.safeParse({
+        ...MARKET_ANALYSIS,
+        posicionamento_setor: "a".repeat(501),
+      }).success,
+    ).toBe(false);
+  });
+
+  it("bullet legado valida; enriquecido aceita titulo, dimensao_ids e proximo_passo", () => {
+    const legado = { texto: "Priorizar governança", prioridade: "alta" as const };
+    expect(insightBulletSchema.safeParse(legado).success).toBe(true);
+
+    const enriquecido = {
+      ...legado,
+      titulo: "Definir dono de dados",
+      dimensao_ids: ["d01", "d02"],
+      proximo_passo: "Nomear responsável em 30 dias",
+    };
+    const parsed = insightBulletSchema.safeParse(enriquecido);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.titulo).toBe("Definir dono de dados");
+      expect(parsed.data.dimensao_ids).toEqual(["d01", "d02"]);
+      expect(parsed.data.proximo_passo).toBe("Nomear responsável em 30 dias");
+    }
+  });
+
+  it("rejeita titulo acima de 70 chars e proximo_passo acima de 300", () => {
+    expect(
+      insightBulletSchema.safeParse({
+        texto: "x",
+        prioridade: "alta",
+        titulo: "a".repeat(71),
+      }).success,
+    ).toBe(false);
+    expect(
+      insightBulletSchema.safeParse({
+        texto: "x",
+        prioridade: "alta",
+        proximo_passo: "a".repeat(301),
+      }).success,
+    ).toBe(false);
+  });
+});
+
 describe("insightsBriefSchema", () => {
   it("aceita brief válido", () => {
     expect(insightsBriefSchema.safeParse(INSIGHTS_BRIEF).success).toBe(true);
