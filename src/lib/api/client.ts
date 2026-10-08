@@ -216,6 +216,10 @@ export interface PublicPortalResponse {
   commercialAnswer: string;
 }
 
+export async function getPublicPortal(token: string): Promise<PublicPortalResponse> {
+  return apiFetch(`/public-proxy/portal/${token}`);
+}
+
 // ─── Admin session (cookie-based, httpOnly) ───
 
 export interface AdminSessionInfo {

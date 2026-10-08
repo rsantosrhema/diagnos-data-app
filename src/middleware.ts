@@ -5,6 +5,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 const RATE_LIMITED_PATHS = [
   "/api/public-proxy/leads",
   "/api/public-proxy/screener",
+  "/api/public-proxy/portal",
   "/api/admin-proxy/session",
   "/api/admin-proxy/dashboard",
   "/api/admin-proxy/analysis/reprocess",
@@ -13,6 +14,7 @@ const RATE_LIMITED_PATHS = [
 const RATE_LIMITS: Record<string, { limit: number; windowMs: number }> = {
   "/api/public-proxy/leads": { limit: 5, windowMs: 10 * 60 * 1000 },
   "/api/public-proxy/screener": { limit: 5, windowMs: 10 * 60 * 1000 },
+  "/api/public-proxy/portal": { limit: 30, windowMs: 60 * 1000 },
   "/api/admin-proxy/session": { limit: 10, windowMs: 10 * 60 * 1000 },
   "/api/admin-proxy/dashboard": { limit: 60, windowMs: 60 * 1000 },
   "/api/admin-proxy/analysis/reprocess": { limit: 10, windowMs: 60 * 1000 },

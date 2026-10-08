@@ -387,6 +387,8 @@ T16 -> T18
 
 ### T11: Add public token route with rate limiting
 
+**Status**: Complete
+
 **What**: Expose `GET /api/portal/[token]` (token-as-credential, no manager session) plus public proxy and middleware throttle.
 **Where**: `src/app/api/portal/[token]/route.ts`
 **Depends on**: T8
@@ -400,11 +402,11 @@ T16 -> T18
 
 **Done when**:
 
-- [ ] Route checks internal key, calls `getByToken`, maps all token failures to generic 404, never returns email/phone keys
-- [ ] Thin `public-proxy/portal/[token]` companion created (covered by existing middleware matcher)
-- [ ] `src/middleware.ts` gains explicit `/api/public-proxy/portal` entry at 30 req/min per IP
-- [ ] Co-located `route.test.ts`: valid token 200 without PII keys, invalid/expired 404-generic, missing internal key 401
-- [ ] Gate check passes: `npm run test` (full — middleware touch)
+- [x] Route checks internal key, calls `getByToken`, maps all token failures to generic 404, never returns email/phone keys
+- [x] Thin `public-proxy/portal/[token]` companion created (covered by existing middleware matcher)
+- [x] `src/middleware.ts` gains explicit `/api/public-proxy/portal` entry at 30 req/min per IP
+- [x] Co-located `route.test.ts`: valid token 200 without PII keys, invalid/expired 404-generic, missing internal key 401
+- [x] Gate check passes: `npm run test` (full — 410 passed, 1 skipped opt-in smoke; middleware touch)
 
 **Tests**: unit
 **Gate**: full
