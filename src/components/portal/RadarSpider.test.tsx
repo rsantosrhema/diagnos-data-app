@@ -17,11 +17,11 @@ describe("RadarSpider", () => {
     expect(container.innerHTML).toBe("");
   });
 
-  it("renderiza os eixos, grid e labels das dimensões", () => {
+  it("renderiza os eixos, grid e a legenda com os nomes das dimensões", () => {
     render(<RadarSpider dimensions={TEN_DIMENSIONS} />);
     const svg = document.querySelector("svg");
     expect(svg).toBeTruthy();
-    expect(svg?.getAttribute("viewBox")).toBe("0 0 320 320");
+    expect(svg?.getAttribute("viewBox")).toBe("0 0 360 360");
     expect(document.querySelectorAll("line").length).toBe(10);
     expect(screen.getByText("Dimensão 7")).toBeTruthy();
     expect(screen.getByText("Dimensão 10")).toBeTruthy();
@@ -35,10 +35,10 @@ describe("RadarSpider", () => {
     );
     expect(dataPoly).toBeTruthy();
     const points = dataPoly?.getAttribute("points")?.split(" ") ?? [];
-    expect(points[0]).toBe("160.0,40.0");
+    expect(points[0]).toBe("180.0,50.0");
     const angle = (-90 + (2 * 360) / 3) * (Math.PI / 180);
-    const xC = 160 + Math.cos(angle) * 60;
-    const yC = 160 + Math.sin(angle) * 60;
+    const xC = 180 + Math.cos(angle) * 65;
+    const yC = 180 + Math.sin(angle) * 65;
     expect(points[2]).toBe(`${xC.toFixed(1)},${yC.toFixed(1)}`);
   });
 

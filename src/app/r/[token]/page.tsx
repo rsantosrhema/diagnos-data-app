@@ -7,7 +7,7 @@ import { WaveDivider } from "../../components/WaveDivider";
 import { StageHero } from "@/components/portal/StageHero";
 import { RadarSpider } from "@/components/portal/RadarSpider";
 import { MaturityBars } from "@/components/portal/MaturityBars";
-import { AnswersAccordion } from "@/components/portal/AnswersAccordion";
+import { AnswersTable } from "@/components/portal/AnswersTable";
 import { CompetitorsGrid } from "@/components/portal/CompetitorsGrid";
 import { InsightsBoard } from "@/components/portal/InsightsBoard";
 import { SourcesList } from "@/components/portal/SourcesList";
@@ -125,16 +125,16 @@ export default function PublicPortalPage() {
               score={{ valor: data.score.valor, faixa: data.score.faixa }}
             />
 
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="rounded-2xl border border-rhema-lavender-light bg-white p-6 shadow-[0_8px_32px_rgba(59,35,102,0.12)]">
+            <div className="grid items-stretch gap-6 md:grid-cols-2">
+              <div className="flex h-full flex-col rounded-2xl border border-rhema-lavender-light bg-white p-6 shadow-[0_8px_32px_rgba(59,35,102,0.12)]">
                 <h2 className="mb-4 font-poppins text-lg font-semibold text-rhema-institutional">
                   Radar de maturidade
                 </h2>
-                <div className="overflow-x-auto">
+                <div className="flex flex-1 items-center justify-center overflow-x-auto">
                   <RadarSpider dimensions={data.dimensions} />
                 </div>
               </div>
-              <div className="rounded-2xl border border-rhema-lavender-light bg-white p-6 shadow-[0_8px_32px_rgba(59,35,102,0.12)]">
+              <div className="flex h-full flex-col rounded-2xl border border-rhema-lavender-light bg-white p-6 shadow-[0_8px_32px_rgba(59,35,102,0.12)]">
                 <h2 className="mb-3 font-poppins text-lg font-semibold text-rhema-institutional">
                   Barras de maturidade
                 </h2>
@@ -142,7 +142,7 @@ export default function PublicPortalPage() {
               </div>
             </div>
 
-            <AnswersAccordion dimensions={data.dimensions} />
+            <AnswersTable dimensions={data.dimensions} />
 
             {showAnalysis ? (
               <>

@@ -9,7 +9,7 @@ import { Reveal } from "../../components";
 import { StageHero } from "@/components/portal/StageHero";
 import { RadarSpider } from "@/components/portal/RadarSpider";
 import { MaturityBars } from "@/components/portal/MaturityBars";
-import { AnswersAccordion } from "@/components/portal/AnswersAccordion";
+import { AnswersTable } from "@/components/portal/AnswersTable";
 import { CompetitorsGrid } from "@/components/portal/CompetitorsGrid";
 import { InsightsBoard } from "@/components/portal/InsightsBoard";
 import { SourcesList } from "@/components/portal/SourcesList";
@@ -323,19 +323,19 @@ export default function LeadPortalPage() {
               <StageHero stage={data.stage} score={{ valor: data.score.valor, faixa: data.score.faixa }} />
             </Reveal>
 
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid items-stretch gap-6 md:grid-cols-2">
               <Reveal delay={2}>
-                <div className="rounded-2xl border border-rhema-lavender-light bg-white p-6 shadow-[0_8px_32px_rgba(59,35,102,0.12)]">
+                <div className="flex h-full flex-col rounded-2xl border border-rhema-lavender-light bg-white p-6 shadow-[0_8px_32px_rgba(59,35,102,0.12)]">
                   <h2 className="mb-4 font-poppins text-lg font-semibold text-rhema-institutional">
                     Radar de maturidade
                   </h2>
-                  <div className="overflow-x-auto">
+                  <div className="flex flex-1 items-center justify-center overflow-x-auto">
                     <RadarSpider dimensions={data.dimensions} />
                   </div>
                 </div>
               </Reveal>
               <Reveal delay={3}>
-                <div className="rounded-2xl border border-rhema-lavender-light bg-white p-6 shadow-[0_8px_32px_rgba(59,35,102,0.12)]">
+                <div className="flex h-full flex-col rounded-2xl border border-rhema-lavender-light bg-white p-6 shadow-[0_8px_32px_rgba(59,35,102,0.12)]">
                   <div className="mb-2 flex items-center justify-between">
                     <h2 className="font-poppins text-lg font-semibold text-rhema-institutional">
                       Barras de maturidade
@@ -360,7 +360,7 @@ export default function LeadPortalPage() {
             </div>
 
             <Reveal delay={4}>
-              <AnswersAccordion dimensions={data.dimensions} />
+              <AnswersTable dimensions={data.dimensions} />
             </Reveal>
 
             {showAnalysis ? (

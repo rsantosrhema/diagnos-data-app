@@ -17,11 +17,26 @@ interface InsightsBoardProps {
 
 const PRIORITY_CONFIG: Record<
   InsightCard["prioridade"],
-  { color: string; label: string; heading: string }
+  { color: string; soft: string; label: string; heading: string }
 > = {
-  alta: { color: "#C0392B", label: "Prioridade alta", heading: "Prioridade alta" },
-  media: { color: "#F1C40F", label: "Prioridade média", heading: "Prioridade média" },
-  baixa: { color: "#2980B9", label: "Prioridade baixa", heading: "Prioridade baixa" },
+  alta: {
+    color: "#C0392B",
+    soft: "rgba(192,57,43,0.08)",
+    label: "Prioridade alta",
+    heading: "Prioridade alta",
+  },
+  media: {
+    color: "#B7791F",
+    soft: "rgba(183,121,31,0.10)",
+    label: "Prioridade média",
+    heading: "Prioridade média",
+  },
+  baixa: {
+    color: "#2980B9",
+    soft: "rgba(41,128,185,0.10)",
+    label: "Prioridade baixa",
+    heading: "Prioridade baixa",
+  },
 };
 
 const PRIORITY_ORDER: InsightCard["prioridade"][] = ["alta", "media", "baixa"];
@@ -55,11 +70,11 @@ export function InsightsBoard({ insights, onDimensaoFilter }: InsightsBoardProps
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {grouped.map(({ priority, items }) => (
         <div key={priority}>
           <p
-            className="mb-2 flex items-center gap-2 font-poppins text-xs font-semibold uppercase tracking-wide"
+            className="mb-3 flex items-center gap-2 font-poppins text-xs font-semibold uppercase tracking-wide"
             style={{ color: PRIORITY_CONFIG[priority].color }}
           >
             <span
@@ -69,8 +84,9 @@ export function InsightsBoard({ insights, onDimensaoFilter }: InsightsBoardProps
             />
             {PRIORITY_CONFIG[priority].heading}
           </p>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid items-stretch gap-4 md:grid-cols-2">
             {items.map((bullet, idx) => {
+              const config = PRIORITY_CONFIG[priority];
               const hasFilter =
                 Boolean(onDimensaoFilter) &&
                 Array.isArray(bullet.dimensao_ids) &&
@@ -80,22 +96,57 @@ export function InsightsBoard({ insights, onDimensaoFilter }: InsightsBoardProps
                   key={`${priority}-${idx}`}
                   data-dimensao-filter={hasFilter ? "true" : undefined}
                   onClick={(event) => handleClick(bullet, event)}
-                  className={`rounded-2xl border border-rhema-lavender-light bg-white shadow-[0_8px_32px_rgba(59,35,102,0.12)] ${
-                    hasFilter ? "cursor-pointer transition-transform duration-300 hover:-translate-y-0.5" : ""
+                  className={`flex h-full flex-col overflow-hidden rounded-2xl border border-rhema-lavender-light bg-white shadow-[0_8px_32px_rgba(59,35,102,0.10)] ${
+                    hasFilter
+                      ? "cursor-pointer transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 hover:shadow-[0_18px_48px_rgba(59,35,102,0.14)]"
+                      : ""
                   }`}
-                  style={{ borderLeft: `4px solid ${PRIORITY_CONFIG[priority].color}` }}
+                  style={{ borderLeft: `4px solid ${config.color}` }}
                 >
-                  <h3 className="font-poppins text-sm font-semibold text-rhema-institutional">
-                    {bullet.titulo ?? (bullet.dimensao_ids ? fallbackTitle(bullet.texto) : "—")}
-                  </h3>
-                  <p className="mt-2 font-inter text-sm leading-relaxed text-rhema-dark/70">
-                    {bullet.texto}
-                  </p>
-                  {bullet.proximo_passo && (
-                    <p className="mt-3 font-inter text-sm leading-relaxed text-rhema-dark/70">
-                      <span className="font-medium text-rhema-primary">Próximo passo: </span>
-                      {bullet.proximo_passo}
+                  <div className="flex flex-1 flex-col gap-3 p-5 md:p-6">
+                    <div className="flex items-start gap-3">
+                      <span
+                        aria-hidden
+                        className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
+                        style={{ backgroundColor: config.soft, color: config.color }}
+                      >
+                        <svg
+                          className="h-4 w-4"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.6"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M8 1.5 9.9 6l4.6.3-3.6 3 1.2 4.5L8 11.3 3.9 13.8 5.1 9.3 1.5 6.3 6.1 6z" />
+                        </svg>
+                      </span>
+                      <h3 className="font-poppins text-base font-semibold leading-snug text-rhema-institutional">
+                        {bullet.titulo ??
+                          (bullet.dimensao_ids
+                            ? fallbackTitle(bullet.texto)
+                            : "—")}
+                      </h3>
+                    </div>
+
+                    <p className="font-inter text-sm leading-relaxed text-rhema-dark/70">
+                      {bullet.texto}
                     </p>
+                  </div>
+
+                  {bullet.proximo_passo && (
+                    <div
+                      className="mx-5 mb-5 rounded-xl border border-rhema-lavender-light px-4 py-3 md:mx-6 md:mb-6"
+                      style={{ backgroundColor: config.soft }}
+                    >
+                      <p className="font-inter text-sm leading-relaxed text-rhema-dark/80">
+                        <span className="font-semibold text-rhema-primary">
+                          Próximo passo:{" "}
+                        </span>
+                        {bullet.proximo_passo}
+                      </p>
+                    </div>
                   )}
                 </article>
               );
