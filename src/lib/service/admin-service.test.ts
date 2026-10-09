@@ -5,6 +5,8 @@ import type { AssessmentRepository } from "@/lib/repository/assessment-repo";
 import type { MarketInsightsRepository, MarketInsightsRow } from "@/lib/repository/market-insights-repo";
 import type { AnalysisQueueRepository } from "@/lib/repository/analysis-queue-repo";
 import type { AdminLogEntryDTO } from "@/lib/dto/admin";
+import type { AgentPayload } from "@/lib/schemas/agent-payload";
+import type { GeneratePdfInput } from "@/lib/service/screen-service";
 
 function mockLeadRepo(overrides: Partial<LeadRepository> = {}): LeadRepository {
   return {
@@ -99,6 +101,7 @@ function createAdminServiceForTest(deps: {
   queueRepo?: AnalysisQueueRepository;
   logLoader?: ReturnType<typeof mockLogLoader>;
   analysisService?: { enqueue: (leadId: string) => Promise<{ ok: boolean; queued: boolean }> };
+  generatePdf?: (input: GeneratePdfInput) => Promise<{ pdf: Buffer; filename: string }>;
 }) {
   return createAdminService({
     leadRepo: deps.leadRepo ?? mockLeadRepo(),
@@ -107,6 +110,7 @@ function createAdminServiceForTest(deps: {
     queueRepo: deps.queueRepo ?? mockQueueRepo(),
     logLoader: deps.logLoader ?? mockLogLoader(),
     analysisService: deps.analysisService ?? mockAnalysisService(),
+    generatePdf: deps.generatePdf ?? vi.fn().mockResolvedValue({ pdf: Buffer.from("pdf"), filename: "diagnostico.pdf" }),
   });
 }
 
@@ -357,6 +361,131 @@ describe("AdminService", () => {
       });
 
       await expect(service.generateReport("l1")).rejects.toThrow("queue down");
+    });
+  });
+
+  describe("getReportPdf", () => {
+    const lead: LeadRow = {
+      id: "l1",
+      name: "Alice",
+      company: "A Corp",
+      email: "a@a.com",
+      phone: "1",
+      role: "CEO",
+      status: "analisado",
+      created_at: new Date().toISOString(),
+    };
+
+    const agentPayload: AgentPayload = {
+      versao: "1",
+      solicitante: { nome: "Alice", cargo: "CEO" },
+      empresa: { nome: "A Corp", porte: null, segmento: null, funcionarios: null, faturamento: null },
+      contexto: {},
+      perfil_empresa: {},
+      respostas: [
+        { dimensao_id: "governanca", dimensao: "Governança", pergunta: "p", nivel: 3, peso: 10, resposta: "r" },
+      ],
+      resposta_comercial: { pergunta: "q", resposta: "a" },
+      score: { valor: 30, faixa: "Estruturado", descricao: "desc" },
+      risco: { dimensao_id: "governanca", nivel: 3 },
+      desequilibrio: false,
+      consentimento: { aceito: true, texto: "t", aceito_em: "2024-01-01T00:00:00.000Z" },
+    };
+
+    const assessment = {
+      id: "a1",
+      lead_id: "l1",
+      context: {},
+      answers: [],
+      commercial_answer: null,
+      consent: null,
+      agent_payload: agentPayload,
+      created_at: new Date().toISOString(),
+    };
+
+    const analyzedInsights = insightRow({
+      lead_id: "l1",
+      status: "analisado",
+      analysis: { resumo: "resumo", dores: [], contexto_concorrentes: [] },
+      insights: { bullets: [{ texto: "b", prioridade: "alta" }] },
+    });
+
+    it("gera o PDF a partir do payload e insights salvos", async () => {
+      const generatePdf = vi.fn().mockResolvedValue({ pdf: Buffer.from("pdf"), filename: "diagnostico-alice.pdf" });
+      const service = createAdminServiceForTest({
+        leadRepo: mockLeadRepo({ findById: vi.fn().mockResolvedValue(lead) }),
+        assessmentRepo: mockAssessmentRepo({ findByLeadId: vi.fn().mockResolvedValue(assessment) }),
+        marketInsightsRepo: mockMarketInsightsRepo({ findByLeadId: vi.fn().mockResolvedValue(analyzedInsights) }),
+        generatePdf,
+      });
+
+      const result = await service.getReportPdf("l1");
+
+      expect(result.filename).toBe("diagnostico-alice.pdf");
+      expect(generatePdf).toHaveBeenCalledTimes(1);
+      const input = generatePdf.mock.calls[0][0] as GeneratePdfInput;
+      expect(input.respondentName).toBe("Alice");
+      expect(input.dimensionScores).toEqual([{ name: "Governança", nivel: 3, peso: 10 }]);
+      expect(input.band.rotulo).toBe("Estruturado");
+      expect(input.analysis?.resumo).toBe("resumo");
+      expect(input.insights?.bullets).toHaveLength(1);
+    });
+
+    it("lança 404 quando o lead não existe", async () => {
+      const service = createAdminServiceForTest({
+        leadRepo: mockLeadRepo({ findById: vi.fn().mockResolvedValue(null) }),
+      });
+
+      await expect(service.getReportPdf("l1")).rejects.toMatchObject({
+        name: "AdminServiceError",
+        status: 404,
+      });
+    });
+
+    it("lança 404 quando não há diagnóstico", async () => {
+      const service = createAdminServiceForTest({
+        leadRepo: mockLeadRepo({ findById: vi.fn().mockResolvedValue(lead) }),
+        assessmentRepo: mockAssessmentRepo({ findByLeadId: vi.fn().mockResolvedValue(null) }),
+      });
+
+      await expect(service.getReportPdf("l1")).rejects.toMatchObject({ status: 404 });
+    });
+
+    it("lança 409 quando a análise não está concluída", async () => {
+      const service = createAdminServiceForTest({
+        leadRepo: mockLeadRepo({ findById: vi.fn().mockResolvedValue(lead) }),
+        assessmentRepo: mockAssessmentRepo({ findByLeadId: vi.fn().mockResolvedValue(assessment) }),
+        marketInsightsRepo: mockMarketInsightsRepo({
+          findByLeadId: vi.fn().mockResolvedValue(insightRow({ status: "processando" })),
+        }),
+      });
+
+      await expect(service.getReportPdf("l1")).rejects.toMatchObject({ status: 409 });
+    });
+
+    it("lança 404 quando o agent_payload é inválido", async () => {
+      const service = createAdminServiceForTest({
+        leadRepo: mockLeadRepo({ findById: vi.fn().mockResolvedValue(lead) }),
+        assessmentRepo: mockAssessmentRepo({
+          findByLeadId: vi.fn().mockResolvedValue({ ...assessment, agent_payload: { foo: "bar" } }),
+        }),
+        marketInsightsRepo: mockMarketInsightsRepo({ findByLeadId: vi.fn().mockResolvedValue(analyzedInsights) }),
+      });
+
+      await expect(service.getReportPdf("l1")).rejects.toMatchObject({ status: 404 });
+    });
+
+    it("lança 500 quando generatePdf não foi injetado", async () => {
+      const service = createAdminService({
+        leadRepo: mockLeadRepo({ findById: vi.fn().mockResolvedValue(lead) }),
+        assessmentRepo: mockAssessmentRepo({ findByLeadId: vi.fn().mockResolvedValue(assessment) }),
+        marketInsightsRepo: mockMarketInsightsRepo({ findByLeadId: vi.fn().mockResolvedValue(analyzedInsights) }),
+        queueRepo: mockQueueRepo(),
+        logLoader: mockLogLoader(),
+        analysisService: mockAnalysisService(),
+      });
+
+      await expect(service.getReportPdf("l1")).rejects.toMatchObject({ status: 500 });
     });
   });
 });

@@ -7,6 +7,7 @@ import { WaveDivider } from "../components/WaveDivider";
 import {
   getAdminDashboard,
   generateReport,
+  downloadReportPdf,
   loginAdminSession,
   getAdminSessionInfo,
   logoutAdminSession,
@@ -41,7 +42,6 @@ export default function AdminPage() {
   const [data, setData] = useState<AdminDashboardResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const pushToast = useCallback((kind: Toast["kind"], message: string) => {
@@ -76,23 +76,6 @@ export default function AdminPage() {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (!openMenu) return;
-    const close = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest("[data-action-menu]")) setOpenMenu(null);
-    };
-    const esc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpenMenu(null);
-    };
-    document.addEventListener("click", close);
-    document.addEventListener("keydown", esc);
-    return () => {
-      document.removeEventListener("click", close);
-      document.removeEventListener("keydown", esc);
-    };
-  }, [openMenu]);
-
   async function handleLogin(ev: FormEvent) {
     ev.preventDefault();
     setLoginError("");
@@ -124,12 +107,12 @@ export default function AdminPage() {
   }
 
   async function handleGenerateReport(leadId: string) {
-    setActionLoading(`report-${leadId}`);
+    setActionLoading(`play-${leadId}`);
     try {
       const result = await generateReport(leadId);
       await loadData();
       if (result.queued) {
-        pushToast("success", "Relatório enfileirado — você receberá por email");
+        pushToast("success", "Relatório enfileirado — processando na frota de agentes");
       } else {
         pushToast("success", "Relatório já está na fila ou em processamento");
       }
@@ -137,7 +120,26 @@ export default function AdminPage() {
       pushToast("error", err instanceof Error ? err.message : "Não foi possível gerar o relatório");
     } finally {
       setActionLoading(null);
-      setOpenMenu(null);
+    }
+  }
+
+  async function handleDownloadReport(leadId: string) {
+    setActionLoading(`report-${leadId}`);
+    try {
+      const { blob, filename } = await downloadReportPdf(leadId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      pushToast("success", "Download do relatório iniciado");
+    } catch (err) {
+      pushToast("error", err instanceof Error ? err.message : "Não foi possível baixar o relatório");
+    } finally {
+      setActionLoading(null);
     }
   }
 
@@ -166,11 +168,10 @@ export default function AdminPage() {
           data={data}
           loading={loading}
           actionLoading={actionLoading}
-          openMenu={openMenu}
-          setOpenMenu={setOpenMenu}
           onRefresh={loadData}
           onLogout={handleLogout}
           onGenerateReport={handleGenerateReport}
+          onDownloadReport={handleDownloadReport}
         />
       )}
 
@@ -330,20 +331,18 @@ function DashboardView({
   data,
   loading,
   actionLoading,
-  openMenu,
-  setOpenMenu,
   onRefresh,
   onLogout,
   onGenerateReport,
+  onDownloadReport,
 }: {
   data: AdminDashboardResponse | null;
   loading: boolean;
   actionLoading: string | null;
-  openMenu: string | null;
-  setOpenMenu: (v: string | null) => void;
   onRefresh: () => void;
   onLogout: () => void;
   onGenerateReport: (leadId: string) => void;
+  onDownloadReport: (leadId: string) => void;
 }) {
   const [now, setNow] = useState(new Date());
 
@@ -508,14 +507,11 @@ function DashboardView({
                             <AnalysisBadge status={row.analysisStatus} />
                           </td>
                           <td className="px-6 py-3.5 text-right">
-                            <RowActionMenu
+                            <RowActions
                               row={row}
-                              open={openMenu === row.leadId}
-                              onToggle={() =>
-                                setOpenMenu(openMenu === row.leadId ? null : row.leadId)
-                              }
                               loadingKey={actionLoading}
-                              onGenerateReport={onGenerateReport}
+                              onPlay={onGenerateReport}
+                              onDownload={onDownloadReport}
                             />
                           </td>
                         </tr>
@@ -561,7 +557,11 @@ function TableSkeleton() {
             <div className="skeleton h-5 w-44" />
             <div className="skeleton h-5 w-24" />
             <div className="skeleton h-5 w-24" />
-            <div className="ml-auto skeleton h-7 w-7" />
+            <div className="ml-auto flex gap-2">
+              <div className="skeleton h-8 w-8" />
+              <div className="skeleton h-8 w-8" />
+              <div className="skeleton h-8 w-8" />
+            </div>
           </div>
         ))}
       </div>
@@ -591,79 +591,181 @@ function EmptyState() {
 
 // ─── Sub-components ───
 
-function RowActionMenu({
-  row,
-  open,
-  onToggle,
-  loadingKey,
-  onGenerateReport,
+const ACTION_BUTTON_BASE =
+  "inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]";
+
+function actionButtonClass(disabled: boolean, tone: "primary" | "neutral"): string {
+  if (disabled) {
+    return `${ACTION_BUTTON_BASE} cursor-not-allowed border-rhema-lavender-light bg-white text-rhema-institutional opacity-40`;
+  }
+  const tones: Record<"primary" | "neutral", string> = {
+    primary:
+      "border-rhema-primary bg-rhema-primary text-white hover:bg-rhema-primary-light hover:-translate-y-0.5",
+    neutral:
+      "border-rhema-lavender bg-white text-rhema-institutional hover:bg-rhema-lavender-light hover:-translate-y-0.5",
+  };
+  return `${ACTION_BUTTON_BASE} ${tones[tone]}`;
+}
+
+function SpinnerIcon() {
+  return (
+    <svg
+      className="h-4 w-4 animate-spin"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
+      <path d="M12 3a9 9 0 1 0 9 9" />
+    </svg>
+  );
+}
+
+function PlayIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M4.5 2.7a.9.9 0 0 1 1.36-.77l7.1 5.3a.9.9 0 0 1 0 1.54l-7.1 5.3A.9.9 0 0 1 4.5 13.3z" />
+    </svg>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg
+      className="h-4 w-4"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M8 2v8" />
+      <path d="M4.5 6.8 8 10.3l3.5-3.5" />
+      <path d="M3 13.5h10" />
+    </svg>
+  );
+}
+
+function PortalIcon() {
+  return (
+    <svg
+      className="h-4 w-4"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" />
+      <path d="M4.5 5.5h4" />
+      <path d="M4.5 8h7" />
+      <path d="M4.5 10.5h5" />
+    </svg>
+  );
+}
+
+function RowActionButton({
+  label,
+  disabled,
+  busy = false,
+  tone,
+  onClick,
+  href,
+  children,
 }: {
-  row: AdminLeadRow;
-  open: boolean;
-  onToggle: () => void;
-  loadingKey: string | null;
-  onGenerateReport: (leadId: string) => void;
+  label: string;
+  disabled: boolean;
+  busy?: boolean;
+  tone: "primary" | "neutral";
+  onClick?: () => void;
+  href?: string;
+  children: React.ReactNode;
 }) {
-  const canGenerate =
-    row.hasDiagnostic &&
-    row.analysisStatus !== "processando" &&
-    row.analysisStatus !== "pendente";
+  const className = actionButtonClass(disabled, tone);
+
+  if (href && !disabled) {
+    return (
+      <Link href={href} aria-label={label} title={label} className={className}>
+        {children}
+      </Link>
+    );
+  }
 
   return (
-    <div className="relative inline-block" data-action-menu>
-      <button
-        aria-label="Ações do cliente"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        className={`action-toggle ${open ? "bg-rhema-lavender-light/60" : ""}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggle();
-        }}
-      >
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="5" cy="12" r="1.5" />
-          <circle cx="12" cy="12" r="1.5" />
-          <circle cx="19" cy="12" r="1.5" />
-        </svg>
-      </button>
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      aria-busy={busy || undefined}
+      disabled={disabled}
+      onClick={disabled ? undefined : onClick}
+      className={className}
+    >
+      {children}
+    </button>
+  );
+}
 
-      {open && (
-        <div className="action-menu" role="menu">
-          {row.hasDiagnostic && (
-            <Link
-              role="menuitem"
-              href={`/admin/leads/${row.leadId}`}
-              className="action-item"
-              onClick={() => onToggle()}
-            >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" />
-                <path d="M4.5 5.5h4" />
-                <path d="M4.5 8h7" />
-                <path d="M4.5 10.5h5" />
-              </svg>
-              Ver resultado
-            </Link>
-          )}
-          {canGenerate && (
-            <button
-              role="menuitem"
-              className="action-item"
-              disabled={loadingKey === `report-${row.leadId}`}
-              onClick={() => onGenerateReport(row.leadId)}
-            >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 1.5h5.5L13 5v9.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-12a1 1 0 0 1 1-1z" />
-                <path d="M9.5 1.5V5H13" />
-                <path d="M5.5 8h5" />
-                <path d="M5.5 11h5" />
-              </svg>
-              {loadingKey === `report-${row.leadId}` ? "Gerando..." : "Gerar relatório"}
-            </button>
-          )}
-        </div>
-      )}
+function RowActions({
+  row,
+  loadingKey,
+  onPlay,
+  onDownload,
+}: {
+  row: AdminLeadRow;
+  loadingKey: string | null;
+  onPlay: (leadId: string) => void;
+  onDownload: (leadId: string) => void;
+}) {
+  const playBusy = loadingKey === `play-${row.leadId}`;
+  const downloading = loadingKey === `report-${row.leadId}`;
+  const processing =
+    row.analysisStatus === "pendente" || row.analysisStatus === "processando";
+  const analyzed = row.analysisStatus === "analisado";
+
+  const playDisabled = !row.hasDiagnostic || analyzed || processing || playBusy;
+  const reportDisabled = !analyzed || downloading;
+  const portalDisabled = !row.hasDiagnostic;
+
+  const playLabel = analyzed
+    ? "Relatório já processado"
+    : processing
+      ? "Processando relatório"
+      : "Processar relatório";
+
+  return (
+    <div className="flex items-center justify-end gap-2">
+      <RowActionButton
+        label={playLabel}
+        tone="primary"
+        disabled={playDisabled}
+        busy={playBusy || processing}
+        onClick={() => onPlay(row.leadId)}
+      >
+        {playBusy || processing ? <SpinnerIcon /> : <PlayIcon />}
+      </RowActionButton>
+
+      <RowActionButton
+        label={analyzed ? "Baixar relatório em PDF" : "Relatório disponível após o processamento"}
+        tone="neutral"
+        disabled={reportDisabled}
+        busy={downloading}
+        onClick={() => onDownload(row.leadId)}
+      >
+        {downloading ? <SpinnerIcon /> : <DownloadIcon />}
+      </RowActionButton>
+
+      <RowActionButton
+        label="Abrir portal do cliente"
+        tone="neutral"
+        disabled={portalDisabled}
+        href={`/admin/leads/${row.leadId}`}
+      >
+        <PortalIcon />
+      </RowActionButton>
     </div>
   );
 }

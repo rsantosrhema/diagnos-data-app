@@ -10,6 +10,10 @@ import type {
   AdminQueueStatsDTO,
 } from "@/lib/dto/admin";
 import type { MarketInsightsStatus } from "@/lib/repository/market-insights-repo";
+import type { GeneratePdfInput } from "@/lib/service/screen-service";
+import type { AgentPayload } from "@/lib/schemas/agent-payload";
+import { agentPayloadSchema } from "@/lib/schemas/agent-payload";
+import { marketAnalysisSchema, insightsBriefSchema } from "@/lib/agents/types";
 
 export class AdminServiceError extends Error {
   constructor(
@@ -28,6 +32,30 @@ const ENQUEUEABLE_STATUSES = new Set([
   "analise_pendente",
 ]);
 
+function buildPdfInput(
+  payload: AgentPayload,
+  extras: { analysis?: GeneratePdfInput["analysis"]; insights?: GeneratePdfInput["insights"] },
+): GeneratePdfInput {
+  const dimensionScores = payload.respostas.map((r) => ({
+    name: r.dimensao,
+    nivel: r.nivel,
+    peso: r.peso,
+  }));
+  const riskDim = payload.respostas.find(
+    (r) => r.dimensao_id === payload.risco.dimensao_id,
+  );
+  return {
+    respondentName: payload.solicitante.nome,
+    band: { rotulo: payload.score.faixa, descricao: payload.score.descricao },
+    dimensionScores,
+    riskDimension: { name: riskDim?.dimensao ?? "Dimensão", nivel: payload.risco.nivel },
+    imbalance: payload.desequilibrio,
+    commercialAnswer: payload.resposta_comercial.resposta,
+    ...(extras.analysis ? { analysis: extras.analysis } : {}),
+    ...(extras.insights ? { insights: extras.insights } : {}),
+  };
+}
+
 export function createAdminService(deps: {
   leadRepo: LeadRepository;
   assessmentRepo: AssessmentRepository;
@@ -35,8 +63,9 @@ export function createAdminService(deps: {
   queueRepo: AnalysisQueueRepository;
   logLoader: (limit: number) => Promise<AdminLogEntryDTO[]>;
   analysisService: { enqueue(leadId: string): Promise<{ ok: boolean; queued: boolean }> };
+  generatePdf?: (input: GeneratePdfInput) => Promise<{ pdf: Buffer; filename: string }>;
 }) {
-  const { leadRepo, assessmentRepo, marketInsightsRepo, queueRepo, logLoader, analysisService } = deps;
+  const { leadRepo, assessmentRepo, marketInsightsRepo, queueRepo, logLoader, analysisService, generatePdf } = deps;
 
   return {
     async getDashboard(): Promise<AdminDashboardResponseDTO> {
@@ -117,6 +146,47 @@ export function createAdminService(deps: {
         );
       }
       return { ok: true, queued: true };
+    },
+
+    async getReportPdf(
+      leadId: string,
+    ): Promise<{ pdf: Buffer; filename: string }> {
+      const lead = await leadRepo.findById(leadId);
+      if (!lead) {
+        throw new AdminServiceError("Lead não encontrado", 404);
+      }
+
+      const assessment = await assessmentRepo.findByLeadId(leadId);
+      if (!assessment) {
+        throw new AdminServiceError("Diagnóstico não encontrado", 404);
+      }
+
+      const insights = await marketInsightsRepo.findByLeadId(leadId);
+      if (!insights || insights.status !== "analisado") {
+        throw new AdminServiceError(
+          "Relatório ainda não disponível",
+          409,
+        );
+      }
+
+      const payloadParsed = agentPayloadSchema.safeParse(assessment.agent_payload);
+      if (!payloadParsed.success) {
+        throw new AdminServiceError("Diagnóstico indisponível", 404);
+      }
+
+      const analysisParsed = marketAnalysisSchema.safeParse(insights.analysis);
+      const briefParsed = insightsBriefSchema.safeParse(insights.insights);
+
+      if (!generatePdf) {
+        throw new AdminServiceError("Geração de PDF indisponível", 500);
+      }
+
+      return generatePdf(
+        buildPdfInput(payloadParsed.data, {
+          analysis: analysisParsed.success ? analysisParsed.data : undefined,
+          insights: briefParsed.success ? briefParsed.data : undefined,
+        }),
+      );
     },
   };
 }

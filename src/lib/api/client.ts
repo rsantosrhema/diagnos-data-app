@@ -202,6 +202,32 @@ export async function revokeShareLink(leadId: string): Promise<{ ok: true }> {
   return apiFetch(`/admin-proxy/portal/${leadId}/share`, { method: "DELETE" });
 }
 
+export interface ReportPdfDownload {
+  blob: Blob;
+  filename: string;
+}
+
+export async function downloadReportPdf(
+  leadId: string,
+): Promise<ReportPdfDownload> {
+  const res = await fetch(
+    `${API_BASE}/admin-proxy/portal/${encodeURIComponent(leadId)}/report-pdf`,
+    { method: "GET", credentials: "same-origin" },
+  );
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    const message = (data as { error?: string })?.error ?? `Erro ${res.status}`;
+    throw new ApiError(message, res.status, data);
+  }
+
+  const blob = await res.blob();
+  const disposition = res.headers.get("content-disposition") ?? "";
+  const match = /filename="?([^";]+)"?/i.exec(disposition);
+  const filename = match?.[1] ?? `diagnostico-${leadId}.pdf`;
+  return { blob, filename };
+}
+
 export interface PublicPortalResponse {
   lead: { id: string; name: string; company: string };
   score: { valor: number; faixa: string; descricao: string };
