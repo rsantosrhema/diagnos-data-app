@@ -7,7 +7,7 @@ import { createLeadRepository } from "@/lib/repository/lead-repo";
 import { createAssessmentRepository } from "@/lib/repository/assessment-repo";
 import { createMarketInsightsRepository } from "@/lib/repository/market-insights-repo";
 import { createShareTokenRepository } from "@/lib/repository/share-token-repo";
-import { createPortalService, PortalServiceError } from "@/lib/service/portal-service";
+import { createPortalService, PortalServiceError, logPortalError } from "@/lib/service/portal-service";
 
 export async function GET(
   req: Request,
@@ -40,6 +40,7 @@ export async function GET(
     if (err instanceof PortalServiceError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
+    logPortalError("getForManager", leadId, err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }

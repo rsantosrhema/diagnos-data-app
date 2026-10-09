@@ -26,6 +26,35 @@ export class PortalServiceError extends Error {
   }
 }
 
+export function logPortalError(scope: string, ref: string, err: unknown): void {
+  const e = err as {
+    message?: string;
+    code?: string;
+    details?: string;
+    hint?: string;
+  };
+  console.error(
+    `[portal] ${scope} falhou (ref=${ref}):`,
+    e?.message ?? err,
+    e?.code ? `code=${e.code}` : "",
+    e?.details ?? "",
+    e?.hint ?? "",
+  );
+}
+
+async function step<T>(
+  name: string,
+  ref: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    logPortalError(name, ref, err);
+    throw err;
+  }
+}
+
 export const SHARE_TOKEN_TTL_DAYS = 90;
 
 const GENERIC_NOT_FOUND = "Link inválido ou expirado";
@@ -69,7 +98,9 @@ export function createPortalService(deps: {
     async getForManager(leadId: string): Promise<ManagerPortalDTO> {
       const [full, shareRow] = await Promise.all([
         assembleFull(leadId),
-        shareTokenRepo.findActiveByLeadId(leadId),
+        step("shareTokenRepo.findActiveByLeadId", leadId, () =>
+          shareTokenRepo.findActiveByLeadId(leadId),
+        ),
       ]);
       return {
         ...full,
@@ -119,16 +150,22 @@ async function loadAndBuild(
   insightsRepo: MarketInsightsRepository,
   leadId: string,
 ): Promise<FullPortalState> {
-  const lead = await leadRepo.findById(leadId);
+  const lead = await step("leadRepo.findById", leadId, () =>
+    leadRepo.findById(leadId),
+  );
   if (!lead) throw new PortalServiceError("Lead não encontrado", 404);
 
-  const assessment = await assessmentRepo.findByLeadId(leadId);
+  const assessment = await step("assessmentRepo.findByLeadId", leadId, () =>
+    assessmentRepo.findByLeadId(leadId),
+  );
   if (!assessment) {
     throw new PortalServiceError("Diagnóstico não encontrado", 404);
   }
   const payload = validateAgentPayload(assessment.agent_payload, leadId);
 
-  const insights = await insightsRepo.findByLeadId(leadId);
+  const insights = await step("insightsRepo.findByLeadId", leadId, () =>
+    insightsRepo.findByLeadId(leadId),
+  );
   const analysisState = extractAnalysisState(insights);
   const risk = buildRisk(payload);
 

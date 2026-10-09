@@ -6,7 +6,7 @@ import { createLeadRepository } from "@/lib/repository/lead-repo";
 import { createAssessmentRepository } from "@/lib/repository/assessment-repo";
 import { createMarketInsightsRepository } from "@/lib/repository/market-insights-repo";
 import { createShareTokenRepository } from "@/lib/repository/share-token-repo";
-import { createPortalService, PortalServiceError } from "@/lib/service/portal-service";
+import { createPortalService, PortalServiceError, logPortalError } from "@/lib/service/portal-service";
 
 const GENERIC_NOT_FOUND = "Link inválido ou expirado";
 
@@ -39,6 +39,7 @@ export async function GET(
     if (err instanceof PortalServiceError) {
       return NextResponse.json({ error: GENERIC_NOT_FOUND }, { status: 404 });
     }
+    logPortalError("getByToken", token, err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }

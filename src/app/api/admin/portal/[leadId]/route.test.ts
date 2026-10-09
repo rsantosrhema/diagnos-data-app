@@ -31,6 +31,7 @@ vi.mock("@/lib/service/portal-service", () => ({
       this.status = status;
     }
   },
+  logPortalError: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({

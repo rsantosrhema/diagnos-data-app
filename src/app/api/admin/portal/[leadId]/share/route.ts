@@ -7,7 +7,7 @@ import { createLeadRepository } from "@/lib/repository/lead-repo";
 import { createAssessmentRepository } from "@/lib/repository/assessment-repo";
 import { createMarketInsightsRepository } from "@/lib/repository/market-insights-repo";
 import { createShareTokenRepository } from "@/lib/repository/share-token-repo";
-import { createPortalService, PortalServiceError } from "@/lib/service/portal-service";
+import { createPortalService, PortalServiceError, logPortalError } from "@/lib/service/portal-service";
 
 function buildService() {
   const supabase = getServiceClient();
@@ -42,6 +42,7 @@ export async function POST(
     if (err instanceof PortalServiceError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
+    logPortalError("createShareToken", leadId, err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }
@@ -68,6 +69,7 @@ export async function DELETE(
     if (err instanceof PortalServiceError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
+    logPortalError("revokeShareToken", leadId, err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }
