@@ -5,6 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 interface Builder {
   select: ReturnType<typeof vi.fn>;
   eq: ReturnType<typeof vi.fn>;
+  is: ReturnType<typeof vi.fn>;
   gt: ReturnType<typeof vi.fn>;
   single: ReturnType<typeof vi.fn>;
   maybeSingle: ReturnType<typeof vi.fn>;
@@ -21,6 +22,7 @@ function mockSupabase(response: {
   const builder = {} as Builder;
   builder.select = vi.fn().mockReturnValue(builder);
   builder.eq = vi.fn().mockReturnValue(builder);
+  builder.is = vi.fn().mockReturnValue(builder);
   builder.gt = vi.fn().mockReturnValue(builder);
   builder.maybeSingle = vi.fn().mockResolvedValue({
     data: response.data ?? null,
@@ -34,7 +36,7 @@ function mockSupabase(response: {
     data: null,
     error: response.updateError ?? null,
   });
-  const updateEq = vi.fn().mockReturnValue({ eq: updateFinal });
+  const updateEq = vi.fn().mockReturnValue({ is: updateFinal });
   builder.update = vi.fn().mockReturnValue({ eq: updateEq });
   builder.insert = vi.fn().mockResolvedValue({
     data: null,
@@ -143,7 +145,7 @@ describe("ShareTokenRepository", () => {
 
       expect(from).toHaveBeenCalledWith("share_tokens");
       expect(queryEq).toHaveBeenCalledWith("lead_id", "lead-1");
-      expect(builder.eq).toHaveBeenCalledWith("revoked_at", null);
+      expect(builder.is).toHaveBeenCalledWith("revoked_at", null);
       expect(builder.select).toHaveBeenCalledWith(
         "id, lead_id, token_hash, expires_at, revoked_at, created_by, created_at",
       );

@@ -27,7 +27,7 @@ export function createShareTokenRepository(supabase: SupabaseClient) {
         .from("share_tokens")
         .update({ revoked_at: revokedAt })
         .eq("lead_id", params.leadId)
-        .eq("revoked_at", null);
+        .is("revoked_at", null);
       if (revokeError) throw revokeError;
 
       const { error } = await supabase.from("share_tokens").insert({
@@ -53,7 +53,7 @@ export function createShareTokenRepository(supabase: SupabaseClient) {
         .from("share_tokens")
         .update({ revoked_at: new Date().toISOString() })
         .eq("lead_id", leadId)
-        .eq("revoked_at", null);
+        .is("revoked_at", null);
       if (error) throw error;
     },
 
@@ -62,7 +62,7 @@ export function createShareTokenRepository(supabase: SupabaseClient) {
         .from("share_tokens")
         .select(TOKEN_COLUMNS)
         .eq("lead_id", leadId)
-        .eq("revoked_at", null)
+        .is("revoked_at", null)
         .gt("expires_at", new Date().toISOString())
         .maybeSingle();
       if (error) throw error;
