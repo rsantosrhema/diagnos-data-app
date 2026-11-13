@@ -84,8 +84,8 @@ Each requirement gets a unique ID for tracking across design, tasks, and validat
 | PORTALUN-03 | P1: Uma página, dois acessos | - | Implementing |
 | PORTALUN-04 | P1: Uma página, dois acessos | - | Implementing |
 | PORTALUN-05 | P1: Uma página, dois acessos | - | Implementing |
-| PORTALUN-06 | P1: Uma página, dois acessos | - | Pending |
-| PORTALUN-07 | P1: Uma página, dois acessos | - | Pending |
+| PORTALUN-06 | P1: Uma página, dois acessos | - | Implementing |
+| PORTALUN-07 | P1: Uma página, dois acessos | - | Implementing |
 | PORTALUN-08 | P1: Uma página, dois acessos | - | Pending |
 
 **ID format:** `PORTALUN-[NUMBER]`
