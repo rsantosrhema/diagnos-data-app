@@ -155,22 +155,33 @@ describe("RadarChart", () => {
     expect(data).toHaveLength(1);
     const coords = parsePoints(pointsOf(data[0])!);
     const insideGrid = (x: number, y: number): boolean => {
-      const dx = x - 160;
-      const dy = y - 160;
-      return Math.hypot(dx, dy) <= 120 + 1e-6;
+      const dx = x - 270;
+      const dy = y - 213.5;
+      return Math.hypot(dx, dy) <= 160 + 1e-6;
     };
     for (let i = 0; i < coords.length; i += 2) {
       expect(insideGrid(coords[i], coords[i + 1])).toBe(true);
     }
   });
 
-  it("desenha um label Text por dimensão (RADAR-05)", () => {
+  it("desenha um label Text por dimensão com rótulo curto (RADAR-05)", () => {
     const el = RadarChart({ dimensions: DIMENSIONS });
     const texts = collectByComponent(el, Text);
     expect(texts).toHaveLength(DIMENSIONS.length);
     const all = childTexts(el);
-    for (const d of DIMENSIONS) {
-      expect(all).toContain(d.name);
+    for (const label of [
+      "Governança",
+      "Patrocínio",
+      "Arquitetura",
+      "Qualidade",
+      "Metadados",
+      "Mestres",
+      "Segurança",
+      "Consumo",
+      "IA/Analytics",
+      "Time",
+    ]) {
+      expect(all).toContain(label);
     }
   });
 });

@@ -116,17 +116,17 @@ describe("generateScreenerPdf", () => {
       },
     });
     const children = buildReportChildren(input);
-    expect(hasText(children, "Insights Priorizados")).toBe(true);
-    expect(countText(children, "[ALTA] ")).toBe(1);
+    expect(hasText(children, "Insights priorizados")).toBe(true);
+    expect(countText(children, "ALTA")).toBe(1);
     expect(countText(children, "Falta governança de dados")).toBe(1);
-    expect(countText(children, "[MEDIA] ")).toBe(1);
+    expect(countText(children, "MÉDIA")).toBe(1);
     expect(countText(children, "Fortalecer qualidade")).toBe(1);
-    expect(countText(children, "[BAIXA] ")).toBe(1);
+    expect(countText(children, "BAIXA")).toBe(1);
     expect(countText(children, "Amadurecer analytics")).toBe(1);
     const colors = collectBackgroundColors(children);
-    expect(colors).toContain("#C0392B");
-    expect(colors).toContain("#F1C40F");
-    expect(colors).toContain("#2980B9");
+    expect(colors).toContain("#B23A34");
+    expect(colors).toContain("#A9741A");
+    expect(colors).toContain("#2F6FA8");
     const result = await generateScreenerPdf(input);
     expect(result.pdf.length).toBeGreaterThan(0);
     expect(result.pdf.toString("latin1")).not.toMatch(/https?:\/\/\S+/);
@@ -137,11 +137,11 @@ describe("generateScreenerPdf", () => {
       insights: { bullets: [{ texto: "Tópico", prioridade: "urgente" as never }] },
     });
     const children = buildReportChildren(input);
-    expect(hasText(children, "Insights Priorizados")).toBe(true);
-    const colors = collectBackgroundColors(children).filter((c) => c === "#2980B9");
-    expect(colors).toEqual(["#2980B9"]);
-    expect(collectBackgroundColors(children)).not.toContain("#C0392B");
-    expect(collectBackgroundColors(children)).not.toContain("#F1C40F");
+    expect(hasText(children, "Insights priorizados")).toBe(true);
+    const colors = collectBackgroundColors(children).filter((c) => c === "#2F6FA8");
+    expect(colors).toEqual(["#2F6FA8"]);
+    expect(collectBackgroundColors(children)).not.toContain("#B23A34");
+    expect(collectBackgroundColors(children)).not.toContain("#A9741A");
     const result = await generateScreenerPdf(input);
     expect(result.pdf.length).toBeGreaterThan(0);
   });
@@ -163,7 +163,7 @@ describe("generateScreenerPdf", () => {
       },
     });
     const children = buildReportChildren(input);
-    expect(hasText(children, "Análise de Mercado")).toBe(true);
+    expect(hasText(children, "Análise de mercado")).toBe(true);
     expect(hasText(children, "Empresa enfrenta dores típicas do segmento.")).toBe(true);
     expect(hasText(children, "Falta de dono dos dados")).toBe(true);
     const result = await generateScreenerPdf(input);
@@ -172,7 +172,7 @@ describe("generateScreenerPdf", () => {
 
   it("analysis ausente: omite a seção Análise (PDF-01 edge)", async () => {
     const children = buildReportChildren(makeInput({ analysis: undefined }));
-    expect(hasText(children, "Análise de Mercado")).toBe(false);
+    expect(hasText(children, "Análise de mercado")).toBe(false);
   });
 
   it("contexto_concorrentes não-vazio: renderiza seção Concorrentes (PDF-03)", async () => {
@@ -200,27 +200,27 @@ describe("generateScreenerPdf", () => {
 
   it("sem insights: omite a seção de bullets (PDF básico de fallback)", async () => {
     const children = buildReportChildren(makeInput({ insights: undefined }));
-    expect(hasText(children, "Insights Priorizados")).toBe(false);
+    expect(hasText(children, "Insights priorizados")).toBe(false);
     const result = await generateScreenerPdf(makeInput({ insights: undefined }));
     expect(result.pdf.length).toBeGreaterThan(0);
   });
 
   it("com insights vazios: omite a seção de bullets", async () => {
     const children = buildReportChildren(makeInput({ insights: { bullets: [] } }));
-    expect(hasText(children, "Insights Priorizados")).toBe(false);
+    expect(hasText(children, "Insights priorizados")).toBe(false);
     const result = await generateScreenerPdf(makeInput({ insights: { bullets: [] } }));
     expect(result.pdf.length).toBeGreaterThan(0);
   });
 
   it("renderiza seção Radar de Maturidade com dimensionScores (RADAR-01)", async () => {
     const children = buildReportChildren(makeInput());
-    expect(hasText(children, "Radar de Maturidade")).toBe(true);
+    expect(hasText(children, "Radar de maturidade")).toBe(true);
     const result = await generateScreenerPdf(makeInput());
     expect(result.pdf.length).toBeGreaterThan(0);
   });
 
   it("omite a seção Radar quando dimensionScores vazio (RADAR-01 edge)", () => {
     const children = buildReportChildren(makeInput({ dimensionScores: [] }));
-    expect(hasText(children, "Radar de Maturidade")).toBe(false);
+    expect(hasText(children, "Radar de maturidade")).toBe(false);
   });
 });
