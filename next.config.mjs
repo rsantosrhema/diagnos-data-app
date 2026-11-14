@@ -32,6 +32,7 @@ const cspDirectives = [
 
 const nextConfig = {
   reactStrictMode: true,
+  output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   async headers() {
     return [
       {

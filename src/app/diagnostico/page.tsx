@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, type FormEvent } from "react";
-import { RhemaLogo } from "../components/RhemaLogo";
-import { WaveDivider } from "../components/WaveDivider";
+import { PageShell, Toolbar, Icon } from "../components/PageShell";
 import { submitScreener, ApiError } from "@/lib/api/client";
 import {
   SCREENER_CONTRACT,
@@ -248,69 +247,55 @@ export default function DiagnosticoPage() {
     }
   }
 
-  // ─── Success state ───
   if (status === "success") {
     return (
-      <main className="min-h-screen flex flex-col">
-        <header className="bg-rhema-institutional">
-          <div className="max-w-6xl mx-auto px-6 py-4">
-            <RhemaLogo variant="dark" width={140} />
-          </div>
-        </header>
-        <section className="bg-rhema-institutional relative overflow-hidden">
-          <div className="max-w-6xl mx-auto px-6 pt-12 pb-24 md:pt-20 md:pb-32 text-center">
-            <h1 className="font-poppins font-bold text-2xl md:text-4xl text-white mb-4">
-              Diagnóstico enviado!
-            </h1>
-            <p className="text-rhema-lavender/80 font-inter text-base max-w-lg mx-auto">
-              Recebemos suas respostas. Nosso time comercial fará a análise e
-              entrará em contato.
-            </p>
-          </div>
-          <WaveDivider color="var(--color-rhema-offwhite)" />
-        </section>
-        <section className="bg-rhema-offwhite -mt-1 flex-1 flex items-center justify-center pb-20">
-          <div className="card p-10 text-center max-w-md mx-6 animate-fade-in-up">
-            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
+      <PageShell>
+        <Toolbar>
+          <span className="rd-pill rd-pill--ok gap-1.5 uppercase tracking-[0.1em]">
+            <Icon name="check" size={11} /> Concluído
+          </span>
+        </Toolbar>
+        <section className="flex flex-1 items-center justify-center px-6 pb-24">
+          <div className="rd-card w-full max-w-[580px] p-11 text-center animate-fade-in-up">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#e9f3ee] text-[#2e7d57]">
+              <Icon name="check" size={28} />
             </div>
-            <h2 className="font-poppins font-semibold text-xl text-rhema-institutional mb-3">
-              Obrigado!
-            </h2>
-            <p className="font-inter text-sm text-rhema-dark/70 leading-relaxed">
+            <h1 className="rd-h text-[32px]">Diagnóstico enviado!</h1>
+            <p className="mx-auto mt-3 max-w-[460px] text-[15px] leading-relaxed text-[#6e6e73]">
+              Recebemos suas respostas. Nosso time comercial fará a análise e entrará em contato.
+            </p>
+            <div className="mx-auto my-7 h-px bg-[#1d1d1f12]" />
+            <h2 className="rd-h text-[17px]">Obrigado!</h2>
+            <p className="mt-2 text-[13px] text-[#6e6e73]">
               Nosso time comercial fará a análise do seu diagnóstico e entrará em contato.
             </p>
-            <a
-              href="/"
-              className="btn-primary inline-block mt-6"
-            >
-              Voltar ao início
+            <a href="/" className="rd-btn rd-btn--sm mt-7">
+              Voltar ao início <Icon name="arrowRight" size={14} />
             </a>
           </div>
         </section>
-      </main>
+      </PageShell>
     );
   }
 
-  // ─── Current question data ───
   let questionTitle = "";
+  let questionSub = "";
   let questionBody: React.ReactNode = null;
+
+  const errorText = (msg?: string) =>
+    msg ? <p className="mt-1 text-xs text-[#b23a34]">{msg}</p> : null;
 
   if (step.kind === "info") {
     questionTitle = `Olá, ${form.name || "visitante"}`;
+    questionSub = `Responda essas perguntas para entendermos mais sobre a ${form.company || "sua empresa"}.`;
     questionBody = (
-      <div className="space-y-6">
-        <p className="font-inter text-sm text-rhema-dark/70">
-          Responda essas perguntas para entendermos mais sobre a <strong>{form.company || "sua empresa"}</strong>.
-        </p>
+      <div className="space-y-5">
         {SCREENER_CONTRACT.perfil_empresa.map((profQ) => (
           <div key={profQ.id}>
-            <label htmlFor={profQ.id} className="label-field">{profQ.pergunta}</label>
+            <label htmlFor={profQ.id} className="rd-label">{profQ.pergunta}</label>
             <select
               id={profQ.id}
-              className={`input-field ${errors[`prof_${profQ.id}`] ? "error" : ""}`}
+              className={`rd-input h-[52px] font-medium ${errors[`prof_${profQ.id}`] ? "error" : ""} ${form.profile[profQ.id] ? "" : "text-[#6e6e73]"}`}
               value={form.profile[profQ.id] || ""}
               onChange={(e) => updateProfile(profQ.id, e.target.value)}
             >
@@ -319,7 +304,7 @@ export default function DiagnosticoPage() {
                 <option key={opt} value={opt}>{opt}</option>
               ))}
             </select>
-            {errors[`prof_${profQ.id}`] && <p className="text-red-600 text-xs mt-1 font-inter">{errors[`prof_${profQ.id}`]}</p>}
+            {errorText(errors[`prof_${profQ.id}`])}
           </div>
         ))}
       </div>
@@ -328,58 +313,62 @@ export default function DiagnosticoPage() {
     const dimId = DIMENSION_IDS[step.index];
     const dim = SCREENER_CONTRACT.dimensoes.find((d) => d.id === dimId)!;
     questionTitle = dim.pergunta;
+    questionSub = "Escolha o nível que melhor descreve a realidade da empresa.";
     questionBody = (
-      <div className="space-y-3">
-        <p className="font-inter text-xs text-rhema-dark/50 mb-2">
-          Escolha o nível que melhor descreve a realidade da empresa.
-        </p>
+      <div className="space-y-2.5">
         {dim.opcoes.map((opt) => {
           const isSelected = form.answers[dimId] === opt.nivel;
           return (
-            <button key={opt.nivel} onClick={() => updateAnswer(dimId, opt.nivel)} className={`w-full text-left p-4 md:p-5 rounded-xl border-2 transition-all duration-200 ${isSelected ? "border-rhema-primary bg-rhema-primary/5 shadow-sm" : "border-rhema-lavender-light bg-white hover:border-rhema-lavender hover:shadow-sm"}`}>
-              <div className="flex items-start gap-4">
-                <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-xs font-poppins font-semibold transition-colors ${isSelected ? "bg-rhema-primary text-white" : "bg-rhema-lavender-light text-rhema-dark/50"}`}>{`${opt.nivel}`}</div>
-                <div>
-                  <p className={`font-poppins font-medium text-sm ${isSelected ? "text-rhema-primary" : "text-rhema-institutional"}`}>{LEVEL_LABELS[opt.nivel - 1]}</p>
-                  <p className={`font-inter text-xs mt-0.5 ${isSelected ? "text-rhema-primary/70" : "text-rhema-dark/50"}`}>{opt.texto}</p>
-                </div>
-              </div>
+            <button key={opt.nivel} type="button" onClick={() => updateAnswer(dimId, opt.nivel)} className="rd-option" data-selected={isSelected}>
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${isSelected ? "bg-[#4a2c7d] text-white" : "bg-[#f5f4f8] text-[#6e6e73]"}`}>{opt.nivel}</span>
+              <span className="flex-1">
+                <span className="block text-sm font-semibold text-[#1d1d1f]">{LEVEL_LABELS[opt.nivel - 1]}</span>
+                <span className="mt-0.5 block text-xs text-[#6e6e73]">{opt.texto}</span>
+              </span>
+              {isSelected && <Icon name="check" className="text-[#4a2c7d]" />}
             </button>
           );
         })}
-        {errors[`ans_${dimId}`] && <p className="text-red-600 text-xs font-inter">{errors[`ans_${dimId}`]}</p>}
+        {errorText(errors[`ans_${dimId}`])}
       </div>
     );
   } else if (step.kind === "commercial") {
     const cta = SCREENER_CONTRACT.pergunta_comercial;
     questionTitle = cta.pergunta;
     questionBody = (
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {cta.opcoes.map((opt) => {
           const isSelected = form.commercialAnswer === opt;
           return (
-            <button key={opt} onClick={() => update("commercialAnswer", opt)} className={`w-full text-left p-4 md:p-5 rounded-xl border-2 transition-all duration-200 ${isSelected ? "border-rhema-primary bg-rhema-primary/5 shadow-sm" : "border-rhema-lavender-light bg-white hover:border-rhema-lavender hover:shadow-sm"}`}>
-              <p className={`font-poppins font-medium text-sm ${isSelected ? "text-rhema-primary" : "text-rhema-institutional"}`}>{opt}</p>
+            <button key={opt} type="button" onClick={() => update("commercialAnswer", opt)} className="rd-option h-14" data-selected={isSelected}>
+              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-[1.5px] ${isSelected ? "border-[#4a2c7d]" : "border-[#1d1d1f33]"}`}>
+                {isSelected && <span className="h-2.5 w-2.5 rounded-full bg-[#4a2c7d]" />}
+              </span>
+              <span className="text-sm text-[#1d1d1f]">{opt}</span>
             </button>
           );
         })}
+        <p className="flex items-center gap-2 pt-3 text-xs text-[#6e6e73]">
+          <Icon name="info" size={14} />
+          Pergunta não pontuada: entra como gancho comercial e qualificação de dor, não no cálculo de maturidade.
+        </p>
       </div>
     );
   } else {
-    // consent
     questionTitle = "Consentimento";
     questionBody = (
       <div className="space-y-4">
-        <p className="font-inter text-sm text-rhema-dark/70 leading-relaxed">
+        <p className="flex gap-3 rounded-xl bg-[#f5f4f8] p-4 text-[13px] leading-relaxed text-[#6e6e73]">
+          <Icon name="info" size={14} className="mt-0.5 shrink-0" />
           {SCREENER_CONTRACT.meta.aviso_metodologico}
         </p>
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input type="checkbox" checked={form.consent} onChange={(e) => update("consent", e.target.checked)} className="mt-1 h-5 w-5 rounded border-rhema-lavender text-rhema-primary focus:ring-rhema-primary" />
-          <span className="font-inter text-sm text-rhema-dark">
+        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#1d1d1f1f] p-4">
+          <input type="checkbox" checked={form.consent} onChange={(e) => update("consent", e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[#4a2c7d]" />
+          <span className="text-sm leading-relaxed text-[#6e6e73]">
             Autorizo o uso dos meus dados para fins de diagnóstico de maturidade de dados e contato comercial pela Rhema Data.
           </span>
         </label>
-        {errors.consent && <p className="text-red-600 text-xs font-inter">{errors.consent}</p>}
+        {errorText(errors.consent)}
       </div>
     );
   }
@@ -395,67 +384,48 @@ export default function DiagnosticoPage() {
           : "Seus dados";
 
   return (
-    <main className="min-h-screen flex flex-col bg-rhema-offwhite">
-      {/* Header */}
-      <header className="bg-white border-b border-rhema-lavender-light">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <RhemaLogo variant="light" width={110} />
-          <span className="font-inter text-sm text-rhema-dark/50">
-            {stepIndex() + 1} de {TOTAL_STEPS}
-          </span>
+    <PageShell>
+      <Toolbar>
+        <span className="rd-eyebrow">
+          Etapa {stepIndex() + 1} de {TOTAL_STEPS}
+        </span>
+        <div className="flex items-center gap-1" aria-hidden="true">
+          {Array.from({ length: TOTAL_STEPS }, (_, i) => (
+            <span key={i} className={`h-1 w-[11px] rounded-sm ${i <= stepIndex() ? "bg-[#4a2c7d]" : "bg-[#1d1d1f1a]"}`} />
+          ))}
         </div>
-        <div className="h-1 bg-rhema-lavender-light">
-          <div className="h-full bg-rhema-primary transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
-        </div>
-      </header>
+      </Toolbar>
 
-      {/* Question */}
-      <section className="flex-1 flex items-start justify-center pt-8 md:pt-16 pb-28 px-6">
-        <div className="w-full max-w-2xl animate-fade-in" key={`${step.kind}-${step.kind === "dimension" ? step.index : 0}`}>
-          <div className="mb-6">
-            <span className="inline-block font-poppins text-xs font-medium tracking-wide uppercase text-rhema-primary bg-rhema-primary/10 px-3 py-1.5 rounded-full">
-              {dimBadge}
-            </span>
+      <section className="flex flex-1 items-start justify-center px-6 pb-32 pt-12 md:pt-16">
+        <div className="rd-card w-full max-w-[760px] px-6 py-8 md:px-11 md:py-10 animate-fade-in" key={`${step.kind}-${step.kind === "dimension" ? step.index : 0}`}>
+          <div className="flex flex-col gap-3.5 pb-7">
+            <span className="rd-badge">{dimBadge}</span>
+            <h2 className="rd-h text-2xl leading-tight md:text-[32px]">{questionTitle}</h2>
+            {questionSub && <p className="text-sm text-[#6e6e73]">{questionSub}</p>}
           </div>
-          <h2 className="font-poppins font-semibold text-xl md:text-2xl text-rhema-institutional leading-snug mb-8">
-            {questionTitle}
-          </h2>
           {questionBody}
           {serverError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-4">
-              <p className="text-red-700 text-sm font-inter">{serverError}</p>
-            </div>
+            <p className="mt-4 rounded-xl bg-[#f9eae8] p-3 text-sm text-[#b23a34]">{serverError}</p>
           )}
         </div>
       </section>
 
-      {/* Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-rhema-lavender-light">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <button onClick={goBack} disabled={step.kind === "info"} className="font-poppins text-sm font-medium text-rhema-dark/50 hover:text-rhema-dark transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-            {"← Anterior"}
+      <div className="fixed inset-x-0 bottom-0 flex justify-center px-6 pb-6">
+        <div className="flex w-full max-w-[1280px] items-center justify-between rounded-[18px] bg-[#fafafa] px-6 py-4 shadow-[0_8px_24px_#00000012]">
+          <button type="button" onClick={goBack} disabled={step.kind === "info"} className="rd-link flex items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed">
+            <Icon name="arrowLeft" size={14} /> Anterior
           </button>
           {isLastStep ? (
-            <button onClick={handleSubmit} disabled={!form.consent || status === "submitting"} className="btn-primary">
-              {status === "submitting" ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Enviando...
-                </span>
-              ) : (
-                "Enviar diagnóstico"
-              )}
+            <button type="button" onClick={handleSubmit} disabled={!form.consent || status === "submitting"} className="rd-btn rd-btn--sm">
+              {status === "submitting" ? "Enviando..." : <>Enviar diagnóstico <Icon name="arrowRight" size={14} /></>}
             </button>
           ) : (
-            <button onClick={goNext} className="btn-primary">
-              {"Próxima →"}
+            <button type="button" onClick={goNext} className="rd-btn rd-btn--sm">
+              Próxima <Icon name="arrowRight" size={14} />
             </button>
           )}
         </div>
       </div>
-    </main>
+    </PageShell>
   );
 }

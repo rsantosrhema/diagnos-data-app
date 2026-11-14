@@ -50,6 +50,7 @@ function mockQueueRepo(overrides: Partial<AnalysisQueueRepository> = {}): Analys
     read: vi.fn(),
     ack: vi.fn(),
     requeue: vi.fn(),
+    cancel: vi.fn().mockResolvedValue({ cancelled: true }),
     resetReadCount: vi.fn().mockResolvedValue({ alreadyRetried: false }),
     stats: vi.fn().mockResolvedValue({
       queueLength: 0,
@@ -243,6 +244,24 @@ describe("AdminService", () => {
       const result = await service.getDashboard();
       expect(result.rows).toEqual([]);
       expect(result.kpis.leadsTotal).toBe(0);
+    });
+  });
+
+  describe("cancelReport", () => {
+    it("cancela job em andamento", async () => {
+      const cancel = vi.fn().mockResolvedValue({ cancelled: true });
+      const service = createAdminServiceForTest({ queueRepo: mockQueueRepo({ cancel }) });
+
+      await expect(service.cancelReport("l1")).resolves.toEqual({ ok: true, cancelled: true });
+      expect(cancel).toHaveBeenCalledWith("l1");
+    });
+
+    it("rejeita com 409 quando não há job em andamento", async () => {
+      const service = createAdminServiceForTest({
+        queueRepo: mockQueueRepo({ cancel: vi.fn().mockResolvedValue({ cancelled: false }) }),
+      });
+
+      await expect(service.cancelReport("l1")).rejects.toMatchObject({ status: 409 });
     });
   });
 

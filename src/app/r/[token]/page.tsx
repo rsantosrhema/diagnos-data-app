@@ -51,7 +51,7 @@ export default function PublicPortalPage() {
   }, [token]);
 
   return (
-    <main className="flex min-h-screen flex-col bg-rhema-offwhite">
+    <main className="rd-page">
       <DiagnosticPortal
         mode="public"
         data={data ? toPortalData(data) : null}

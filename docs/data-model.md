@@ -173,7 +173,7 @@ Todas as tabelas têm **RLS habilitado sem policies** para `anon`/`authenticated
 
 **RLS**: habilitado, sem policies (service-role only).
 
-**Fila**: os jobs de análise são enfileirados na fila `analysis_jobs` (extensão `pgmq`) via wrappers `security definer` `analysis_queue_enqueue(uuid)` / `analysis_queue_read()` / `analysis_queue_ack(...)` / `analysis_queue_requeue(...)` / `analysis_queue_stats()`, chamados pelo service-role através de `supabase.rpc`. Semântica **read + ack/archive** (ADR-010): `read` usa visibility timeout de 600s (a mensagem não é apagada ao ler; se o worker cair, ela volta à fila), e `ack` arquiva a mensagem em `pgmq_archived` preservando histórico. A fila é independente do PostgREST (não exposta a `anon`/`authenticated`).
+**Fila**: os jobs de análise são enfileirados na fila `analysis_jobs` (extensão `pgmq`) via wrappers `security definer` `analysis_queue_enqueue(uuid)` / `analysis_queue_read()` / `analysis_queue_ack(...)` / `analysis_queue_requeue(...)` / `analysis_queue_stats()` / `analysis_queue_cancel(uuid)`, chamados pelo service-role através de `supabase.rpc`. Semântica **read + ack/archive** (ADR-010): `read` usa visibility timeout de 600s (a mensagem não é apagada ao ler; se o worker cair, ela volta à fila), e `ack` arquiva a mensagem em `pgmq_archived` preservando histórico. `analysis_queue_cancel` (migration `0017_analysis_queue_cancel`) marca o insight como `falha` com `error = 'Cancelado pelo gerente'` e arquiva as mensagens pendentes do lead, liberando o reprocessamento. A fila é independente do PostgREST (não exposta a `anon`/`authenticated`).
 
 ### `analysis_job_logs`
 

@@ -146,6 +146,15 @@ export async function generateReport(
   });
 }
 
+export async function cancelReport(
+  leadId: string,
+): Promise<{ ok: true; cancelled: true }> {
+  return apiFetch("/admin-proxy/analysis/cancel", {
+    method: "POST",
+    body: { leadId },
+  });
+}
+
 // ─── Portal (admin) ───
 
 export interface PortalShareState {

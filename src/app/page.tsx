@@ -2,8 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { RhemaLogo } from "./components/RhemaLogo";
-import { WaveDivider } from "./components/WaveDivider";
+import Link from "next/link";
+import { PageShell, Toolbar, SiteFooter, Icon } from "./components/PageShell";
 import { submitLead, type LeadInput } from "@/lib/api/client";
 import { CARGOS } from "@/lib/screener/contract";
 import { LEAD_STORAGE_KEY, type StoredLead } from "@/lib/lead-storage";
@@ -69,221 +69,127 @@ export default function HomePage() {
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   }
 
+  const fields = [
+    { id: "name", label: "Nome completo", type: "text", placeholder: "Seu nome" },
+    { id: "company", label: "Empresa", type: "text", placeholder: "Nome da empresa" },
+  ] as const;
+  const contactFields = [
+    { id: "email", label: "Email corporativo", type: "email", placeholder: "voce@empresa.com" },
+    { id: "phone", label: "Telefone", type: "tel", placeholder: "(11) 99999-9999" },
+  ] as const;
+
+  function renderField(f: { id: "name" | "company" | "email" | "phone"; label: string; type: string; placeholder: string }) {
+    return (
+      <div key={f.id}>
+        <label htmlFor={f.id} className="rd-label">{f.label}</label>
+        <input
+          id={f.id}
+          type={f.type}
+          className={`rd-input ${errors[f.id] ? "error" : ""}`}
+          placeholder={f.placeholder}
+          value={form[f.id]}
+          onChange={(e) => update(f.id, e.target.value)}
+        />
+        {errors[f.id] && <p className="mt-1 text-xs text-[#b23a34]">{errors[f.id]}</p>}
+      </div>
+    );
+  }
+
   return (
-    <main className="min-h-screen flex flex-col">
-      {/* ─── Header ─── */}
-      <header className="bg-rhema-institutional">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <RhemaLogo variant="dark" width={140} />
-          <div className="flex items-center gap-6">
-            <a
-              href="/admin"
-              className="text-sm font-poppins font-medium text-white/40 hover:text-white/70 transition-colors"
-            >
-              Painel gerencial
-            </a>
-          </div>
-        </div>
-      </header>
+    <PageShell>
+      <Toolbar>
+        <a href="#como-funciona" className="rd-link">Como funciona</a>
+        <Link href="/admin" className="rd-link">Painel gerencial</Link>
+      </Toolbar>
 
-      {/* ─── Hero ─── */}
-      <section className="bg-rhema-institutional relative overflow-hidden">
-        <div className="max-w-6xl mx-auto px-6 pt-12 pb-28 md:pt-20 md:pb-36">
-          <div className="max-w-2xl">
-            <p className="text-rhema-lavender font-poppins text-sm font-medium tracking-wide uppercase mb-4">
-              Diagnóstico de Maturidade
-            </p>
-            <h1 className="font-poppins font-bold text-3xl md:text-5xl text-white leading-tight mb-6">
-              Sua empresa está pronta para{" "}
-              <span className="text-rhema-lavender">extrair valor real</span>{" "}
-              dos dados?
-            </h1>
-            <p className="text-rhema-lavender/80 font-inter text-base md:text-lg leading-relaxed max-w-xl">
-              Avalie o nível de maturidade da gestão de dados da sua empresa com
-              base no framework DAMA-DMBOK. Receba um relatório completo com
-              recomendações práticas.
-            </p>
-          </div>
-        </div>
-        <WaveDivider color="var(--color-rhema-offwhite)" />
-      </section>
-
-      {/* ─── Content ─── */}
-      <section className="bg-rhema-offwhite -mt-1">
-        <div className="max-w-6xl mx-auto px-6 py-16 md:py-24 grid md:grid-cols-2 gap-12 md:gap-20 items-start">
-          {/* Left: info */}
-          <div className="animate-fade-in-up">
-            <h2 className="font-poppins font-semibold text-2xl md:text-3xl text-rhema-institutional mb-8">
-              Como funciona
-            </h2>
-            <div className="space-y-8">
-              {[
-                {
-                  step: "01",
-                  title: "Cadastre-se",
-                  desc: "Preencha o formulário ao lado com seus dados e os da sua empresa. Leva menos de 1 minuto.",
-                },
-                {
-                  step: "02",
-                  title: "Responda o questionário",
-                  desc: "Perguntas sobre práticas de gestão de dados da sua empresa. Leva menos de 10 minutos.",
-                },
-                {
-                  step: "03",
-                  title: "Receba o relatório",
-                  desc: "Nosso time comercial analisa seu diagnóstico e envia um relatório detalhado com scores, recomendações e plano de ação.",
-                },
-              ].map((item) => (
-                <div key={item.step} className="flex gap-5">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-rhema-primary/10 flex items-center justify-center">
-                    <span className="font-poppins font-bold text-rhema-primary text-sm">
-                      {item.step}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="font-poppins font-semibold text-rhema-institutional text-lg mb-1">
-                      {item.title}
-                    </h3>
-                    <p className="font-inter text-rhema-dark/70 text-sm leading-relaxed">
-                      {item.desc}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Right: form */}
-          <div className="card p-8 md:p-10 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
-            <h2 className="font-poppins font-semibold text-xl text-rhema-institutional mb-1">
-              Comece seu diagnóstico
-            </h2>
-            <p className="font-inter text-sm text-rhema-dark/60 mb-8">
-              Preencha os dados abaixo para iniciar agora.
-            </p>
-
-            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-              {/* honeypot */}
-              <input
-                type="text"
-                name="website"
-                value={form.website}
-                onChange={(e) => update("website", e.target.value)}
-                className="hidden"
-                tabIndex={-1}
-                autoComplete="off"
-              />
-
-              <div>
-                <label htmlFor="name" className="label-field">Nome completo</label>
-                <input
-                  id="name"
-                  type="text"
-                  className={`input-field ${errors.name ? "error" : ""}`}
-                  placeholder="Seu nome"
-                  value={form.name}
-                  onChange={(e) => update("name", e.target.value)}
-                />
-                {errors.name && <p className="text-red-600 text-xs mt-1 font-inter">{errors.name}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="company" className="label-field">Empresa</label>
-                <input
-                  id="company"
-                  type="text"
-                  className={`input-field ${errors.company ? "error" : ""}`}
-                  placeholder="Nome da empresa"
-                  value={form.company}
-                  onChange={(e) => update("company", e.target.value)}
-                />
-                {errors.company && <p className="text-red-600 text-xs mt-1 font-inter">{errors.company}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="role" className="label-field">Cargo</label>
-                <select
-                  id="role"
-                  className={`input-field ${errors.role ? "error" : ""}`}
-                  value={form.role}
-                  onChange={(e) => update("role", e.target.value)}
-                >
-                  <option value="" disabled>
-                    Selecione seu cargo
-                  </option>
-                  {CARGOS.map((cargo) => (
-                    <option key={cargo} value={cargo}>
-                      {cargo}
-                    </option>
-                  ))}
-                </select>
-                {errors.role && <p className="text-red-600 text-xs mt-1 font-inter">{errors.role}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="email" className="label-field">Email corporativo</label>
-                <input
-                  id="email"
-                  type="email"
-                  className={`input-field ${errors.email ? "error" : ""}`}
-                  placeholder="voce@empresa.com"
-                  value={form.email}
-                  onChange={(e) => update("email", e.target.value)}
-                />
-                {errors.email && <p className="text-red-600 text-xs mt-1 font-inter">{errors.email}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="phone" className="label-field">Telefone</label>
-                <input
-                  id="phone"
-                  type="tel"
-                  className={`input-field ${errors.phone ? "error" : ""}`}
-                  placeholder="(11) 99999-9999"
-                  value={form.phone}
-                  onChange={(e) => update("phone", e.target.value)}
-                />
-                {errors.phone && <p className="text-red-600 text-xs mt-1 font-inter">{errors.phone}</p>}
-              </div>
-
-              {serverError && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <p className="text-red-700 text-sm font-inter">{serverError}</p>
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={status === "submitting"}
-                className="btn-primary w-full"
-              >
-                {status === "submitting" ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Enviando...
-                  </span>
-                ) : (
-                  "Iniciar diagnóstico"
-                )}
-              </button>
-            </form>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Footer ─── */}
-      <footer className="bg-rhema-institutional mt-auto">
-        <WaveDivider flip color="var(--color-rhema-institutional)" className="-mb-1" />
-        <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4">
-          <RhemaLogo variant="dark" width={120} />
-          <p className="font-inter text-xs text-white/50">
-            &copy; {new Date().getFullYear()} Rhema Data. Todos os direitos reservados.
+      <section className="rd-container grid flex-1 items-center gap-12 py-16 md:grid-cols-[1fr_512px] md:gap-24">
+        <div className="max-w-[640px]">
+          <p className="rd-eyebrow mb-5 flex items-center gap-3">
+            <span className="h-0.5 w-4 bg-[#4a2c7d]" />
+            Diagnóstico de maturidade de dados
           </p>
+          <h1 className="rd-h text-4xl leading-[1.1] md:text-5xl">
+            Sua empresa está pronta para{" "}
+            <span className="text-[#3b2366]">extrair valor real</span> dos dados?
+          </h1>
+          <p className="mt-6 max-w-[580px] text-base leading-relaxed text-[#6e6e73] md:text-lg">
+            Avalie o nível de maturidade da gestão de dados da sua empresa com base no
+            framework DAMA-DMBOK. Receba um relatório completo com recomendações práticas.
+          </p>
+          <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-xs text-[#6e6e73]">
+            {([["layers", "Framework DAMA-DMBOK"], ["timer", "Menos de 10 minutos"], ["file", "Relatório executivo"]] as const).map(([icon, text]) => (
+              <li key={text} className="flex items-center gap-2">
+                <Icon name={icon} size={14} />
+                {text}
+              </li>
+            ))}
+          </ul>
         </div>
-      </footer>
-    </main>
+
+        <div className="rd-card p-8 md:p-[34px]">
+          <h2 className="rd-h text-[22px]">Comece seu diagnóstico</h2>
+          <p className="mb-6 mt-1 text-[13px] text-[#6e6e73]">
+            Preencha os dados abaixo para iniciar agora.
+          </p>
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            <input
+              type="text"
+              name="website"
+              value={form.website}
+              onChange={(e) => update("website", e.target.value)}
+              className="hidden"
+              tabIndex={-1}
+              autoComplete="off"
+            />
+            {fields.map(renderField)}
+            <div>
+              <label htmlFor="role" className="rd-label">Cargo</label>
+              <select
+                id="role"
+                className={`rd-input ${errors.role ? "error" : ""}`}
+                value={form.role}
+                onChange={(e) => update("role", e.target.value)}
+              >
+                <option value="" disabled>Selecione seu cargo</option>
+                {CARGOS.map((cargo) => (
+                  <option key={cargo} value={cargo}>{cargo}</option>
+                ))}
+              </select>
+              {errors.role && <p className="mt-1 text-xs text-[#b23a34]">{errors.role}</p>}
+            </div>
+            {contactFields.map(renderField)}
+            {serverError && (
+              <p className="rounded-xl bg-[#f9eae8] p-3 text-sm text-[#b23a34]">{serverError}</p>
+            )}
+            <button type="submit" disabled={status === "submitting"} className="rd-btn mt-2 w-full">
+              {status === "submitting" ? "Enviando..." : <>Iniciar diagnóstico <Icon name="arrowRight" /></>}
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <section id="como-funciona" className="rd-container pt-8">
+        <div className="mb-4 flex items-center gap-4">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#4a2c7d]">Como funciona</span>
+          <span className="h-px flex-1 bg-[#1d1d1f1f]" />
+          <span className="text-xs text-[#707077]">Sem custo para começar</span>
+        </div>
+        <div className="rd-card grid gap-8 p-9 md:grid-cols-3 md:gap-0 md:p-9">
+          {[
+            ["01", "Cadastre-se", "Preencha o formulário ao lado com seus dados e os da sua empresa. Leva menos de 1 minuto."],
+            ["02", "Responda o questionário", "Perguntas sobre práticas de gestão de dados da sua empresa. Leva menos de 10 minutos."],
+            ["03", "Receba o relatório", "Nosso time comercial analisa seu diagnóstico e envia um relatório detalhado com scores, recomendações e plano de ação."],
+          ].map(([n, title, desc], i) => (
+            <div key={n} className={`md:px-9 ${i > 0 ? "md:border-l md:border-[#1d1d1f12]" : "md:pl-0"}`}>
+              <p className="font-poppins text-[72px] font-semibold leading-none text-[#c9bedb]">{n}</p>
+              <h3 className="rd-h mt-6 text-[17px]">{title}</h3>
+              <p className="mt-3 text-[13px] leading-relaxed text-[#6e6e73]">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <SiteFooter />
+    </PageShell>
   );
 }

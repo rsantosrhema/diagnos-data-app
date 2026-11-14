@@ -148,6 +148,14 @@ export function createAdminService(deps: {
       return { ok: true, queued: true };
     },
 
+    async cancelReport(leadId: string): Promise<{ ok: true; cancelled: true }> {
+      const { cancelled } = await queueRepo.cancel(leadId);
+      if (!cancelled) {
+        throw new AdminServiceError("Não há relatório em andamento para este lead", 409);
+      }
+      return { ok: true, cancelled: true };
+    },
+
     async getReportPdf(
       leadId: string,
     ): Promise<{ pdf: Buffer; filename: string }> {

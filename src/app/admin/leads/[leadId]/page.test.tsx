@@ -132,6 +132,7 @@ describe("Página portal do gerente", () => {
     expect(screen.getByText("Governança sem dono")).toBeTruthy();
     expect(screen.getByText("Relatório setorial")).toBeTruthy();
     expect(screen.getByRole("button", { name: /copiar/i })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /revogar/i })).toBeNull();
   });
 
   it("análise pendente mostra placeholder sem esconder diagnóstico", async () => {
@@ -161,6 +162,9 @@ describe("Página portal do gerente", () => {
     const { default: PortalPage } = await import("./page");
     render(<PortalPage />);
     await screen.findByText("Acesso não autorizado");
+    const backLinks = screen.getAllByRole("link", { name: "Voltar ao painel" });
+    expect(backLinks.length).toBeGreaterThan(0);
+    expect(backLinks.every((link) => link.getAttribute("href") === "/admin")).toBe(true);
     expect(screen.queryByText("Estruturado")).toBeNull();
     expect(screen.queryByText("João Silva")).toBeNull();
   });

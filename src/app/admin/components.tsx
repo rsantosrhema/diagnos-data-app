@@ -3,43 +3,22 @@ import type { AnalysisStatus } from "@/lib/api/client";
 
 export type { AnalysisStatus };
 
-export function KpiCard({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: number;
-  tone: "amber" | "red" | "green" | "primary";
-}) {
-  const tones: Record<string, string> = {
-    amber: "text-amber-600",
-    red: "text-red-600",
-    green: "text-green-600",
-    primary: "text-rhema-primary",
-  };
-
+export function KpiCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="card p-5 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5">
-      <p className="font-inter text-xs uppercase tracking-wide text-rhema-dark/50">
-        {label}
-      </p>
-      <p
-        className={`mt-2 font-poppins text-3xl font-bold tabular-nums ${tones[tone]}`}
-      >
-        {value}
-      </p>
+    <div className="border-[#1d1d1f12] p-6 [&:not(:first-child)]:border-l">
+      <p className="rd-eyebrow">{label}</p>
+      <p className="rd-h mt-2 text-[28px] tabular-nums">{value}</p>
     </div>
   );
 }
 
 export function DiagnosticBadge({ hasDiagnostic }: { hasDiagnostic: boolean }) {
   return hasDiagnostic ? (
-    <span className="inline-block rounded-full bg-green-100 px-2.5 py-1 font-inter text-xs font-medium text-green-700">
+    <span className="rd-pill rd-pill--ok">
       Concluído
     </span>
   ) : (
-    <span className="inline-block rounded-full bg-gray-100 px-2.5 py-1 font-inter text-xs font-medium text-gray-600">
+    <span className="rd-pill rd-pill--gray">
       Pendente
     </span>
   );
@@ -47,14 +26,14 @@ export function DiagnosticBadge({ hasDiagnostic }: { hasDiagnostic: boolean }) {
 
 export function AnalysisBadge({ status }: { status: AnalysisStatus }) {
   if (!status) {
-    return <span className="font-inter text-xs text-rhema-dark/40">—</span>;
+    return <span className="text-xs text-[#707077]">—</span>;
   }
 
   const map: Record<Exclude<AnalysisStatus, null>, string> = {
-    pendente: "bg-amber-100 text-amber-700",
-    processando: "bg-blue-100 text-blue-700",
-    analisado: "bg-green-100 text-green-700",
-    falha: "bg-red-100 text-red-700",
+    pendente: "rd-pill--amber",
+    processando: "rd-pill--blue",
+    analisado: "rd-pill--ok",
+    falha: "rd-pill--risk",
   };
 
   const labels: Record<Exclude<AnalysisStatus, null>, string> = {
@@ -68,7 +47,7 @@ export function AnalysisBadge({ status }: { status: AnalysisStatus }) {
 
   return (
     <span
-      className={`inline-block rounded-full px-2.5 py-1 font-inter text-xs font-medium ${map[status]}${pulse}`}
+      className={`rd-pill ${map[status]}${pulse}`}
     >
       {labels[status]}
     </span>
@@ -110,8 +89,8 @@ const LOG_ERROR_STEPS = new Set(["failed", "pdf_failed", "email_failed"]);
 export function LogStepLabel({ step }: { step: string }) {
   const label = LOG_STEP_LABELS[step] ?? step;
   const tone = LOG_ERROR_STEPS.has(step)
-    ? "text-red-700 font-medium"
-    : "text-rhema-dark/70";
+    ? "text-[#b23a34] font-medium"
+    : "text-[#6e6e73]";
   return <span className={tone}>{label}</span>;
 }
 

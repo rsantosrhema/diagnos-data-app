@@ -37,6 +37,8 @@ async function dispatchWorker(req: Request): Promise<void> {
       );
     }
   } catch (err) {
+    // O worker segue processando após o timeout; só a espera pela resposta é abortada.
+    if (err instanceof Error && err.name === "TimeoutError") return;
     console.error("[reprocess] falha ao acionar worker:", err);
   }
 }

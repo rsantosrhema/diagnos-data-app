@@ -30,6 +30,15 @@ export function createAnalysisQueueRepository(supabase: SupabaseClient) {
       return { ok: result?.ok ?? true, queued: result?.queued ?? true };
     },
 
+    async cancel(leadId: string): Promise<{ cancelled: boolean }> {
+      const { data, error } = await supabase.rpc("analysis_queue_cancel", {
+        p_lead_id: leadId,
+      });
+      if (error) throw error;
+      const result = data as { cancelled?: boolean } | null;
+      return { cancelled: result?.cancelled ?? false };
+    },
+
     async read(): Promise<AnalysisQueueJob | null> {
       const { data, error } = await supabase.rpc("analysis_queue_read");
       if (error) throw error;

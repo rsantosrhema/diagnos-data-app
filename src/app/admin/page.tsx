@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import Link from "next/link";
-import { RhemaLogo } from "../components/RhemaLogo";
-import { WaveDivider } from "../components/WaveDivider";
+import { PageShell, Toolbar, SiteFooter, Icon } from "../components/PageShell";
 import {
   getAdminDashboard,
   generateReport,
+  cancelReport,
   downloadReportPdf,
   loginAdminSession,
   getAdminSessionInfo,
@@ -18,7 +18,6 @@ import {
   AnalysisBadge,
   DiagnosticBadge,
   KpiCard,
-  Reveal,
   type AnalysisStatus,
 } from "./components";
 
@@ -123,6 +122,19 @@ export default function AdminPage() {
     }
   }
 
+  async function handleCancelReport(leadId: string) {
+    setActionLoading(`cancel-${leadId}`);
+    try {
+      await cancelReport(leadId);
+      await loadData();
+      pushToast("success", "Processamento interrompido — já é possível reprocessar");
+    } catch (err) {
+      pushToast("error", err instanceof Error ? err.message : "Não foi possível parar o processamento");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
   async function handleDownloadReport(leadId: string) {
     setActionLoading(`report-${leadId}`);
     try {
@@ -144,7 +156,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col">
+    <PageShell as="div">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-rhema-primary focus:px-4 focus:py-2 focus:text-sm focus:text-white"
@@ -171,12 +183,13 @@ export default function AdminPage() {
           onRefresh={loadData}
           onLogout={handleLogout}
           onGenerateReport={handleGenerateReport}
+          onCancelReport={handleCancelReport}
           onDownloadReport={handleDownloadReport}
         />
       )}
 
       <ToastStack toasts={toasts} />
-    </main>
+    </PageShell>
   );
 }
 
@@ -239,45 +252,28 @@ function LoginView({
   onSubmit: (ev: FormEvent) => void;
 }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="bg-rhema-institutional">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <a href="/">
-            <RhemaLogo variant="dark" width={140} />
-          </a>
-          <a
-            href="/"
-            className="font-poppins text-sm font-medium text-white/70 transition-colors hover:text-white"
-          >
-            Voltar ao início
-          </a>
-        </div>
-      </header>
+    <>
+      <Toolbar>
+        <a href="/" className="rd-link flex items-center gap-2">
+          <Icon name="arrowLeft" size={13} /> Voltar ao início
+        </a>
+      </Toolbar>
 
-      <section className="bg-rhema-institutional relative overflow-hidden">
-        <div className="mx-auto max-w-6xl px-6 pb-20 pt-12 text-center md:pb-24 md:pt-16">
-          <h1 className="font-poppins text-2xl font-bold text-white md:text-4xl">
-            Painel administrativo
-          </h1>
-          <p className="mx-auto mt-4 max-w-md font-inter text-base text-rhema-lavender/80">
-            Acesse com suas credenciais de gerente.
-          </p>
-        </div>
-        <WaveDivider color="var(--color-rhema-offwhite)" />
-      </section>
-
-      <section className="bg-rhema-offwhite -mt-1 flex flex-1 items-start justify-center px-6 pb-20 pt-8 md:pt-16">
-        <div className="card w-full max-w-md p-8 md:p-10 animate-fade-in-up">
-          <form onSubmit={onSubmit} className="space-y-5" noValidate>
+      <section className="flex flex-1 items-start justify-center px-6 pb-20 pt-12 md:pt-20">
+        <div className="rd-card w-full max-w-[440px] p-9 animate-fade-in-up">
+          <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-[#f1edf8] text-[#4a2c7d]">
+            <Icon name="lock" size={18} />
+          </div>
+          <h1 className="rd-h text-[26px]">Painel administrativo</h1>
+          <p className="mb-6 mt-1.5 text-sm text-[#6e6e73]">Acesse com suas credenciais de gerente.</p>
+          <form onSubmit={onSubmit} className="space-y-4" noValidate>
             <div>
-              <label htmlFor="email" className="label-field">
-                Email
-              </label>
+              <label htmlFor="email" className="rd-label">Email</label>
               <input
                 id="email"
                 type="email"
                 autoComplete="email"
-                className={`input-field ${loginError ? "error" : ""}`}
+                className={`rd-input ${loginError ? "error" : ""}`}
                 placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => {
@@ -287,16 +283,13 @@ function LoginView({
                 autoFocus
               />
             </div>
-
             <div>
-              <label htmlFor="password" className="label-field">
-                Senha
-              </label>
+              <label htmlFor="password" className="rd-label">Senha</label>
               <input
                 id="password"
                 type="password"
                 autoComplete="current-password"
-                className={`input-field ${loginError ? "error" : ""}`}
+                className={`rd-input ${loginError ? "error" : ""}`}
                 placeholder="Sua senha"
                 value={password}
                 onChange={(e) => {
@@ -305,23 +298,16 @@ function LoginView({
                 }}
               />
               {loginError && (
-                <p className="mt-1 font-inter text-xs text-red-600" role="alert">
-                  {loginError}
-                </p>
+                <p className="mt-1 text-xs text-[#b23a34]" role="alert">{loginError}</p>
               )}
             </div>
-
-            <button
-              type="submit"
-              disabled={loginLoading}
-              className="btn-primary w-full"
-            >
-              {loginLoading ? "Entrando..." : "Entrar"}
+            <button type="submit" disabled={loginLoading} className="rd-btn mt-2 w-full">
+              {loginLoading ? "Entrando..." : <>Entrar <Icon name="arrowRight" size={14} /></>}
             </button>
           </form>
         </div>
       </section>
-    </div>
+    </>
   );
 }
 
@@ -334,6 +320,7 @@ function DashboardView({
   onRefresh,
   onLogout,
   onGenerateReport,
+  onCancelReport,
   onDownloadReport,
 }: {
   data: AdminDashboardResponse | null;
@@ -342,6 +329,7 @@ function DashboardView({
   onRefresh: () => void;
   onLogout: () => void;
   onGenerateReport: (leadId: string) => void;
+  onCancelReport: (leadId: string) => void;
   onDownloadReport: (leadId: string) => void;
 }) {
   const [now, setNow] = useState(new Date());
@@ -372,174 +360,99 @@ function DashboardView({
 
   return (
     <>
-      <header className="bg-rhema-institutional">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <RhemaLogo variant="dark" width={140} />
-          <div className="flex items-center gap-6">
-            <a
-              href="/"
-              className="hidden font-poppins text-sm font-medium text-white/70 transition-colors hover:text-white md:inline-block"
-            >
-              Início
-            </a>
+      <Toolbar>
+        <a href="/" className="rd-link">Início</a>
+        <button onClick={onLogout} className="rd-btn-ghost">Sair</button>
+      </Toolbar>
+
+      <main id="main-content" className="rd-container flex-1 pt-14">
+        <p className="rd-eyebrow inline-flex items-center gap-2 rounded-full border border-[#1d1d1f1f] bg-white px-3 py-1.5">
+          <Icon name="pulse" size={12} className="text-[#4a2c7d]" /> Diagnos Data · Gerencial
+        </p>
+        <h1 className="rd-h mt-3 text-[40px] leading-tight">Operações</h1>
+        <p className="mt-3 text-[15px] text-[#6e6e73]">
+          Acompanhe os diagnósticos recebidos e gere relatórios de análise sob demanda.
+        </p>
+
+        {data?.kpis && (
+          <div className="rd-card mt-8 grid grid-cols-2 lg:grid-cols-4">
+            <KpiCard label="Leads" value={data.kpis.leadsTotal} />
+            <KpiCard label="Diagnósticos concluídos" value={data.kpis.diagnosticosConcluidos} />
+            <KpiCard label="Em processamento" value={data.kpis.relatoriosEmProcessamento} />
+            <KpiCard label="Relatórios com falha" value={data.kpis.relatoriosFalha} />
+          </div>
+        )}
+
+        <div className="mt-4 flex flex-col items-start justify-between gap-4 rounded-[20px] bg-[#f1edf8] p-6 md:flex-row md:items-center">
+          <div>
+            <h2 className="rd-h text-base">Fila de relatórios</h2>
+            <p className="mt-1 text-[13px] text-[#6e6e73]">
+              Acompanhe o estado de cada relatório, o log de processamento e os KPIs da fila.
+            </p>
+          </div>
+          <a href="/admin/fila" className="rd-btn rd-btn--sm shrink-0">
+            Ver fila de relatórios <Icon name="arrowRight" size={14} />
+          </a>
+        </div>
+
+        <div className="rd-card mt-6 overflow-hidden">
+          <div className="flex items-center justify-between px-6 pb-3 pt-5">
+            <h2 className="rd-h text-lg">Clientes</h2>
             <button
-              onClick={onLogout}
-              className="rounded-full bg-white px-5 py-2 font-poppins text-sm font-medium text-rhema-primary transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5 hover:bg-rhema-lavender active:scale-[0.98]"
+              onClick={onRefresh}
+              disabled={loading}
+              className="rd-link flex items-center gap-2 disabled:opacity-50"
             >
-              Sair
+              <Icon name="refresh" size={13} /> {loading ? "Carregando..." : "Atualizar"}
             </button>
           </div>
-        </div>
-      </header>
 
-      <section className="bg-rhema-institutional relative overflow-hidden">
-        <div className="mx-auto max-w-7xl px-6 pb-16 pt-12 md:pb-20 md:pt-16">
-          <p className="mb-3 font-poppins text-sm font-medium uppercase tracking-wide text-rhema-lavender">
-            Diagnos Data · Gerencial
-          </p>
-          <h1 className="font-poppins text-3xl font-bold text-white md:text-4xl">
-            Operações
-          </h1>
-          <p className="mt-4 max-w-xl font-inter text-base leading-relaxed text-rhema-lavender/80">
-            Acompanhe os diagnósticos recebidos e gere relatórios de análise
-            sob demanda.
-          </p>
-        </div>
-        <WaveDivider color="var(--color-rhema-offwhite)" />
-      </section>
+          <div className="overflow-x-auto">
+            {showSkeletons ? (
+              <TableSkeleton />
+            ) : showEmpty ? (
+              <EmptyState />
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[#1d1d1f1f]">
+                    {["Nome", "Empresa", "Email", "Diagnóstico", "Análise", "Ações"].map((h, i) => (
+                      <th key={h} className={`rd-th px-6 ${i === 5 ? "text-right" : ""}`}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.leadId} className="border-b border-[#1d1d1f12] last:border-0">
+                      <td className="px-6 py-4 font-medium text-[#1d1d1f]">{row.name}</td>
+                      <td className="px-6 py-4 text-[#6e6e73]">{row.company}</td>
+                      <td className="px-6 py-4 text-[#6e6e73]">{row.email}</td>
+                      <td className="px-6 py-4"><DiagnosticBadge hasDiagnostic={row.hasDiagnostic} /></td>
+                      <td className="px-6 py-4"><AnalysisBadge status={row.analysisStatus} /></td>
+                      <td className="px-6 py-4 text-right">
+                        <RowActions
+                          row={row}
+                          loadingKey={actionLoading}
+                          onPlay={onGenerateReport}
+                          onCancel={onCancelReport}
+                          onDownload={onDownloadReport}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
 
-      <main id="main-content" className="bg-rhema-offwhite -mt-1 flex-1">
-        <div className="mx-auto max-w-7xl px-6 pb-24 pt-10 md:pt-14">
-          {/* KPIs */}
-          {data?.kpis && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Reveal delay={0}>
-                <KpiCard label="Leads" value={data.kpis.leadsTotal} tone="primary" />
-              </Reveal>
-              <Reveal delay={1}>
-                <KpiCard label="Diagnósticos concluídos" value={data.kpis.diagnosticosConcluidos} tone="green" />
-              </Reveal>
-              <Reveal delay={2}>
-                <KpiCard label="Em processamento" value={data.kpis.relatoriosEmProcessamento} tone="amber" />
-              </Reveal>
-              <Reveal delay={3}>
-                <KpiCard label="Relatórios com falha" value={data.kpis.relatoriosFalha} tone="red" />
-              </Reveal>
-            </div>
-          )}
-
-          {/* Fila de relatórios — página dedicada */}
-          <Reveal delay={4}>
-            <div className="card mt-8 flex items-center justify-between p-6">
-              <div>
-                <h2 className="font-poppins text-lg font-semibold text-rhema-institutional">
-                  Fila de relatórios
-                </h2>
-                <p className="mt-1 font-inter text-sm text-rhema-dark/60">
-                  Acompanhe o estado de cada relatório, o log de processamento e os
-                  KPIs da fila.
-                </p>
-              </div>
-              <a href="/admin/fila" className="btn-primary shrink-0">
-                Ver fila de relatórios
-              </a>
-            </div>
-          </Reveal>
-
-          {/* Table */}
-          <Reveal delay={5}>
-            <div className="card mt-8 overflow-hidden">
-              <div className="flex items-center justify-between border-b border-rhema-lavender-light px-6 py-4">
-                <h2 className="font-poppins text-lg font-semibold text-rhema-institutional">
-                  Clientes
-                </h2>
-                <button
-                  onClick={onRefresh}
-                  disabled={loading}
-                  className="font-inter text-sm text-rhema-primary transition-colors hover:underline disabled:opacity-50"
-                >
-                  {loading ? "Carregando..." : "Atualizar"}
-                </button>
-              </div>
-
-              <div className="overflow-x-auto">
-                {showSkeletons ? (
-                  <TableSkeleton />
-                ) : showEmpty ? (
-                  <EmptyState />
-                ) : (
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-rhema-lavender-light bg-rhema-lavender-light/30">
-                        {["Nome", "Empresa", "Email", "Diagnóstico", "Análise", "Ações"].map(
-                          (h, i) => (
-                            <th
-                              key={h}
-                              className={`px-6 py-3 font-poppins text-xs font-medium text-rhema-dark/60 ${
-                                i === 5 ? "text-right" : "text-left"
-                              }`}
-                            >
-                              {h}
-                            </th>
-                          ),
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((row) => (
-                        <tr
-                          key={row.leadId}
-                          className="border-b border-rhema-lavender-light/50 transition-colors last:border-0 hover:bg-rhema-lavender-light/20"
-                        >
-                          <td className="px-6 py-3.5 font-inter font-medium text-rhema-dark">
-                            {row.name}
-                          </td>
-                          <td className="px-6 py-3.5 font-inter text-rhema-dark/70">
-                            {row.company}
-                          </td>
-                          <td className="px-6 py-3.5 font-inter text-rhema-dark/70">
-                            {row.email}
-                          </td>
-                          <td className="px-6 py-3.5">
-                            <DiagnosticBadge hasDiagnostic={row.hasDiagnostic} />
-                          </td>
-                          <td className="px-6 py-3.5">
-                            <AnalysisBadge status={row.analysisStatus} />
-                          </td>
-                          <td className="px-6 py-3.5 text-right">
-                            <RowActions
-                              row={row}
-                              loadingKey={actionLoading}
-                              onPlay={onGenerateReport}
-                              onDownload={onDownloadReport}
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
-          </Reveal>
-
-          {/* Footer meta */}
-          <div className="mt-6 flex flex-col items-center justify-between gap-2 font-mono text-[11px] uppercase tracking-wider text-rhema-dark/40 md:flex-row">
+          <div className="flex items-center justify-between px-6 pb-4 pt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#707077]">
             <span className="tabular-nums">Total: {data?.rows.length ?? 0} clientes</span>
             <span>Atualizado às {lastUpdate}</span>
           </div>
         </div>
       </main>
 
-      <footer className="bg-rhema-institutional">
-        <WaveDivider flip color="var(--color-rhema-institutional)" className="-mb-1" />
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-10 md:flex-row">
-          <RhemaLogo variant="dark" width={120} />
-          <p className="font-inter text-xs text-white/50">
-            © {new Date().getFullYear()} Rhema Data. Todos os direitos reservados.
-          </p>
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   );
 }
@@ -592,17 +505,17 @@ function EmptyState() {
 // ─── Sub-components ───
 
 const ACTION_BUTTON_BASE =
-  "inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]";
+  "inline-flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-200";
 
 function actionButtonClass(disabled: boolean, tone: "primary" | "neutral"): string {
   if (disabled) {
-    return `${ACTION_BUTTON_BASE} cursor-not-allowed border-rhema-lavender-light bg-white text-rhema-institutional opacity-40`;
+    return `${ACTION_BUTTON_BASE} cursor-not-allowed text-[#6e6e73] opacity-40`;
   }
   const tones: Record<"primary" | "neutral", string> = {
     primary:
-      "border-rhema-primary bg-rhema-primary text-white hover:bg-rhema-primary-light hover:-translate-y-0.5",
+      "bg-[#f1edf8] text-[#4a2c7d] hover:bg-[#e6dff2]",
     neutral:
-      "border-rhema-lavender bg-white text-rhema-institutional hover:bg-rhema-lavender-light hover:-translate-y-0.5",
+      "text-[#6e6e73] hover:bg-[#1d1d1f0d]",
   };
   return `${ACTION_BUTTON_BASE} ${tones[tone]}`;
 }
@@ -626,6 +539,14 @@ function PlayIcon() {
   return (
     <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
       <path d="M4.5 2.7a.9.9 0 0 1 1.36-.77l7.1 5.3a.9.9 0 0 1 0 1.54l-7.1 5.3A.9.9 0 0 1 4.5 13.3z" />
+    </svg>
+  );
+}
+
+function StopIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
+      <rect x="3.5" y="3.5" width="9" height="9" rx="1.5" />
     </svg>
   );
 }
@@ -713,14 +634,17 @@ function RowActions({
   row,
   loadingKey,
   onPlay,
+  onCancel,
   onDownload,
 }: {
   row: AdminLeadRow;
   loadingKey: string | null;
   onPlay: (leadId: string) => void;
+  onCancel: (leadId: string) => void;
   onDownload: (leadId: string) => void;
 }) {
   const playBusy = loadingKey === `play-${row.leadId}`;
+  const cancelBusy = loadingKey === `cancel-${row.leadId}`;
   const downloading = loadingKey === `report-${row.leadId}`;
   const processing =
     row.analysisStatus === "pendente" || row.analysisStatus === "processando";
@@ -747,6 +671,18 @@ function RowActions({
       >
         {playBusy || processing ? <SpinnerIcon /> : <PlayIcon />}
       </RowActionButton>
+
+      {processing && (
+        <RowActionButton
+          label="Parar processamento"
+          tone="neutral"
+          disabled={cancelBusy}
+          busy={cancelBusy}
+          onClick={() => onCancel(row.leadId)}
+        >
+          {cancelBusy ? <SpinnerIcon /> : <StopIcon />}
+        </RowActionButton>
+      )}
 
       <RowActionButton
         label={analyzed ? "Baixar relatório em PDF" : "Relatório disponível após o processamento"}

@@ -77,6 +77,11 @@ describe("DiagnosticPortal", () => {
 
   it("renderiza as mesmas seções nos dois modos", () => {
     const { unmount } = render(<DiagnosticPortal data={portalData()} mode="public" />);
+    expect(screen.getByRole("heading", { level: 1, name: "Corp LTDA" })).toBeTruthy();
+    expect(screen.getByText(/João Silva · 10 dimensões avaliadas/)).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "Pular para o conteúdo" }).getAttribute("href"),
+    ).toBe("#portal-content");
     expect(screen.getByText("Estruturado")).toBeTruthy();
     expect(screen.getByText("Radar de maturidade")).toBeTruthy();
     expect(screen.getByText("Barras de maturidade")).toBeTruthy();
@@ -87,6 +92,8 @@ describe("DiagnosticPortal", () => {
     unmount();
 
     render(<DiagnosticPortal data={portalData()} mode="manager" />);
+    expect(screen.getByRole("heading", { level: 1, name: "Corp LTDA" })).toBeTruthy();
+    expect(screen.getByText(/João Silva · 10 dimensões avaliadas/)).toBeTruthy();
     expect(screen.getByText("Estruturado")).toBeTruthy();
     expect(screen.getByText("Radar de maturidade")).toBeTruthy();
     expect(screen.getByText("Barras de maturidade")).toBeTruthy();
@@ -108,6 +115,18 @@ describe("DiagnosticPortal", () => {
     expect(screen.queryByText("Concorrente A")).toBeNull();
   });
 
+  it("análise em processamento mantém diagnóstico e placeholder", () => {
+    render(
+      <DiagnosticPortal
+        data={portalData({ analysisStatus: "processando", analysis: undefined, insights: undefined })}
+        mode="manager"
+      />,
+    );
+    expect(screen.getByText("Análise de mercado em processamento...")).toBeTruthy();
+    expect(screen.getByText("Estruturado")).toBeTruthy();
+    expect(screen.getByText("Barras de maturidade")).toBeTruthy();
+  });
+
   it("modo manager destaca as dimensões do insight e limpa o filtro", () => {
     render(<DiagnosticPortal data={portalData()} mode="manager" />);
     expect(screen.queryByRole("button", { name: "Limpar filtro" })).toBeNull();
@@ -117,10 +136,12 @@ describe("DiagnosticPortal", () => {
     expect(screen.getByRole("button", { name: "Limpar filtro" })).toBeTruthy();
     expect(screen.getByTestId("maturity-bar-0").style.opacity).toBe("1");
     expect(screen.getByTestId("maturity-bar-1").style.opacity).toBe("0.35");
+    expect(screen.getByTestId("maturity-bar-2").style.opacity).toBe("1");
 
     fireEvent.click(screen.getByRole("button", { name: "Limpar filtro" }));
     expect(screen.queryByRole("button", { name: "Limpar filtro" })).toBeNull();
     expect(screen.getByTestId("maturity-bar-1").style.opacity).toBe("1");
+    expect(screen.getByTestId("maturity-bar-2").style.opacity).toBe("1");
   });
 
   it("modo público não oferece filtro por dimensão", () => {

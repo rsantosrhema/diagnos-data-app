@@ -9,6 +9,7 @@ const RATE_LIMITED_PATHS = [
   "/api/admin-proxy/session",
   "/api/admin-proxy/dashboard",
   "/api/admin-proxy/analysis/reprocess",
+  "/api/admin-proxy/analysis/cancel",
 ];
 
 const RATE_LIMITS: Record<string, { limit: number; windowMs: number }> = {
@@ -18,6 +19,7 @@ const RATE_LIMITS: Record<string, { limit: number; windowMs: number }> = {
   "/api/admin-proxy/session": { limit: 10, windowMs: 10 * 60 * 1000 },
   "/api/admin-proxy/dashboard": { limit: 60, windowMs: 60 * 1000 },
   "/api/admin-proxy/analysis/reprocess": { limit: 10, windowMs: 60 * 1000 },
+  "/api/admin-proxy/analysis/cancel": { limit: 10, windowMs: 60 * 1000 },
 };
 
 export function middleware(req: NextRequest) {
