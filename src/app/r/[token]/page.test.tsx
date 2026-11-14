@@ -108,6 +108,7 @@ describe("Portal público /r/[token]", () => {
     expect(screen.queryByRole("button", { name: /copiar/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /revogar/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /reprocessar/i })).toBeNull();
+    expect(screen.queryByText("Voltar ao painel")).toBeNull();
   });
 
   it("HTML não contém strings de email", async () => {

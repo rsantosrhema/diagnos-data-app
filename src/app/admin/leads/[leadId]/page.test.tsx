@@ -215,4 +215,16 @@ describe("Página portal do gerente", () => {
       expect(revokeShareLink).toHaveBeenCalledWith("lead-1");
     });
   });
+
+  it("link ativo sem URL ainda oferece revogar", async () => {
+    mockPortal(portalFixture({ share: { active: true, url: null, expiresAt: "2027-01-06T10:00:00.000Z" } }));
+    (revokeShareLink as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: true });
+    const { default: PortalPage } = await import("./page");
+    render(<PortalPage />);
+    await screen.findByText("Estruturado");
+    fireEvent.click(screen.getByRole("button", { name: /revogar/i }));
+    await waitFor(() => {
+      expect(revokeShareLink).toHaveBeenCalledWith("lead-1");
+    });
+  });
 });
