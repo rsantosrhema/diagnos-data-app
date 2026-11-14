@@ -1,6 +1,6 @@
-import { generateText, Output } from "ai";
 import { insightsBriefSchema, type InsightsBrief, type MarketAnalysis } from "./types";
 import { sanitizeUntrusted } from "./sanitize";
+import { generateValidatedJson } from "./llm-json";
 import type { AgentPayload } from "@/lib/screener/agent-payload";
 import type { LanguageModel } from "ai";
 
@@ -35,30 +35,13 @@ export type WriterDeps = {
   generateObject?: GenerateObjectFn;
 };
 
-function extractJson(text: string): unknown {
-  const trimmed = text.trim();
-  try {
-    return JSON.parse(trimmed);
-  } catch {
-    const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
-    if (fenced) {
-      try {
-        return JSON.parse(fenced[1].trim());
-      } catch {
-        /* fallthrough */
-      }
-    }
-    const start = trimmed.indexOf("{");
-    const end = trimmed.lastIndexOf("}");
-    if (start >= 0 && end > start) {
-      try {
-        return JSON.parse(trimmed.slice(start, end + 1));
-      } catch {
-        /* fallthrough */
-      }
-    }
-    throw new WriterError("Resposta do LLM não contém JSON válido");
+const WRITER_MAX_OUTPUT_TOKENS = 8_000;
+
+function capBullets(raw: unknown): unknown {
+  if (raw && typeof raw === "object" && Array.isArray((raw as { bullets?: unknown }).bullets)) {
+    return { ...raw, bullets: (raw as { bullets: unknown[] }).bullets.slice(0, MAX_BULLETS) };
   }
+  return raw;
 }
 
 export function createWriterAgent(deps: WriterDeps) {
@@ -86,7 +69,18 @@ export function createWriterAgent(deps: WriterDeps) {
           );
         }
       } else {
-        raw = await generateWriterObject(deps.llm, prompt);
+        try {
+          return await generateValidatedJson({
+            llm: deps.llm,
+            system: WRITER_SYSTEM_PROMPT,
+            prompt,
+            schema: insightsBriefSchema,
+            maxOutputTokens: WRITER_MAX_OUTPUT_TOKENS,
+            normalize: capBullets,
+          });
+        } catch (err) {
+          throw new WriterError(err instanceof Error ? err.message : "Falha ao gerar brief");
+        }
       }
 
       const bullets = Array.isArray(raw?.bullets) ? raw.bullets.slice(0, MAX_BULLETS) : [];
@@ -99,32 +93,6 @@ export function createWriterAgent(deps: WriterDeps) {
       return parsed.data;
     },
   };
-}
-
-async function generateWriterObject(
-  llm: LanguageModel,
-  prompt: string,
-): Promise<{ bullets?: unknown }> {
-  try {
-    const { output } = await generateText({
-      model: llm,
-      prompt,
-      system: WRITER_SYSTEM_PROMPT,
-      output: Output.object({ schema: insightsBriefSchema }),
-      maxOutputTokens: 2048,
-    });
-    return output as { bullets?: unknown };
-  } catch {
-    const { text } = await generateText({
-      model: llm,
-      prompt,
-      system: WRITER_SYSTEM_PROMPT,
-      maxOutputTokens: 2048,
-    });
-    const parsed = extractJson(text) as { bullets?: unknown };
-    if (Array.isArray(parsed?.bullets)) return parsed;
-    throw new WriterError("Resposta do LLM não contém campo bullets");
-  }
 }
 
 const WRITER_JSON_EXAMPLE = {

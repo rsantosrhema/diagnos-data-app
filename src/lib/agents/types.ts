@@ -1,6 +1,19 @@
 import { z } from "zod";
 import type { AgentPayload } from "@/lib/screener/agent-payload";
 
+function clampedOptionalString(max: number) {
+  return z.preprocess(
+    (v) => (typeof v === "string" && v.length > max ? truncateAtWord(v, max) : v),
+    z.string().max(max).optional(),
+  );
+}
+
+function truncateAtWord(text: string, max: number): string {
+  const cut = text.slice(0, max - 1);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
+}
+
 export const researchResultSchema = z
   .object({
     title: z.string(),
@@ -45,8 +58,8 @@ export const analysisPainSchema = z
     evidencia_mercado: z.boolean(),
     confianca: z.number().min(0).max(1),
     nivel_atual: z.number().int().min(1).max(5).optional(),
-    impacto_negocio: z.string().max(300).optional(),
-    recomendacao_curta: z.string().max(300).optional(),
+    impacto_negocio: clampedOptionalString(300),
+    recomendacao_curta: clampedOptionalString(300),
   })
   .strict();
 export type AnalysisPain = z.infer<typeof analysisPainSchema>;
@@ -56,7 +69,7 @@ export const competitorContextSchema = z
     nome: z.string(),
     contexto: z.string(),
     url: z.string().optional(),
-    diferencial: z.string().max(300).optional(),
+    diferencial: clampedOptionalString(300),
   })
   .strict();
 export type CompetitorContext = z.infer<typeof competitorContextSchema>;
@@ -66,8 +79,8 @@ export const marketAnalysisSchema = z
     resumo: z.string(),
     dores: z.array(analysisPainSchema),
     contexto_concorrentes: z.array(competitorContextSchema),
-    posicionamento_setor: z.string().max(500).optional(),
-    oportunidade_principal: z.string().max(300).optional(),
+    posicionamento_setor: clampedOptionalString(500),
+    oportunidade_principal: clampedOptionalString(300),
   })
   .strict();
 export type MarketAnalysis = z.infer<typeof marketAnalysisSchema>;
@@ -76,9 +89,9 @@ export const insightBulletSchema = z
   .object({
     texto: z.string(),
     prioridade: z.enum(["alta", "media", "baixa"]),
-    titulo: z.string().max(70).optional(),
+    titulo: clampedOptionalString(70),
     dimensao_ids: z.array(z.string()).optional(),
-    proximo_passo: z.string().max(300).optional(),
+    proximo_passo: clampedOptionalString(300),
   })
   .strict();
 export type InsightBullet = z.infer<typeof insightBulletSchema>;

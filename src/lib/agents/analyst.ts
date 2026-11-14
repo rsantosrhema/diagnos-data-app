@@ -1,7 +1,7 @@
-import { generateText, Output } from "ai";
 import { marketAnalysisSchema, type MarketAnalysis } from "./types";
 import { loadSegmentSkill } from "./segment-skills";
 import { sanitizeUntrusted } from "./sanitize";
+import { generateValidatedJson } from "./llm-json";
 import type { AgentPayload } from "@/lib/screener/agent-payload";
 import type { LanguageModel } from "ai";
 
@@ -105,31 +105,7 @@ export type AnalystDeps = {
   skillLoader?: typeof loadSegmentSkill;
 };
 
-function extractJson(text: string): unknown {
-  const trimmed = text.trim();
-  try {
-    return JSON.parse(trimmed);
-  } catch {
-    const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
-    if (fenced) {
-      try {
-        return JSON.parse(fenced[1].trim());
-      } catch {
-        /* fallthrough */
-      }
-    }
-    const start = trimmed.indexOf("{");
-    const end = trimmed.lastIndexOf("}");
-    if (start >= 0 && end > start) {
-      try {
-        return JSON.parse(trimmed.slice(start, end + 1));
-      } catch {
-        /* fallthrough */
-      }
-    }
-    throw new AnalystError("Resposta do LLM não contém JSON válido");
-  }
-}
+const ANALYST_MAX_OUTPUT_TOKENS = 16_000;
 
 export function createAnalystAgent(deps: AnalystDeps) {
   const loadSkill = deps.skillLoader ?? loadSegmentSkill;
@@ -160,7 +136,17 @@ export function createAnalystAgent(deps: AnalystDeps) {
           );
         }
       } else {
-        object = await generateAnalystObject(deps.llm, prompt);
+        try {
+          return await generateValidatedJson({
+            llm: deps.llm,
+            system: ANALYST_SYSTEM_PROMPT,
+            prompt,
+            schema: marketAnalysisSchema,
+            maxOutputTokens: ANALYST_MAX_OUTPUT_TOKENS,
+          });
+        } catch (err) {
+          throw new AnalystError(err instanceof Error ? err.message : "Falha ao gerar análise");
+        }
       }
 
       const parsed = marketAnalysisSchema.safeParse(object);
@@ -171,30 +157,6 @@ export function createAnalystAgent(deps: AnalystDeps) {
       return parsed.data;
     },
   };
-}
-
-async function generateAnalystObject(
-  llm: LanguageModel,
-  prompt: string,
-): Promise<unknown> {
-  try {
-    const { output } = await generateText({
-      model: llm,
-      prompt,
-      system: ANALYST_SYSTEM_PROMPT,
-      output: Output.object({ schema: marketAnalysisSchema }),
-      maxOutputTokens: 4096,
-    });
-    return output;
-  } catch {
-    const { text } = await generateText({
-      model: llm,
-      prompt,
-      system: ANALYST_SYSTEM_PROMPT,
-      maxOutputTokens: 4096,
-    });
-    return extractJson(text);
-  }
 }
 
 export type MarketResearchLike = {

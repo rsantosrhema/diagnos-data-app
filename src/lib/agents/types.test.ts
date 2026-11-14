@@ -252,17 +252,17 @@ describe("campos opcionais do portal (back-compat)", () => {
     ).toBe(false);
   });
 
-  it("rejeita impacto_negocio acima de 300 chars", () => {
-    expect(
-      analysisPainSchema.safeParse({
-        dimensao_id: "d01",
-        dimensao: "Governança",
-        dor: "x",
-        evidencia_mercado: true,
-        confianca: 0.8,
-        impacto_negocio: "a".repeat(301),
-      }).success,
-    ).toBe(false);
+  it("trunca impacto_negocio acima de 300 chars", () => {
+    const parsed = analysisPainSchema.safeParse({
+      dimensao_id: "d01",
+      dimensao: "Governança",
+      dor: "x",
+      evidencia_mercado: true,
+      confianca: 0.8,
+      impacto_negocio: "a".repeat(301),
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.impacto_negocio!.length).toBeLessThanOrEqual(300);
   });
 
   it("concorrente legado valida; enriquecido aceita url e diferencial", () => {
@@ -302,13 +302,13 @@ describe("campos opcionais do portal (back-compat)", () => {
     ).toBe(false);
   });
 
-  it("rejeita posicionamento_setor acima de 500 chars", () => {
-    expect(
-      marketAnalysisSchema.safeParse({
-        ...MARKET_ANALYSIS,
-        posicionamento_setor: "a".repeat(501),
-      }).success,
-    ).toBe(false);
+  it("trunca posicionamento_setor acima de 500 chars", () => {
+    const parsed = marketAnalysisSchema.safeParse({
+      ...MARKET_ANALYSIS,
+      posicionamento_setor: "a".repeat(501),
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.posicionamento_setor!.length).toBeLessThanOrEqual(500);
   });
 
   it("bullet legado valida; enriquecido aceita titulo, dimensao_ids e proximo_passo", () => {
@@ -330,21 +330,22 @@ describe("campos opcionais do portal (back-compat)", () => {
     }
   });
 
-  it("rejeita titulo acima de 70 chars e proximo_passo acima de 300", () => {
-    expect(
-      insightBulletSchema.safeParse({
-        texto: "x",
-        prioridade: "alta",
-        titulo: "a".repeat(71),
-      }).success,
-    ).toBe(false);
-    expect(
-      insightBulletSchema.safeParse({
-        texto: "x",
-        prioridade: "alta",
-        proximo_passo: "a".repeat(301),
-      }).success,
-    ).toBe(false);
+  it("trunca titulo acima de 70 chars e proximo_passo acima de 300", () => {
+    const titulo = insightBulletSchema.safeParse({
+      texto: "x",
+      prioridade: "alta",
+      titulo: "a".repeat(71),
+    });
+    expect(titulo.success).toBe(true);
+    if (titulo.success) expect(titulo.data.titulo!.length).toBeLessThanOrEqual(70);
+
+    const passo = insightBulletSchema.safeParse({
+      texto: "x",
+      prioridade: "alta",
+      proximo_passo: "a".repeat(301),
+    });
+    expect(passo.success).toBe(true);
+    if (passo.success) expect(passo.data.proximo_passo!.length).toBeLessThanOrEqual(300);
   });
 });
 
@@ -379,5 +380,18 @@ describe("insightsBriefSchema", () => {
     const parsed = insightsBriefSchema.parse(INSIGHTS_BRIEF);
     const verificado: InsightsBrief = parsed;
     expect(verificado.bullets).toHaveLength(2);
+  });
+});
+
+describe("clamp de campos opcionais longos", () => {
+  it("trunca posicionamento_setor acima de 500 caracteres em vez de rejeitar a análise", () => {
+    const result = marketAnalysisSchema.safeParse({
+      resumo: "r",
+      dores: [],
+      contexto_concorrentes: [],
+      posicionamento_setor: "palavra ".repeat(100),
+    });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.posicionamento_setor!.length).toBeLessThanOrEqual(500);
   });
 });
