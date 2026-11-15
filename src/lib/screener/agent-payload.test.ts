@@ -3,6 +3,7 @@ import { SCREENER_CONTRACT } from "./contract";
 import { computeScores } from "./scoring";
 import { buildAgentPayload } from "./agent-payload";
 import type { AgentPayloadInput } from "./agent-payload";
+import { agentPayloadSchema } from "../schemas/agent-payload";
 
 const DIMS = SCREENER_CONTRACT.dimensoes;
 
@@ -115,5 +116,53 @@ describe("buildAgentPayload", () => {
     expect(payload.consentimento.aceito).toBe(true);
     expect(payload.consentimento.texto.length).toBeGreaterThan(0);
     expect(payload.consentimento.aceito_em).toBe("2026-08-23T12:00:00Z");
+  });
+
+  describe("localização da empresa", () => {
+    it("preserva cidade e estado com acentos", () => {
+      const payload = buildAgentPayload(
+        makeInput({ location: { cidade: "São Paulo", estado: "SP" } }),
+      );
+      expect(payload.empresa.cidade).toBe("São Paulo");
+      expect(payload.empresa.estado).toBe("SP");
+    });
+
+    it("emite cidade e estado nulos sem localização", () => {
+      const payload = buildAgentPayload(makeInput());
+      expect(payload.empresa).toHaveProperty("cidade");
+      expect(payload.empresa).toHaveProperty("estado");
+      expect(payload.empresa.cidade).toBeNull();
+      expect(payload.empresa.estado).toBeNull();
+    });
+
+    it("emite cidade e estado nulos quando a localização tem valores nulos", () => {
+      const payload = buildAgentPayload(makeInput({ location: { cidade: null, estado: null } }));
+      expect(payload.empresa.cidade).toBeNull();
+      expect(payload.empresa.estado).toBeNull();
+    });
+
+    it("preserva cidade e estado independentemente quando parciais", () => {
+      const withCity = buildAgentPayload(
+        makeInput({ location: { cidade: "Campinas", estado: null } }),
+      );
+      expect(withCity.empresa.cidade).toBe("Campinas");
+      expect(withCity.empresa.estado).toBeNull();
+
+      const withState = buildAgentPayload(
+        makeInput({ location: { cidade: null, estado: "RJ" } }),
+      );
+      expect(withState.empresa.cidade).toBeNull();
+      expect(withState.empresa.estado).toBe("RJ");
+    });
+
+    it("valida no agentPayloadSchema com e sem localização", () => {
+      const withLocation = buildAgentPayload(
+        makeInput({ location: { cidade: "São José do Rio Preto", estado: "SP" } }),
+      );
+      const withoutLocation = buildAgentPayload(makeInput());
+
+      expect(agentPayloadSchema.safeParse(withLocation).success).toBe(true);
+      expect(agentPayloadSchema.safeParse(withoutLocation).success).toBe(true);
+    });
   });
 });
