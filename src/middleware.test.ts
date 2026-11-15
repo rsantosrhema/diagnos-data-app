@@ -36,3 +36,54 @@ describe("middleware rate limit (PORTAL-09)", () => {
     expect(other.status).not.toBe(429);
   });
 });
+
+const LOCALIDADES_LIMIT = 60;
+
+function localidadesReq(ip = "203.0.113.10", uf = "SP"): NextRequest {
+  return new NextRequest(`http://localhost/api/public-proxy/localidades?uf=${uf}`, {
+    headers: { "x-real-ip": ip },
+  });
+}
+
+function portalTokenReq(ip = "203.0.113.10", token = "tok-1"): NextRequest {
+  return new NextRequest(`http://localhost/api/public-proxy/portal/${token}`, {
+    headers: { "x-real-ip": ip },
+  });
+}
+
+describe("middleware rate limit (LOC-08)", () => {
+  beforeEach(() => resetAllRateLimits());
+
+  it("permite até 60 requisições por minuto ao endpoint de localidades", () => {
+    for (let i = 1; i <= LOCALIDADES_LIMIT; i++) {
+      const res = middleware(localidadesReq());
+      expect(res.status).not.toBe(429);
+    }
+  });
+
+  it("responde 429 com Retry-After na 61ª requisição ao endpoint de localidades", () => {
+    for (let i = 1; i <= LOCALIDADES_LIMIT; i++) middleware(localidadesReq());
+    const blocked = middleware(localidadesReq());
+    expect(blocked.status).toBe(429);
+    expect(blocked.headers.get("Retry-After")).toBeTruthy();
+    expect(blocked.body).toBeTruthy();
+  });
+
+  it("não bloqueia IPs diferentes na mesma janela em localidades", () => {
+    for (let i = 1; i <= LOCALIDADES_LIMIT; i++) middleware(localidadesReq("203.0.113.10"));
+    const other = middleware(localidadesReq("198.51.100.20"));
+    expect(other.status).not.toBe(429);
+  });
+
+  it("isola o limite por caminho: esgotar localidades não bloqueia o portal", () => {
+    for (let i = 1; i <= LOCALIDADES_LIMIT + 1; i++) middleware(localidadesReq());
+    const portal = middleware(portalTokenReq());
+    expect(portal.status).not.toBe(429);
+  });
+
+  it("isola o limite por caminho: esgotar o portal não bloqueia localidades", () => {
+    for (let i = 1; i <= PORTAL_LIMIT + 1; i++) middleware(portalTokenReq());
+    const localidades = middleware(localidadesReq());
+    expect(localidades.status).not.toBe(429);
+  });
+});
