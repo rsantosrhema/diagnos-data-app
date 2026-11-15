@@ -34,6 +34,8 @@ describe("LeadService", () => {
         phone: "12345678",
         email: "joao@corp.com",
         role: "CTO",
+        city: "São Paulo",
+        state: "SP",
       });
 
       expect(result).toEqual({ ok: true, leadId: "lead-new" });
@@ -42,8 +44,57 @@ describe("LeadService", () => {
       );
     });
 
+    it("persists city and state when creating a new lead", async () => {
+      const create = vi.fn().mockResolvedValue("lead-new");
+      const service = createLeadService({
+        leadRepo: mockLeadRepo({
+          findByEmail: vi.fn().mockResolvedValue(null),
+          create,
+        }),
+      });
+
+      await service.createLead({
+        name: "João",
+        company: "Corp",
+        phone: "12345678",
+        email: "joao@corp.com",
+        role: "CTO",
+        city: "São Paulo",
+        state: "SP",
+      });
+
+      expect(create).toHaveBeenCalledWith(
+        expect.objectContaining({ city: "São Paulo", state: "SP" }),
+      );
+    });
+
+    it("forwards city and state exactly, preserving accents and compound names", async () => {
+      const create = vi.fn().mockResolvedValue("lead-new");
+      const service = createLeadService({
+        leadRepo: mockLeadRepo({
+          findByEmail: vi.fn().mockResolvedValue(null),
+          create,
+        }),
+      });
+
+      await service.createLead({
+        name: "João",
+        company: "Corp",
+        phone: "12345678",
+        email: "joao@corp.com",
+        role: "CTO",
+        city: "São José do Rio Preto",
+        state: "SP",
+      });
+
+      expect(create).toHaveBeenCalledWith(
+        expect.objectContaining({ city: "São José do Rio Preto", state: "SP" }),
+      );
+    });
+
     it("reuses existing lead when status is not concluido", async () => {
       const create = vi.fn();
+      const updateLocation = vi.fn().mockResolvedValue(undefined);
       const service = createLeadService({
         leadRepo: mockLeadRepo({
           findByEmail: vi.fn().mockResolvedValue({
@@ -51,6 +102,7 @@ describe("LeadService", () => {
             status: "token_gerado",
           }),
           create,
+          updateLocation,
         }),
       });
 
@@ -60,19 +112,59 @@ describe("LeadService", () => {
         phone: "12345678",
         email: "joao@corp.com",
         role: "CTO",
+        city: "São Paulo",
+        state: "SP",
       });
 
       expect(result).toEqual({ ok: true, leadId: "lead-existing" });
       expect(create).not.toHaveBeenCalled();
+      expect(updateLocation).toHaveBeenCalledWith("lead-existing", {
+        city: "São Paulo",
+        state: "SP",
+      });
+    });
+
+    it("updates the location of a reused pending lead and returns the same leadId", async () => {
+      const updateLocation = vi.fn().mockResolvedValue(undefined);
+      const service = createLeadService({
+        leadRepo: mockLeadRepo({
+          findByEmail: vi.fn().mockResolvedValue({
+            id: "lead-existing",
+            status: "pendente",
+            city: "Rio de Janeiro",
+            state: "RJ",
+          }),
+          updateLocation,
+        }),
+      });
+
+      const result = await service.createLead({
+        name: "João",
+        company: "Corp",
+        phone: "12345678",
+        email: "joao@corp.com",
+        role: "CTO",
+        city: "Campinas",
+        state: "SP",
+      });
+
+      expect(result).toEqual({ ok: true, leadId: "lead-existing" });
+      expect(updateLocation).toHaveBeenCalledTimes(1);
+      expect(updateLocation).toHaveBeenCalledWith("lead-existing", {
+        city: "Campinas",
+        state: "SP",
+      });
     });
 
     it("rejects lead already concluido", async () => {
+      const updateLocation = vi.fn();
       const service = createLeadService({
         leadRepo: mockLeadRepo({
           findByEmail: vi.fn().mockResolvedValue({
             id: "lead-done",
             status: "concluido",
           }),
+          updateLocation,
         }),
       });
 
@@ -83,12 +175,52 @@ describe("LeadService", () => {
           phone: "12345678",
           email: "joao@corp.com",
           role: "CTO",
+          city: "São Paulo",
+          state: "SP",
         }),
       ).rejects.toMatchObject({ status: 409 });
+      expect(updateLocation).not.toHaveBeenCalled();
+    });
+
+    it("throws LeadServiceError 500 when updating the location of a pending lead fails", async () => {
+      const create = vi.fn();
+      const updateLocation = vi
+        .fn()
+        .mockRejectedValue(new Error("update failed"));
+      const service = createLeadService({
+        leadRepo: mockLeadRepo({
+          findByEmail: vi.fn().mockResolvedValue({
+            id: "lead-existing",
+            status: "pendente",
+          }),
+          create,
+          updateLocation,
+        }),
+      });
+
+      const error: unknown = await service
+        .createLead({
+          name: "João",
+          company: "Corp",
+          phone: "12345678",
+          email: "joao@corp.com",
+          role: "CTO",
+          city: "São Paulo",
+          state: "SP",
+        })
+        .catch((err: unknown) => err);
+
+      expect(error).toBeInstanceOf(LeadServiceError);
+      expect(error).toMatchObject({
+        status: 500,
+        message: "Erro ao salvar cadastro",
+      });
+      expect(create).not.toHaveBeenCalled();
     });
 
     it("race on unique constraint: reuses pending lead", async () => {
       const error = Object.assign(new Error("duplicate"), { code: "23505" });
+      const updateLocation = vi.fn();
       const service = createLeadService({
         leadRepo: mockLeadRepo({
           findByEmail: vi
@@ -96,6 +228,7 @@ describe("LeadService", () => {
             .mockResolvedValueOnce(null)
             .mockResolvedValueOnce({ id: "lead-race", status: "pendente" }),
           create: vi.fn().mockRejectedValue(error),
+          updateLocation,
         }),
       });
 
@@ -105,9 +238,12 @@ describe("LeadService", () => {
         phone: "12345678",
         email: "joao@corp.com",
         role: "CTO",
+        city: "São Paulo",
+        state: "SP",
       });
 
       expect(result).toEqual({ ok: true, leadId: "lead-race" });
+      expect(updateLocation).not.toHaveBeenCalled();
     });
 
     it("race on unique constraint: 409 when lead is concluido", async () => {
@@ -129,6 +265,8 @@ describe("LeadService", () => {
           phone: "12345678",
           email: "joao@corp.com",
           role: "CTO",
+          city: "São Paulo",
+          state: "SP",
         }),
       ).rejects.toMatchObject({ status: 409 });
     });
@@ -148,6 +286,8 @@ describe("LeadService", () => {
         phone: "12345678",
         email: "JOAO@CORP.COM",
         role: "CTO",
+        city: "São Paulo",
+        state: "SP",
       });
 
       expect(create).toHaveBeenCalledWith(

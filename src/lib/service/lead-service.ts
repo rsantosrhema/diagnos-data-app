@@ -21,6 +21,8 @@ export function createLeadService(deps: { leadRepo: LeadRepository }) {
       phone: string;
       email: string;
       role: string;
+      city: string;
+      state: string;
     }): Promise<LeadResponseDTO> {
       const email = params.email.trim().toLowerCase();
 
@@ -32,6 +34,14 @@ export function createLeadService(deps: { leadRepo: LeadRepository }) {
             409,
           );
         }
+        try {
+          await leadRepo.updateLocation(existing.id, {
+            city: params.city,
+            state: params.state,
+          });
+        } catch {
+          throw new LeadServiceError("Erro ao salvar cadastro", 500);
+        }
         return { ok: true, leadId: existing.id };
       }
 
@@ -42,6 +52,8 @@ export function createLeadService(deps: { leadRepo: LeadRepository }) {
           phone: params.phone,
           email,
           role: params.role,
+          city: params.city,
+          state: params.state,
         });
         return { ok: true, leadId };
       } catch (err: unknown) {
