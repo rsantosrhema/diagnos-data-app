@@ -684,6 +684,14 @@ function metaDot(key: string) {
   return h(View, { key, style: styles.metaDot });
 }
 
+function locationLabel(location: GeneratePdfInput["location"]): string | null {
+  if (!location) return null;
+  const city = location.city.trim();
+  const state = location.state.trim();
+  if (city === "" || state === "") return null;
+  return `${city}/${state}`;
+}
+
 function sectionHeader(index: string, title: string, note: string, key: string) {
   return h(
     View,
@@ -726,6 +734,22 @@ function footer() {
 }
 
 function reportHeader(input: GeneratePdfInput) {
+  const location = locationLabel(input.location);
+  const meta: ReturnType<typeof h>[] = [metaItem(input.respondentName, "meta-name")];
+
+  if (location) {
+    meta.push(metaDot("meta-dot-location"), metaItem(location, "meta-location"));
+  }
+
+  meta.push(
+    metaDot("meta-dot-1"),
+    metaItem("Rhema Data", "meta-company"),
+    metaDot("meta-dot-2"),
+    metaItem(`${input.dimensionScores.length} dimensões`, "meta-dims"),
+    metaDot("meta-dot-3"),
+    metaItem("Autoavaliação", "meta-method"),
+  );
+
   return h(
     View,
     { key: "header", style: styles.reportHeader, wrap: false },
@@ -736,17 +760,7 @@ function reportHeader(input: GeneratePdfInput) {
       h(Text, { style: styles.eyebrowLabel }, "RELATÓRIO DE AUTOAVALIAÇÃO"),
     ),
     h(Text, { style: styles.reportTitle }, "Diagnóstico de Maturidade de Dados"),
-    h(
-      View,
-      { style: styles.reportMeta },
-      metaItem(input.respondentName, "meta-name"),
-      metaDot("meta-dot-1"),
-      metaItem("Rhema Data", "meta-company"),
-      metaDot("meta-dot-2"),
-      metaItem(`${input.dimensionScores.length} dimensões`, "meta-dims"),
-      metaDot("meta-dot-3"),
-      metaItem("Autoavaliação", "meta-method"),
-    ),
+    h(View, { style: styles.reportMeta }, ...meta),
   );
 }
 

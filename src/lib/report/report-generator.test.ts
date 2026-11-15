@@ -80,6 +80,38 @@ function collectBackgroundColors(node: unknown): string[] {
   return colors;
 }
 
+function collectTexts(node: unknown): string[] {
+  if (node === null || node === undefined) return [];
+  if (typeof node === "string") return [node];
+  if (Array.isArray(node)) return node.flatMap(collectTexts);
+  const props = (node as { props?: unknown }).props;
+  if (typeof props !== "object" || props === null) return [];
+  const children = (props as { children?: unknown }).children;
+  if (children === null || children === undefined) return [];
+  return collectTexts(children);
+}
+
+function countMetaDots(node: unknown): number {
+  if (node === null || node === undefined) return 0;
+  if (Array.isArray(node)) {
+    return node.reduce((sum, child) => sum + countMetaDots(child), 0);
+  }
+  if (typeof node !== "object") return 0;
+  const props = (node as { props?: unknown }).props;
+  if (typeof props !== "object" || props === null) return 0;
+  const style = (props as { style?: unknown }).style;
+  const isDot =
+    typeof style === "object" &&
+    style !== null &&
+    (style as { backgroundColor?: unknown }).backgroundColor === "#B8B2C2";
+  const children = (props as { children?: unknown }).children;
+  return (isDot ? 1 : 0) + countMetaDots(children);
+}
+
+function hasLocationText(node: unknown): boolean {
+  return collectTexts(node).some((text) => /\/[A-Z]{2}$/.test(text));
+}
+
 describe("generateScreenerPdf", () => {
   it("gera PDF com buffer não-vazio", async () => {
     const result = await generateScreenerPdf(makeInput());
@@ -222,5 +254,58 @@ describe("generateScreenerPdf", () => {
   it("omite a seção Radar quando dimensionScores vazio (RADAR-01 edge)", () => {
     const children = buildReportChildren(makeInput({ dimensionScores: [] }));
     expect(hasText(children, "Radar de maturidade")).toBe(false);
+  });
+
+  it("location presente: exibe Cidade/UF uma única vez na capa (LOC-16)", () => {
+    const children = buildReportChildren(
+      makeInput({ location: { city: "São Paulo", state: "SP" } }),
+    );
+    expect(hasText(children, "São Paulo/SP")).toBe(true);
+    expect(countText(children, "São Paulo/SP")).toBe(1);
+    expect(countMetaDots(children)).toBe(4);
+  });
+
+  it("location com cidade composta e acentuada é renderizada verbatim (LOC-16)", () => {
+    const children = buildReportChildren(
+      makeInput({ location: { city: "São José do Rio Preto", state: "SP" } }),
+    );
+    expect(countText(children, "São José do Rio Preto/SP")).toBe(1);
+  });
+
+  it("location presente: mantém os demais itens do cabeçalho (LOC-16 regression)", () => {
+    const children = buildReportChildren(
+      makeInput({ location: { city: "São Paulo", state: "SP" } }),
+    );
+    expect(countText(children, "João Silva")).toBe(1);
+    expect(countText(children, "Rhema Data")).toBe(1);
+    expect(countText(children, "10 dimensões")).toBe(1);
+    expect(countText(children, "Autoavaliação")).toBe(1);
+  });
+
+  it("sem location: não exibe Cidade/UF nem placeholder (LOC-17)", () => {
+    const children = buildReportChildren(makeInput());
+    expect(hasLocationText(children)).toBe(false);
+    expect(collectTexts(children)).not.toContain("undefined/undefined");
+    expect(countMetaDots(children)).toBe(3);
+  });
+
+  it("location com campos vazios é omitida da capa (LOC-17)", () => {
+    const cases: { city: string; state: string }[] = [
+      { city: "", state: "SP" },
+      { city: "São Paulo", state: "" },
+      { city: "   ", state: "   " },
+    ];
+    for (const location of cases) {
+      const children = buildReportChildren(makeInput({ location }));
+      expect(hasLocationText(children)).toBe(false);
+      expect(countMetaDots(children)).toBe(3);
+    }
+  });
+
+  it("gera PDF com location presente (LOC-16)", async () => {
+    const result = await generateScreenerPdf(
+      makeInput({ location: { city: "São Paulo", state: "SP" } }),
+    );
+    expect(result.pdf.length).toBeGreaterThan(0);
   });
 });
