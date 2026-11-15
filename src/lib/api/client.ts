@@ -53,8 +53,8 @@ export interface LeadInput {
   email: string;
   role: string;
   website?: string;
-  city?: string;
-  state?: string;
+  city: string;
+  state: string;
 }
 
 export async function submitLead(

@@ -97,6 +97,8 @@ describe("submitLead", () => {
     phone: "11999999999",
     email: "ana@acme.com",
     role: "Diretora de Dados",
+    city: "São Paulo",
+    state: "SP",
   };
 
   it("envia cidade e estado no corpo do cadastro", async () => {
@@ -104,11 +106,7 @@ describe("submitLead", () => {
       jsonResponse({ ok: true, leadId: "lead-123" }),
     );
 
-    const result = await submitLead({
-      ...baseLead,
-      city: "São Paulo",
-      state: "SP",
-    });
+    const result = await submitLead(baseLead);
 
     expect(result).toEqual({ ok: true, leadId: "lead-123" });
 
@@ -120,21 +118,6 @@ describe("submitLead", () => {
       city: "São Paulo",
       state: "SP",
     });
-  });
-
-  it("continua funcionando sem cidade e estado", async () => {
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({ ok: true, leadId: "lead-456" }),
-    );
-
-    const result = await submitLead(baseLead);
-
-    expect(result).toEqual({ ok: true, leadId: "lead-456" });
-
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
-    expect(body).toEqual(baseLead);
-    expect(body).not.toHaveProperty("city");
-    expect(body).not.toHaveProperty("state");
   });
 
   it("repassa o honeypot website quando presente", async () => {
