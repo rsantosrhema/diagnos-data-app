@@ -39,6 +39,21 @@ function makeResult(title: string | null, url: string, highlights?: string[]) {
   return { title, url, ...(highlights ? { highlights } : {}) };
 }
 
+const LEGACY_COMPETITORS_QUERY =
+  "Corp LTDA concorrentes análise de dados — Corp LTDA competitors data analytics";
+
+const REGIONAL_COMPETITORS_QUERY =
+  "Corp LTDA concorrentes em São Paulo SP análise de dados — Corp LTDA competitors in São Paulo, SP, Brazil data analytics";
+
+function makePayloadComLocalizacao(
+  localizacao: { cidade?: string | null; estado?: string | null },
+  empresaOverrides: Partial<AgentPayload["empresa"]> = {},
+): AgentPayload {
+  return makePayload({
+    empresa: { ...makePayload().empresa, ...localizacao, ...empresaOverrides },
+  });
+}
+
 describe("createResearcherAgent", () => {
   let searchMock: ReturnType<typeof vi.fn>;
 
@@ -181,5 +196,142 @@ describe("createResearcherAgent", () => {
       expect(section.status).toBe("ok");
       expect(section.results).toEqual([]);
     }
+  });
+
+  it("monta a query de concorrentes com cidade e UF (LOC-10)", async () => {
+    searchMock.mockResolvedValue({ results: [] });
+    const exa = { search: searchMock } as unknown as Pick<Exa, "search">;
+    const agent = createResearcherAgent({ exa });
+
+    const research = await agent.run(
+      makePayloadComLocalizacao({ cidade: "São Paulo", estado: "SP" }),
+    );
+
+    const conc = research.sections.find((s) => s.key === "concorrentes")!;
+    expect(conc.query).toBe(REGIONAL_COMPETITORS_QUERY);
+    expect(searchMock).toHaveBeenCalledWith(
+      REGIONAL_COMPETITORS_QUERY,
+      expect.objectContaining({ type: "auto", numResults: 5, contents: { highlights: true } }),
+    );
+  });
+
+  it("mantém a query antiga quando cidade e estado estão ausentes (LOC-11)", async () => {
+    searchMock.mockResolvedValue({ results: [] });
+    const exa = { search: searchMock } as unknown as Pick<Exa, "search">;
+    const agent = createResearcherAgent({ exa });
+
+    const research = await agent.run(
+      makePayloadComLocalizacao({ cidade: null, estado: null }),
+    );
+
+    const conc = research.sections.find((s) => s.key === "concorrentes")!;
+    expect(conc.query).toBe(LEGACY_COMPETITORS_QUERY);
+    expect(searchMock).toHaveBeenCalledWith(
+      LEGACY_COMPETITORS_QUERY,
+      expect.objectContaining({ type: "auto", numResults: 5, contents: { highlights: true } }),
+    );
+  });
+
+  it("mantém a query antiga quando falta cidade ou estado (LOC-11)", async () => {
+    searchMock.mockResolvedValue({ results: [] });
+    const exa = { search: searchMock } as unknown as Pick<Exa, "search">;
+    const agent = createResearcherAgent({ exa });
+
+    const casos: { cidade?: string | null; estado?: string | null }[] = [
+      { cidade: "São Paulo", estado: null },
+      { cidade: null, estado: "SP" },
+      { cidade: "São Paulo" },
+      { estado: "SP" },
+      { cidade: "", estado: "   " },
+    ];
+
+    for (const localizacao of casos) {
+      const research = await agent.run(makePayloadComLocalizacao(localizacao));
+      const conc = research.sections.find((s) => s.key === "concorrentes")!;
+      expect(conc.query).toBe(LEGACY_COMPETITORS_QUERY);
+    }
+  });
+
+  it("sanitiza cidade e estado antes de montar a query (LOC-13)", async () => {
+    searchMock.mockResolvedValue({ results: [] });
+    const exa = { search: searchMock } as unknown as Pick<Exa, "search">;
+    const agent = createResearcherAgent({ exa });
+
+    const research = await agent.run(
+      makePayloadComLocalizacao({ cidade: "São\nPaulo", estado: "SP\r" }),
+    );
+
+    const conc = research.sections.find((s) => s.key === "concorrentes")!;
+    expect(conc.query).toBe(REGIONAL_COMPETITORS_QUERY);
+    expect(conc.query).not.toContain("\n");
+    expect(conc.query).not.toContain("\r");
+  });
+
+  it("limita cidade e estado a 80 caracteres (LOC-13)", async () => {
+    searchMock.mockResolvedValue({ results: [] });
+    const exa = { search: searchMock } as unknown as Pick<Exa, "search">;
+    const agent = createResearcherAgent({ exa });
+
+    const cidadeLonga = "a".repeat(100);
+    const estadoLongo = "b".repeat(100);
+    const research = await agent.run(
+      makePayloadComLocalizacao({ cidade: cidadeLonga, estado: estadoLongo }),
+    );
+
+    const conc = research.sections.find((s) => s.key === "concorrentes")!;
+    expect(conc.query).toContain(`${"a".repeat(80)}... ${"b".repeat(80)}...`);
+    expect(conc.query).not.toContain(cidadeLonga);
+    expect(conc.query).not.toContain(estadoLongo);
+  });
+
+  it("preserva acentos e nomes compostos de cidade (LOC-10)", async () => {
+    searchMock.mockResolvedValue({ results: [] });
+    const exa = { search: searchMock } as unknown as Pick<Exa, "search">;
+    const agent = createResearcherAgent({ exa });
+
+    const research = await agent.run(
+      makePayloadComLocalizacao({ cidade: "São José do Rio Preto", estado: "SP" }),
+    );
+
+    const conc = research.sections.find((s) => s.key === "concorrentes")!;
+    expect(conc.query).toBe(
+      "Corp LTDA concorrentes em São José do Rio Preto SP análise de dados — Corp LTDA competitors in São José do Rio Preto, SP, Brazil data analytics",
+    );
+  });
+
+  it("sem nome não monta concorrentes mesmo com cidade e estado", async () => {
+    searchMock.mockResolvedValue({ results: [] });
+    const exa = { search: searchMock } as unknown as Pick<Exa, "search">;
+    const agent = createResearcherAgent({ exa });
+
+    const research = await agent.run(
+      makePayloadComLocalizacao({ cidade: "São Paulo", estado: "SP" }, { nome: null }),
+    );
+
+    expect(searchMock).toHaveBeenCalledTimes(3);
+    expect(research.sections.map((s) => s.key)).toEqual([
+      "segmento",
+      "faturamento",
+      "porte",
+    ]);
+  });
+
+  it("localização não altera as queries de segmento, faturamento e porte", async () => {
+    searchMock.mockResolvedValue({ results: [] });
+    const exa = { search: searchMock } as unknown as Pick<Exa, "search">;
+    const agent = createResearcherAgent({ exa });
+
+    const semLocalizacao = await agent.run(makePayload());
+    const comLocalizacao = await agent.run(
+      makePayloadComLocalizacao({ cidade: "São Paulo", estado: "SP" }),
+    );
+
+    const outrasQueries = (research: typeof semLocalizacao) =>
+      research.sections
+        .filter((s) => s.key !== "concorrentes")
+        .map((s) => `${s.key}: ${s.query}`);
+
+    expect(outrasQueries(comLocalizacao)).toEqual(outrasQueries(semLocalizacao));
+    expect(outrasQueries(comLocalizacao)).toHaveLength(3);
   });
 });
