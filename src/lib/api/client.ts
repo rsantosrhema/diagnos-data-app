@@ -180,7 +180,13 @@ export interface PortalShareState {
 }
 
 export interface ManagerPortalResponse {
-  lead: { id: string; name: string; company: string };
+  lead: {
+    id: string;
+    name: string;
+    company: string;
+    city?: string | null;
+    state?: string | null;
+  };
   email: string;
   score: { valor: number; faixa: string; descricao: string };
   dimensions: {
@@ -254,7 +260,13 @@ export async function downloadReportPdf(
 }
 
 export interface PublicPortalResponse {
-  lead: { id: string; name: string; company: string };
+  lead: {
+    id: string;
+    name: string;
+    company: string;
+    city?: string | null;
+    state?: string | null;
+  };
   score: { valor: number; faixa: string; descricao: string };
   dimensions: ManagerPortalResponse["dimensions"];
   risk: ManagerPortalResponse["risk"];

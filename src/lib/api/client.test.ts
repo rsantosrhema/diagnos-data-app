@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError, getMunicipios, submitLead } from "./client";
+import type { ManagerPortalResponse, PublicPortalResponse } from "./client";
 
 const fetchMock = vi.fn();
 
@@ -127,5 +128,29 @@ describe("submitLead", () => {
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
     expect(body.website).toBe("https://spam.example");
+  });
+});
+
+describe("tipos de resposta do portal", () => {
+  it("declara city e state no lead do portal gerencial e do público", () => {
+    const managerLead: ManagerPortalResponse["lead"] = {
+      id: "lead-1",
+      name: "Ana Souza",
+      company: "Acme Dados",
+      city: "São Paulo",
+      state: "SP",
+    };
+    const publicLead: PublicPortalResponse["lead"] = {
+      id: "lead-1",
+      name: "Ana Souza",
+      company: "Acme Dados",
+      city: null,
+      state: null,
+    };
+
+    expect(managerLead.city).toBe("São Paulo");
+    expect(managerLead.state).toBe("SP");
+    expect(publicLead.city).toBeNull();
+    expect(publicLead.state).toBeNull();
   });
 });
