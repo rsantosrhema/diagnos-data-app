@@ -1,35 +1,75 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PageShell, Toolbar, SiteFooter, Icon } from "./components/PageShell";
-import { submitLead, type LeadInput } from "@/lib/api/client";
+import { submitLead, getMunicipios, type LeadInput } from "@/lib/api/client";
 import { CARGOS } from "@/lib/screener/contract";
+import { ESTADOS } from "@/lib/localidades/estados";
 import { LEAD_STORAGE_KEY, type StoredLead } from "@/lib/lead-storage";
 
-const INITIAL_FORM: LeadInput = {
+type LeadForm = LeadInput & { city: string; state: string };
+
+const INITIAL_FORM: LeadForm = {
   name: "",
   company: "",
   phone: "",
   email: "",
   role: "",
   website: "",
+  city: "",
+  state: "",
 };
 
 export default function HomePage() {
   const router = useRouter();
-  const [form, setForm] = useState<LeadInput>(INITIAL_FORM);
-  const [errors, setErrors] = useState<Partial<Record<keyof LeadInput, string>>>({});
+  const [form, setForm] = useState<LeadForm>(INITIAL_FORM);
+  const [errors, setErrors] = useState<Partial<Record<keyof LeadForm, string>>>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
   const [serverError, setServerError] = useState("");
+  const [municipios, setMunicipios] = useState<string[]>([]);
+  const [loadingMunicipios, setLoadingMunicipios] = useState(false);
+  const [cityFallback, setCityFallback] = useState(false);
+  const latestCityRequest = useRef(0);
+
+  async function handleStateChange(uf: string) {
+    setForm((prev) => ({ ...prev, state: uf, city: "" }));
+    setErrors((prev) => ({ ...prev, state: undefined, city: undefined }));
+    setMunicipios([]);
+    setCityFallback(false);
+
+    if (!uf) {
+      setLoadingMunicipios(false);
+      return;
+    }
+
+    const requestId = latestCityRequest.current + 1;
+    latestCityRequest.current = requestId;
+    setLoadingMunicipios(true);
+
+    try {
+      const cidades = await getMunicipios(uf);
+      if (latestCityRequest.current !== requestId) return;
+      setMunicipios(cidades);
+      setCityFallback(false);
+    } catch {
+      if (latestCityRequest.current !== requestId) return;
+      setMunicipios([]);
+      setCityFallback(true);
+    } finally {
+      if (latestCityRequest.current === requestId) setLoadingMunicipios(false);
+    }
+  }
 
   function validate(): boolean {
-    const e: Partial<Record<keyof LeadInput, string>> = {};
+    const e: Partial<Record<keyof LeadForm, string>> = {};
     if (form.name.trim().length < 2) e.name = "Informe seu nome completo";
     if (form.company.trim().length < 2) e.company = "Informe sua empresa";
     if (form.phone.trim().length < 8) e.phone = "Informe um telefone válido";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Informe um email válido";
+    if (!form.state) e.state = "Informe o estado";
+    if (form.city.trim().length < 2) e.city = "Informe a cidade";
     if (!form.role) e.role = "Selecione seu cargo";
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -42,7 +82,11 @@ export default function HomePage() {
 
     setStatus("submitting");
     try {
-      const result = await submitLead(form);
+      const result = await submitLead({
+        ...form,
+        city: form.city.trim(),
+        state: form.state,
+      });
       try {
         const lead: StoredLead = {
           leadId: result.leadId ?? "",
@@ -50,6 +94,8 @@ export default function HomePage() {
           email: form.email.trim(),
           company: form.company.trim(),
           role: form.role,
+          city: form.city.trim(),
+          state: form.state,
         };
         sessionStorage.setItem(LEAD_STORAGE_KEY, JSON.stringify(lead));
       } catch {
@@ -64,7 +110,7 @@ export default function HomePage() {
     }
   }
 
-  function update(field: keyof LeadInput, value: string) {
+  function update(field: keyof LeadForm, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   }
@@ -142,6 +188,50 @@ export default function HomePage() {
               autoComplete="off"
             />
             {fields.map(renderField)}
+            <div>
+              <label htmlFor="state" className="rd-label">Estado</label>
+              <select
+                id="state"
+                className={`rd-input ${errors.state ? "error" : ""}`}
+                value={form.state}
+                onChange={(e) => handleStateChange(e.target.value)}
+              >
+                <option value="" disabled>Selecione o estado</option>
+                {ESTADOS.map((estado) => (
+                  <option key={estado.sigla} value={estado.sigla}>
+                    {estado.sigla} — {estado.nome}
+                  </option>
+                ))}
+              </select>
+              {errors.state && <p className="mt-1 text-xs text-[#b23a34]">{errors.state}</p>}
+            </div>
+            <div>
+              <label htmlFor="city" className="rd-label">Cidade</label>
+              {cityFallback ? (
+                <input
+                  id="city"
+                  type="text"
+                  className={`rd-input ${errors.city ? "error" : ""}`}
+                  placeholder="Sua cidade"
+                  value={form.city}
+                  onChange={(e) => update("city", e.target.value)}
+                />
+              ) : (
+                <select
+                  id="city"
+                  className={`rd-input ${errors.city ? "error" : ""}`}
+                  value={form.city}
+                  disabled={!form.state || loadingMunicipios}
+                  onChange={(e) => update("city", e.target.value)}
+                >
+                  <option value="" disabled>Selecione sua cidade</option>
+                  {municipios.map((nome) => (
+                    <option key={nome} value={nome}>{nome}</option>
+                  ))}
+                </select>
+              )}
+              {errors.city && <p className="mt-1 text-xs text-[#b23a34]">{errors.city}</p>}
+            </div>
             <div>
               <label htmlFor="role" className="rd-label">Cargo</label>
               <select
