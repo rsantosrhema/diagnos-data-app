@@ -59,13 +59,13 @@ export function createScreenService(deps: {
         leadId = lead.id;
         location = { cidade: lead.city ?? null, estado: lead.state ?? null };
       } else {
-        // O fallback por email não carrega a localização coletada na landing.
-        location = { cidade: null, estado: null };
         // Fallback: tenta reutilizar lead existente não-concluído
         const existing = await leadRepo.findByEmail(email);
         if (existing && existing.status !== "concluido") {
           leadId = existing.id;
+          location = { cidade: existing.city ?? null, estado: existing.state ?? null };
         } else {
+          location = { cidade: null, estado: null };
           leadId = await createLeadWithRepo({
             leadRepo,
             name: submission.name,

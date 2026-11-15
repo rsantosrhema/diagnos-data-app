@@ -293,13 +293,32 @@ describe("ScreenService", () => {
     expect(payload.empresa.estado).toBeNull();
   });
 
-  it("fallback por email reutilizando lead com localização: payload sem localização", async () => {
+  it("fallback por email reutilizando lead com localização: payload preserva a localização", async () => {
     const createAssessmentResponse = vi.fn();
     const service = createService({
       leadRepo: mockLeadRepo({
         findById: vi.fn(),
         findByEmail: vi.fn().mockResolvedValue(
           leadRow({ id: "lead-9", status: "pendente", city: "São Paulo", state: "SP" }),
+        ),
+      }),
+      assessmentRepo: mockAssessmentRepo({ createAssessmentResponse }),
+    });
+
+    await service.submitScreener(validSubmission({ leadId: undefined }));
+
+    const payload = agentPayloadFrom(createAssessmentResponse);
+    expect(payload.empresa.cidade).toBe("São Paulo");
+    expect(payload.empresa.estado).toBe("SP");
+  });
+
+  it("fallback por email reutilizando lead sem localização: payload com cidade e estado nulos", async () => {
+    const createAssessmentResponse = vi.fn();
+    const service = createService({
+      leadRepo: mockLeadRepo({
+        findById: vi.fn(),
+        findByEmail: vi.fn().mockResolvedValue(
+          leadRow({ id: "lead-9", status: "pendente" }),
         ),
       }),
       assessmentRepo: mockAssessmentRepo({ createAssessmentResponse }),
