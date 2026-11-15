@@ -205,4 +205,151 @@ describe("DiagnosticPortal", () => {
     expect(screen.getByText("Sem insights de análise para exibir.")).toBeTruthy();
     expect(screen.getByText("Sem fontes de mercado para exibir.")).toBeTruthy();
   });
+
+  it("modo público mostra cidade e estado junto ao nome do solicitante", () => {
+    render(
+      <DiagnosticPortal
+        data={portalData({
+          lead: {
+            id: "lead-1",
+            name: "João Silva",
+            company: "Corp LTDA",
+            city: "São Paulo",
+            state: "SP",
+          },
+        })}
+        mode="public"
+      />,
+    );
+    expect(
+      screen.getByText("João Silva · 10 dimensões avaliadas · São Paulo/SP"),
+    ).toBeTruthy();
+  });
+
+  it("modo manager mostra cidade e estado junto ao nome do solicitante", () => {
+    render(
+      <DiagnosticPortal
+        data={portalData({
+          lead: {
+            id: "lead-1",
+            name: "João Silva",
+            company: "Corp LTDA",
+            city: "São Paulo",
+            state: "SP",
+          },
+        })}
+        mode="manager"
+      />,
+    );
+    const line = screen.getByText("João Silva · 10 dimensões avaliadas · São Paulo/SP");
+    expect(line.textContent).toBe("João Silva · 10 dimensões avaliadas · São Paulo/SP");
+  });
+
+  it("lead antigo sem localização mantém a linha original sem separador extra", () => {
+    render(<DiagnosticPortal data={portalData()} mode="public" />);
+    const line = screen.getByText("João Silva · 10 dimensões avaliadas");
+    expect(line.textContent).toBe("João Silva · 10 dimensões avaliadas");
+    expect(line.textContent).not.toContain("/");
+    expect(line.textContent).not.toMatch(/undefined|null|Localização/);
+  });
+
+  it("cidade sem estado omite a localização", () => {
+    render(
+      <DiagnosticPortal
+        data={portalData({
+          lead: {
+            id: "lead-1",
+            name: "João Silva",
+            company: "Corp LTDA",
+            city: "São Paulo",
+          },
+        })}
+        mode="public"
+      />,
+    );
+    const line = screen.getByText("João Silva · 10 dimensões avaliadas");
+    expect(line.textContent).toBe("João Silva · 10 dimensões avaliadas");
+    expect(screen.queryByText(/São Paulo/)).toBeNull();
+  });
+
+  it("estado sem cidade omite a localização", () => {
+    render(
+      <DiagnosticPortal
+        data={portalData({
+          lead: {
+            id: "lead-1",
+            name: "João Silva",
+            company: "Corp LTDA",
+            state: "SP",
+          },
+        })}
+        mode="public"
+      />,
+    );
+    const line = screen.getByText("João Silva · 10 dimensões avaliadas");
+    expect(line.textContent).toBe("João Silva · 10 dimensões avaliadas");
+    expect(screen.queryByText(/\/SP/)).toBeNull();
+  });
+
+  it("cidade e estado nulos omitem a localização", () => {
+    render(
+      <DiagnosticPortal
+        data={portalData({
+          lead: {
+            id: "lead-1",
+            name: "João Silva",
+            company: "Corp LTDA",
+            city: null,
+            state: null,
+          },
+        })}
+        mode="manager"
+      />,
+    );
+    const line = screen.getByText("João Silva · 10 dimensões avaliadas");
+    expect(line.textContent).toBe("João Silva · 10 dimensões avaliadas");
+    expect(line.textContent).not.toContain("/");
+  });
+
+  it("cidade e estado vazios omitem a localização", () => {
+    render(
+      <DiagnosticPortal
+        data={portalData({
+          lead: {
+            id: "lead-1",
+            name: "João Silva",
+            company: "Corp LTDA",
+            city: "",
+            state: "",
+          },
+        })}
+        mode="public"
+      />,
+    );
+    const line = screen.getByText("João Silva · 10 dimensões avaliadas");
+    expect(line.textContent).toBe("João Silva · 10 dimensões avaliadas");
+    expect(line.textContent).not.toContain("/");
+  });
+
+  it("preserva cidade composta com acento", () => {
+    render(
+      <DiagnosticPortal
+        data={portalData({
+          lead: {
+            id: "lead-1",
+            name: "João Silva",
+            company: "Corp LTDA",
+            city: "São José do Rio Preto",
+            state: "SP",
+          },
+        })}
+        mode="public"
+      />,
+    );
+    expect(
+      screen.getByText(
+        "João Silva · 10 dimensões avaliadas · São José do Rio Preto/SP",
+      ),
+    ).toBeTruthy();
+  });
 });
