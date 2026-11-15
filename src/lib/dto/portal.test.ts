@@ -141,6 +141,57 @@ describe("portalDTOSchema", () => {
     const bad = { ...FULL_DTO, analysisStatus: "cancelado" };
     expect(portalDTOSchema.safeParse(bad).success).toBe(false);
   });
+
+  it("preserva city e state do lead quando presentes (LOC-15)", () => {
+    const located = {
+      ...FULL_DTO,
+      lead: { ...FULL_DTO.lead, city: "São Paulo", state: "SP" },
+    };
+    const result = portalDTOSchema.safeParse(located);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.lead.city).toBe("São Paulo");
+      expect(result.data.lead.state).toBe("SP");
+    }
+  });
+
+  it("valida DTO antigo sem city/state e deixa ambos undefined (LOC-15)", () => {
+    const result = portalDTOSchema.safeParse(FULL_DTO);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.lead.city).toBeUndefined();
+      expect(result.data.lead.state).toBeUndefined();
+    }
+  });
+
+  it("valida city e state nulos (LOC-15)", () => {
+    const located = {
+      ...FULL_DTO,
+      lead: { ...FULL_DTO.lead, city: null, state: null },
+    };
+    const result = portalDTOSchema.safeParse(located);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.lead.city).toBeNull();
+      expect(result.data.lead.state).toBeNull();
+    }
+  });
+
+  it("rejeita chave desconhecida dentro do lead (strict, LOC-18)", () => {
+    const bad = {
+      ...FULL_DTO,
+      lead: { ...FULL_DTO.lead, email: "joao@corp.com" },
+    };
+    expect(portalDTOSchema.safeParse(bad).success).toBe(false);
+  });
+
+  it("rejeita city que não é string (LOC-18)", () => {
+    const bad = {
+      ...FULL_DTO,
+      lead: { ...FULL_DTO.lead, city: 123 },
+    };
+    expect(portalDTOSchema.safeParse(bad).success).toBe(false);
+  });
 });
 
 describe("managerPortalDTOSchema", () => {
@@ -167,6 +218,22 @@ describe("managerPortalDTOSchema", () => {
     };
     const result = managerPortalDTOSchema.safeParse(manager);
     expect(result.success).toBe(true);
+  });
+
+  it("herda city e state do lead no DTO gerencial (LOC-15)", () => {
+    const manager = {
+      ...FULL_DTO,
+      lead: { ...FULL_DTO.lead, city: "São Paulo", state: "SP" },
+      email: "joao@corp.com",
+      share: { active: true, url: "/r/tok123", expiresAt: null },
+    };
+    const result = managerPortalDTOSchema.safeParse(manager);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.lead.city).toBe("São Paulo");
+      expect(result.data.lead.state).toBe("SP");
+      expect(result.data.email).toBe("joao@corp.com");
+    }
   });
 });
 

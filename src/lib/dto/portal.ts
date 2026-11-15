@@ -16,7 +16,13 @@ export const cmmiStageSchema = z
 export const portalDTOSchema = z
   .object({
     lead: z
-      .object({ id: z.string(), name: z.string(), company: z.string() })
+      .object({
+        id: z.string(),
+        name: z.string(),
+        company: z.string(),
+        city: z.string().nullable().optional(),
+        state: z.string().nullable().optional(),
+      })
       .strict(),
     score: z
       .object({ valor: z.number(), faixa: z.string(), descricao: z.string() })
