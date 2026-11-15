@@ -50,13 +50,17 @@ export function createScreenService(deps: {
 
       // 2. Resolve o lead: via leadId (cadastro na landing) ou fallback por email
       let leadId: string;
+      let location: { cidade: string | null; estado: string | null };
       if (submission.leadId) {
         const lead = await leadRepo.findById(submission.leadId);
         if (!lead) {
           throw new ScreenServiceError("Lead inválido", 401);
         }
         leadId = lead.id;
+        location = { cidade: lead.city ?? null, estado: lead.state ?? null };
       } else {
+        // O fallback por email não carrega a localização coletada na landing.
+        location = { cidade: null, estado: null };
         // Fallback: tenta reutilizar lead existente não-concluído
         const existing = await leadRepo.findByEmail(email);
         if (existing && existing.status !== "concluido") {
@@ -107,6 +111,7 @@ export function createScreenService(deps: {
         contract,
         respondent: { name: submission.name, role },
         company: submission.company,
+        location,
         profileAnswers: profile,
         contextAnswers: submission.context,
         dimensionAnswers,

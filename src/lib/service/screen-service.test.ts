@@ -3,6 +3,8 @@ import { createScreenService, ScreenServiceError } from "./screen-service";
 import type { LeadRepository, LeadRow } from "@/lib/repository/lead-repo";
 import type { AssessmentRepository } from "@/lib/repository/assessment-repo";
 import { SCREENER_CONTRACT } from "@/lib/screener/contract";
+import { computeScores } from "@/lib/screener/scoring";
+import type { AgentPayload } from "@/lib/screener/agent-payload";
 import type { ScreenerSubmission } from "@/lib/schemas/screener";
 
 const DIMS = SCREENER_CONTRACT.dimensoes;
@@ -77,6 +79,15 @@ function createService(deps: {
     contract: SCREENER_CONTRACT,
     loadActiveCalibration: vi.fn().mockRejectedValue(new Error("no db")),
   });
+}
+
+function agentPayloadFrom(
+  createAssessmentResponse: ReturnType<typeof vi.fn>,
+): AgentPayload {
+  const [input] = createAssessmentResponse.mock.calls[0] as [
+    { agentPayload: AgentPayload },
+  ];
+  return input.agentPayload;
 }
 
 describe("ScreenService", () => {
@@ -230,5 +241,149 @@ describe("ScreenService", () => {
         validSubmission({ leadId: undefined }),
       ),
     ).rejects.toMatchObject({ status: 500 });
+  });
+
+  it("leadId com localização: payload leva cidade e estado do lead", async () => {
+    const createAssessmentResponse = vi.fn();
+    const service = createService({
+      leadRepo: mockLeadRepo({
+        findById: vi.fn().mockResolvedValue(
+          leadRow({ id: "lead-1", city: "São Paulo", state: "SP" }),
+        ),
+      }),
+      assessmentRepo: mockAssessmentRepo({ createAssessmentResponse }),
+    });
+
+    await service.submitScreener(validSubmission({ leadId: "lead-1" }));
+
+    const payload = agentPayloadFrom(createAssessmentResponse);
+    expect(payload.empresa.cidade).toBe("São Paulo");
+    expect(payload.empresa.estado).toBe("SP");
+  });
+
+  it("lead antigo sem city/state: payload com cidade e estado nulos", async () => {
+    const createAssessmentResponse = vi.fn();
+    const service = createService({
+      leadRepo: mockLeadRepo({
+        findById: vi.fn().mockResolvedValue(leadRow()),
+      }),
+      assessmentRepo: mockAssessmentRepo({ createAssessmentResponse }),
+    });
+
+    await service.submitScreener(validSubmission({ leadId: "lead-1" }));
+
+    const payload = agentPayloadFrom(createAssessmentResponse);
+    expect(payload.empresa.cidade).toBeNull();
+    expect(payload.empresa.estado).toBeNull();
+  });
+
+  it("lead com city/state nulos: payload com cidade e estado nulos", async () => {
+    const createAssessmentResponse = vi.fn();
+    const service = createService({
+      leadRepo: mockLeadRepo({
+        findById: vi.fn().mockResolvedValue(leadRow({ city: null, state: null })),
+      }),
+      assessmentRepo: mockAssessmentRepo({ createAssessmentResponse }),
+    });
+
+    await service.submitScreener(validSubmission({ leadId: "lead-1" }));
+
+    const payload = agentPayloadFrom(createAssessmentResponse);
+    expect(payload.empresa.cidade).toBeNull();
+    expect(payload.empresa.estado).toBeNull();
+  });
+
+  it("fallback por email reutilizando lead com localização: payload sem localização", async () => {
+    const createAssessmentResponse = vi.fn();
+    const service = createService({
+      leadRepo: mockLeadRepo({
+        findById: vi.fn(),
+        findByEmail: vi.fn().mockResolvedValue(
+          leadRow({ id: "lead-9", status: "pendente", city: "São Paulo", state: "SP" }),
+        ),
+      }),
+      assessmentRepo: mockAssessmentRepo({ createAssessmentResponse }),
+    });
+
+    await service.submitScreener(validSubmission({ leadId: undefined }));
+
+    const payload = agentPayloadFrom(createAssessmentResponse);
+    expect(payload.empresa.cidade).toBeNull();
+    expect(payload.empresa.estado).toBeNull();
+  });
+
+  it("fallback por email criando lead: payload sem localização", async () => {
+    const createAssessmentResponse = vi.fn();
+    const create = vi.fn().mockResolvedValue("lead-new");
+    const findByEmail = vi
+      .fn()
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(leadRow({ id: "lead-new", status: "pendente" }));
+    const service = createService({
+      leadRepo: mockLeadRepo({
+        findById: vi.fn(),
+        findByEmail,
+        create,
+      }),
+      assessmentRepo: mockAssessmentRepo({ createAssessmentResponse }),
+    });
+
+    await service.submitScreener(validSubmission({ leadId: undefined }));
+
+    expect(create).toHaveBeenCalledTimes(1);
+    const payload = agentPayloadFrom(createAssessmentResponse);
+    expect(payload.empresa.cidade).toBeNull();
+    expect(payload.empresa.estado).toBeNull();
+  });
+
+  it("leadId inválido: 401 e nenhum assessment persistido", async () => {
+    const createAssessmentResponse = vi.fn();
+    const createDiagnostic = vi.fn();
+    const service = createService({
+      leadRepo: mockLeadRepo({
+        findById: vi.fn().mockResolvedValue(null),
+      }),
+      assessmentRepo: mockAssessmentRepo({
+        createAssessmentResponse,
+        createDiagnostic,
+      }),
+    });
+
+    await expect(
+      service.submitScreener(validSubmission({ leadId: "not-a-real-lead" })),
+    ).rejects.toMatchObject({ status: 401 });
+    expect(createAssessmentResponse).not.toHaveBeenCalled();
+    expect(createDiagnostic).not.toHaveBeenCalled();
+  });
+
+  it("localização não altera o restante do payload", async () => {
+    const createAssessmentResponse = vi.fn();
+    const service = createService({
+      leadRepo: mockLeadRepo({
+        findById: vi.fn().mockResolvedValue(
+          leadRow({ id: "lead-1", city: "São Paulo", state: "SP" }),
+        ),
+      }),
+      assessmentRepo: mockAssessmentRepo({ createAssessmentResponse }),
+    });
+    const expected = computeScores(
+      SCREENER_CONTRACT,
+      DIMS.map((d) => ({ dimensionId: d.id, nivel: 3 })),
+      {},
+      "CTO",
+    );
+
+    await service.submitScreener(
+      validSubmission({ leadId: "lead-1", company: { name: "Corp" } }),
+    );
+
+    const payload = agentPayloadFrom(createAssessmentResponse);
+    expect(payload.empresa.nome).toBe("Corp");
+    expect(payload.empresa.cidade).toBe("São Paulo");
+    expect(payload.empresa.estado).toBe("SP");
+    expect(payload.solicitante).toEqual({ nome: "João Silva", cargo: "CTO" });
+    expect(payload.score.valor).toBe(Number(expected.score.toFixed(2)));
+    expect(payload.respostas).toHaveLength(DIMS.length);
+    expect(payload.consentimento.aceito).toBe(true);
   });
 });
