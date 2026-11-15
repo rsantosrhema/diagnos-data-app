@@ -243,7 +243,40 @@ describe("LeadService", () => {
       });
 
       expect(result).toEqual({ ok: true, leadId: "lead-race" });
-      expect(updateLocation).not.toHaveBeenCalled();
+      expect(updateLocation).toHaveBeenCalledWith("lead-race", {
+        city: "São Paulo",
+        state: "SP",
+      });
+    });
+
+    it("race on unique constraint: 500 when updating the raced lead location fails", async () => {
+      const error = Object.assign(new Error("duplicate"), { code: "23505" });
+      const updateLocation = vi.fn().mockRejectedValue(new Error("db down"));
+      const service = createLeadService({
+        leadRepo: mockLeadRepo({
+          findByEmail: vi
+            .fn()
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce({ id: "lead-race", status: "pendente" }),
+          create: vi.fn().mockRejectedValue(error),
+          updateLocation,
+        }),
+      });
+
+      await expect(
+        service.createLead({
+          name: "João",
+          company: "Corp",
+          phone: "12345678",
+          email: "joao@corp.com",
+          role: "CTO",
+          city: "São Paulo",
+          state: "SP",
+        }),
+      ).rejects.toMatchObject({
+        status: 500,
+        message: "Erro ao salvar cadastro",
+      });
     });
 
     it("race on unique constraint: 409 when lead is concluido", async () => {

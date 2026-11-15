@@ -61,6 +61,14 @@ export function createLeadService(deps: { leadRepo: LeadRepository }) {
         if (pgError.code === "23505") {
           const raced = await leadRepo.findByEmail(email);
           if (raced && raced.status !== "concluido") {
+            try {
+              await leadRepo.updateLocation(raced.id, {
+                city: params.city,
+                state: params.state,
+              });
+            } catch {
+              throw new LeadServiceError("Erro ao salvar cadastro", 500);
+            }
             return { ok: true, leadId: raced.id };
           }
           throw new LeadServiceError(
