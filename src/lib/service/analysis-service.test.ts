@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { createAnalysisService } from "./analysis-service";
 import type { AnalysisQueueRepository } from "@/lib/repository/analysis-queue-repo";
 import type { MarketInsightsRepository } from "@/lib/repository/market-insights-repo";
+import type { LeadRepository, LeadRow } from "@/lib/repository/lead-repo";
 import type { AgentPayload } from "@/lib/screener/agent-payload";
 import type { MarketResearch, MarketAnalysis, InsightsBrief } from "@/lib/agents/types";
 
@@ -23,6 +24,24 @@ const payload: AgentPayload = {
   risco: { dimensao_id: "d01", nivel: 1 },
   desequilibrio: false,
   consentimento: { aceito: true, texto: "ok", aceito_em: "2026-08-29" },
+};
+
+const payloadComDimensoes: AgentPayload = {
+  ...payload,
+  respostas: [
+    {
+      dimensao_id: "d01",
+      dimensao: "Governança de Dados",
+      pergunta: "Como a governança é exercida?",
+      nivel: 2,
+      peso: 15,
+      resposta: "Processos definidos informalmente",
+    },
+  ],
+  resposta_comercial: { pergunta: "Qual o orçamento?", resposta: "Até R$ 50 mil" },
+  score: { valor: 2, faixa: "Emergente", descricao: "descrição da faixa" },
+  risco: { dimensao_id: "d01", nivel: 2 },
+  desequilibrio: true,
 };
 
 const research: MarketResearch = {
@@ -78,9 +97,26 @@ function mockSendEmail() {
   return vi.fn().mockResolvedValue(undefined);
 }
 
-function mockLeadRepo(overrides: { updateStatus?: (id: string, status: string) => Promise<void> } = {}) {
+type AnalysisLeadRepo = Pick<LeadRepository, "updateStatus" | "findById">;
+
+function mockLeadRepo(overrides: Partial<AnalysisLeadRepo> = {}): AnalysisLeadRepo {
   return {
     updateStatus: overrides.updateStatus ?? vi.fn().mockResolvedValue(undefined),
+    findById: overrides.findById ?? vi.fn().mockResolvedValue(null),
+  };
+}
+
+function mockLeadRow(overrides: Partial<LeadRow> = {}): LeadRow {
+  return {
+    id: "lead-1",
+    name: "João",
+    company: "Corp",
+    email: "joao@corp.com",
+    phone: "11999999999",
+    role: "CTO",
+    status: "concluido",
+    created_at: "2026-08-29T00:00:00.000Z",
+    ...overrides,
   };
 }
 
@@ -89,7 +125,7 @@ function createService(deps: {
   insightsRepo?: MarketInsightsRepository;
   orchestrator?: ReturnType<typeof mockOrchestrator>;
   payloadLoader?: (leadId: string) => Promise<AgentPayload | null>;
-  leadRepo?: { updateStatus(id: string, status: string): Promise<void> };
+  leadRepo?: AnalysisLeadRepo;
   generatePdf?: ReturnType<typeof mockGeneratePdf>;
   sendEmail?: ReturnType<typeof mockSendEmail>;
 }) {
@@ -208,6 +244,143 @@ describe("AnalysisService", () => {
       );
     });
 
+    it("lead com localização: o PDF recebe { city, state } (LOC-16)", async () => {
+      const queueRepo = mockQueueRepo({
+        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        ack: vi.fn().mockResolvedValue(undefined),
+      });
+      const findById = vi.fn().mockResolvedValue(mockLeadRow({ city: "São Paulo", state: "SP" }));
+      const generatePdf = mockGeneratePdf();
+
+      const service = createService({
+        queueRepo,
+        leadRepo: mockLeadRepo({ findById }),
+        generatePdf,
+      });
+
+      const result = await service.processNext();
+
+      expect(result).toEqual({ processed: true });
+      expect(findById).toHaveBeenCalledWith("lead-1");
+      expect(generatePdf).toHaveBeenCalledWith(
+        expect.objectContaining({ location: { city: "São Paulo", state: "SP" } }),
+      );
+      expect(queueRepo.ack).toHaveBeenCalledWith("42", "lead-1", "analisado", undefined, expect.any(Number));
+    });
+
+    it("lead antigo sem localização: o input do PDF não tem a chave location", async () => {
+      const queueRepo = mockQueueRepo({
+        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        ack: vi.fn().mockResolvedValue(undefined),
+      });
+      const findById = vi.fn().mockResolvedValue(mockLeadRow({ city: null, state: null }));
+      const generatePdf = mockGeneratePdf();
+
+      const service = createService({
+        queueRepo,
+        leadRepo: mockLeadRepo({ findById }),
+        generatePdf,
+      });
+
+      const result = await service.processNext();
+
+      expect(result).toEqual({ processed: true });
+      const pdfInput = generatePdf.mock.calls[0]?.[0];
+      expect(pdfInput).toBeDefined();
+      expect(pdfInput).not.toHaveProperty("location");
+    });
+
+    it("findById falha: o pipeline segue e o PDF é gerado sem localização", async () => {
+      const queueRepo = mockQueueRepo({
+        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        ack: vi.fn().mockResolvedValue(undefined),
+      });
+      const findById = vi.fn().mockRejectedValue(new Error("db down"));
+      const generatePdf = mockGeneratePdf();
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const service = createService({
+        queueRepo,
+        leadRepo: mockLeadRepo({ findById }),
+        generatePdf,
+      });
+
+      const result = await service.processNext();
+
+      expect(result).toEqual({ processed: true });
+      expect(queueRepo.ack).toHaveBeenCalledWith("42", "lead-1", "analisado", undefined, expect.any(Number));
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("localização"), expect.any(Error));
+      const pdfInput = generatePdf.mock.calls[0]?.[0];
+      expect(pdfInput).not.toHaveProperty("location");
+      errorSpy.mockRestore();
+    });
+
+    it("falha definitiva: o PDF de fallback também recebe a localização do lead", async () => {
+      const queueRepo = mockQueueRepo({
+        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        ack: vi.fn().mockResolvedValue(undefined),
+        requeue: vi.fn().mockResolvedValue(undefined),
+        resetReadCount: vi.fn().mockResolvedValue({ alreadyRetried: false }),
+      });
+      const orchestrator = mockOrchestrator();
+      orchestrator.research.mockRejectedValue(new Error("llm down"));
+      const findByLeadId = vi.fn().mockResolvedValue({ attempts: 2 } as never);
+      const insightsRepo = mockInsightsRepo({ findByLeadId });
+      const findById = vi.fn().mockResolvedValue(mockLeadRow({ city: "São Paulo", state: "SP" }));
+      const generatePdf = mockGeneratePdf();
+      const sendEmail = mockSendEmail();
+
+      const service = createService({
+        queueRepo,
+        insightsRepo,
+        orchestrator,
+        leadRepo: mockLeadRepo({ findById }),
+        generatePdf,
+        sendEmail,
+      });
+
+      const result = await service.processNext();
+
+      expect(result).toEqual({ processed: true });
+      expect(generatePdf).toHaveBeenCalledWith(
+        expect.objectContaining({ location: { city: "São Paulo", state: "SP" } }),
+      );
+      expect(generatePdf).toHaveBeenCalledWith(
+        expect.not.objectContaining({ insights: expect.anything() }),
+      );
+      expect(sendEmail).toHaveBeenCalledTimes(1);
+    });
+
+    it("buildPdfInput mantém os campos anteriores (regressão)", async () => {
+      const queueRepo = mockQueueRepo({
+        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        ack: vi.fn().mockResolvedValue(undefined),
+      });
+      const generatePdf = mockGeneratePdf();
+
+      const service = createService({
+        queueRepo,
+        payloadLoader: async () => payloadComDimensoes,
+        generatePdf,
+      });
+
+      const result = await service.processNext();
+
+      expect(result).toEqual({ processed: true });
+      expect(generatePdf).toHaveBeenCalledWith(
+        expect.objectContaining({
+          respondentName: "João",
+          band: { rotulo: "Emergente", descricao: "descrição da faixa" },
+          dimensionScores: [{ name: "Governança de Dados", nivel: 2, peso: 15 }],
+          riskDimension: { name: "Governança de Dados", nivel: 2 },
+          imbalance: true,
+          commercialAnswer: "Até R$ 50 mil",
+        }),
+      );
+      const pdfInput = generatePdf.mock.calls[0]?.[0];
+      expect(pdfInput).not.toHaveProperty("location");
+    });
+
     it("payload ausente: ack falha + log failed e NÃO envia e-mail", async () => {
       const queueRepo = mockQueueRepo({
         read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
@@ -249,7 +422,7 @@ describe("AnalysisService", () => {
       const findByLeadId = vi.fn().mockResolvedValue({ attempts: 1 } as never);
       const insightsRepo = mockInsightsRepo({ logEvent, findByLeadId });
       const updateStatus = vi.fn().mockResolvedValue(undefined);
-      const leadRepo = { updateStatus };
+      const leadRepo = mockLeadRepo({ updateStatus });
       const generatePdf = mockGeneratePdf();
       const sendEmail = mockSendEmail();
 
@@ -290,7 +463,7 @@ describe("AnalysisService", () => {
       const findByLeadId = vi.fn().mockResolvedValue({ attempts: 1 } as never);
       const insightsRepo = mockInsightsRepo({ logEvent, findByLeadId });
       const updateStatus = vi.fn().mockResolvedValue(undefined);
-      const leadRepo = { updateStatus };
+      const leadRepo = mockLeadRepo({ updateStatus });
       const sendEmail = mockSendEmail();
 
       const service = createService({
@@ -387,7 +560,7 @@ describe("AnalysisService", () => {
       const generatePdf = vi.fn().mockRejectedValue(new Error("pdf renderer down"));
       const sendEmail = mockSendEmail();
       const updateStatus = vi.fn().mockResolvedValue(undefined);
-      const leadRepo = { updateStatus };
+      const leadRepo = mockLeadRepo({ updateStatus });
 
       const service = createService({
         queueRepo,
