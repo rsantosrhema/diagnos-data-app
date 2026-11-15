@@ -23,6 +23,9 @@ const ANALYSIS_OUTPUT = {
   contexto_concorrentes: [{ nome: "Concorrente", contexto: "Investe em analytics" }],
 };
 
+const PROMPT_TAIL =
+  "REGRA: `impacto_negocio`, `recomendacao_curta`, `diferencial` e `oportunidade_principal` devem ter no máximo 300 caracteres; `posicionamento_setor` no máximo 500.";
+
 function makePayload(): AgentPayload {
   return {
     versao: "1.0",
@@ -75,12 +78,42 @@ function makeResearch(): MarketResearch {
   };
 }
 
+type PayloadComLocalizacao = AgentPayload & {
+  empresa: AgentPayload["empresa"] & { cidade?: string | null; estado?: string | null };
+};
+
+function withLocation(
+  payload: AgentPayload,
+  cidade: string | null,
+  estado: string | null,
+): PayloadComLocalizacao {
+  return { ...payload, empresa: { ...payload.empresa, cidade, estado } };
+}
+
+function regionalRule(prompt: string): string | undefined {
+  return prompt.split("\n").find((line) => line.startsWith("REGRA: priorize concorrentes"));
+}
+
 describe("createAnalystAgent", () => {
   let generateObjectMock: ReturnType<typeof vi.fn<GenerateObjectFn>>;
 
   beforeEach(() => {
     generateObjectMock = vi.fn();
   });
+
+  async function capturePrompt(payload: AgentPayload): Promise<string> {
+    generateObjectMock.mockResolvedValue({ object: ANALYSIS_OUTPUT });
+    const llm = { modelId: "x", doGenerate: vi.fn() } as never;
+    const agent = createAnalystAgent({
+      llm,
+      generateObject: generateObjectMock,
+      skillLoader: vi.fn(() => "skill"),
+    });
+
+    await agent.run({ research: makeResearch(), payload });
+
+    return String(generateObjectMock.mock.calls[0][0].prompt);
+  }
 
   it("monta prompt com scores, pesquisa e skill de segmento; valida saída com schema estrito", async () => {
     generateObjectMock.mockResolvedValue({ object: ANALYSIS_OUTPUT });
@@ -216,5 +249,75 @@ describe("createAnalystAgent", () => {
     expect(promptText).toContain("evidencia_mercado");
     expect(promptText).toContain("url");
     expect(promptText).toContain("nivel_atual");
+  });
+
+  it("com cidade e estado, prioriza concorrentes da região e pede sinalizar outra região em `contexto`", async () => {
+    const prompt = await capturePrompt(withLocation(makePayload(), "São Paulo", "SP"));
+
+    expect(prompt).toContain("priorize concorrentes que atuam em São Paulo/SP");
+    expect(prompt).toContain("contexto");
+    expect(prompt).toContain("outra região");
+  });
+
+  it("sem cidade e estado, o prompt termina na última regra atual e não menciona priorização regional", async () => {
+    const prompt = await capturePrompt(makePayload());
+
+    expect(prompt).not.toContain("priorize concorrentes");
+    expect(prompt.endsWith(PROMPT_TAIL)).toBe(true);
+  });
+
+  it("não adiciona regra regional quando só a cidade existe", async () => {
+    const prompt = await capturePrompt(withLocation(makePayload(), "São Paulo", null));
+
+    expect(prompt).not.toContain("priorize concorrentes");
+    expect(prompt.endsWith(PROMPT_TAIL)).toBe(true);
+  });
+
+  it("não adiciona regra regional quando só o estado existe", async () => {
+    const prompt = await capturePrompt(withLocation(makePayload(), null, "SP"));
+
+    expect(prompt).not.toContain("priorize concorrentes");
+    expect(prompt.endsWith(PROMPT_TAIL)).toBe(true);
+  });
+
+  it("não adiciona regra regional quando cidade ou estado são vazios após sanitização", async () => {
+    const semCidade = await capturePrompt(withLocation(makePayload(), "   ", "SP"));
+    const semEstado = await capturePrompt(withLocation(makePayload(), "São Paulo", ""));
+
+    expect(semCidade).not.toContain("priorize concorrentes");
+    expect(semEstado).not.toContain("priorize concorrentes");
+    expect(semCidade.endsWith(PROMPT_TAIL)).toBe(true);
+    expect(semEstado.endsWith(PROMPT_TAIL)).toBe(true);
+  });
+
+  it("sanitiza caracteres de controle e quebras de linha em cidade e estado", async () => {
+    const prompt = await capturePrompt(
+      withLocation(makePayload(), "São\u0000\nPaulo\u200B", "\rSP\u0007"),
+    );
+
+    expect(regionalRule(prompt)).toBe(
+      "REGRA: priorize concorrentes que atuam em São Paulo/SP; quando o concorrente for de outra região, diga isso em `contexto`.",
+    );
+  });
+
+  it("trunca cidade e estado maiores que 80 caracteres antes de montar a regra", async () => {
+    const prompt = await capturePrompt(
+      withLocation(makePayload(), "A".repeat(100), "B".repeat(100)),
+    );
+
+    const regra = regionalRule(prompt);
+    expect(regra).toContain(
+      `priorize concorrentes que atuam em ${"A".repeat(80)}.../${"B".repeat(80)}...`,
+    );
+    expect(regra).not.toContain("A".repeat(100));
+    expect(regra).not.toContain("B".repeat(100));
+  });
+
+  it("mantém cidade composta com acento na regra regional", async () => {
+    const prompt = await capturePrompt(
+      withLocation(makePayload(), "São José do Rio Preto", "SP"),
+    );
+
+    expect(prompt).toContain("priorize concorrentes que atuam em São José do Rio Preto/SP");
   });
 });
