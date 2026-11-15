@@ -24,6 +24,7 @@ export interface GeneratePdfInput {
   riskDimension: { name: string; nivel: number };
   imbalance: boolean;
   commercialAnswer: string;
+  location?: { city: string; state: string };
   analysis?: MarketAnalysis;
   insights?: InsightsBrief;
 }
