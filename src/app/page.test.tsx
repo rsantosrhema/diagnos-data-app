@@ -155,6 +155,28 @@ describe("HomePage - localização do lead", () => {
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/diagnostico"));
   });
 
+  it("vira campo de texto livre obrigatório quando a lista de municípios vem vazia", async () => {
+    const api = await import("@/lib/api/client");
+    vi.mocked(api.getMunicipios).mockResolvedValue([]);
+    renderPage();
+
+    chooseState("SP");
+
+    await waitFor(() => expect(screen.getByLabelText("Cidade").tagName).toBe("INPUT"));
+    const cidade = screen.getByLabelText("Cidade");
+    expect((cidade as HTMLInputElement).type).toBe("text");
+
+    fireEvent.change(cidade, { target: { value: "Santos" } });
+    fillBaseForm();
+    submitForm();
+
+    await waitFor(() =>
+      expect(api.submitLead).toHaveBeenCalledWith(
+        expect.objectContaining({ city: "Santos", state: "SP" }),
+      ),
+    );
+  });
+
   it("valida Estado e Cidade obrigatórios e não chama o servidor", async () => {
     const api = await import("@/lib/api/client");
     renderPage();

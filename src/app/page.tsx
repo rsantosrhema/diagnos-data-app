@@ -51,6 +51,11 @@ export default function HomePage() {
     try {
       const cidades = await getMunicipios(uf);
       if (latestCityRequest.current !== requestId) return;
+      if (cidades.length === 0) {
+        setMunicipios([]);
+        setCityFallback(true);
+        return;
+      }
       setMunicipios(cidades);
       setCityFallback(false);
     } catch {
