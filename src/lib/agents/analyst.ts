@@ -181,19 +181,17 @@ const MAX_TITLE_LEN = 200;
 const MAX_RESULTS_PER_SECTION = 5;
 const MAX_LOCATION_LEN = 80;
 
-type Localizacao = { cidade: string; estado: string };
-
 function sanitizeLocalizacao(valor: string): string {
   return sanitizeUntrusted(valor, MAX_LOCATION_LEN).replace(/\s+/g, " ").trim();
 }
 
-function readLocalizacao(empresa: AgentPayload["empresa"]): Localizacao | null {
-  if (!("cidade" in empresa) || !("estado" in empresa)) return null;
+function hasLocalizacao(empresa: AgentPayload["empresa"]): boolean {
+  if (!("cidade" in empresa) || !("estado" in empresa)) return false;
 
   const cidade = typeof empresa.cidade === "string" ? sanitizeLocalizacao(empresa.cidade) : "";
   const estado = typeof empresa.estado === "string" ? sanitizeLocalizacao(empresa.estado) : "";
 
-  return cidade && estado ? { cidade, estado } : null;
+  return Boolean(cidade && estado);
 }
 
 function buildAnalystPrompt(
@@ -233,10 +231,10 @@ function buildAnalystPrompt(
     "REGRA: `impacto_negocio`, `recomendacao_curta`, `diferencial` e `oportunidade_principal` devem ter no máximo 300 caracteres; `posicionamento_setor` no máximo 500.",
   ];
 
-  const localizacao = readLocalizacao(payload.empresa);
+  const localizacao = hasLocalizacao(payload.empresa);
   if (localizacao) {
     instrucoes.push(
-      `REGRA: priorize concorrentes que atuam em ${localizacao.cidade}/${localizacao.estado}; quando o concorrente for de outra região, diga isso em \`contexto\`.`,
+      "REGRA: priorize concorrentes que atuam na mesma cidade/UF da empresa (campos `cidade` e `estado` em <dados_empresa>); quando o concorrente for de outra região, diga isso em `contexto`.",
     );
   }
 
