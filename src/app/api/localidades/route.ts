@@ -27,7 +27,7 @@ export async function GET(req: Request) {
     if (err instanceof LocalidadesServiceError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
-    console.error("[localidades] falha inesperada ao listar municípios.");
+    console.error("[localidades] falha inesperada ao listar municípios:", err);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }

@@ -140,7 +140,10 @@ describe("GET /api/localidades", () => {
       const body = await res.json();
       expect(body).toEqual({ error: "Erro interno" });
       expect(JSON.stringify(body)).not.toContain("token=segredo");
-      expect(errorSpy).toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalledWith(
+        "[localidades] falha inesperada ao listar municípios:",
+        expect.objectContaining({ message: "falha interna do ibge: token=segredo" }),
+      );
     } finally {
       errorSpy.mockRestore();
     }
