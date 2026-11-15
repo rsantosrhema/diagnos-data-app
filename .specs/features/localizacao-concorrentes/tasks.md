@@ -123,9 +123,9 @@ T21 → T22 → T23 → T24 → T25 → T26 → T27
 
 **Done when**:
 
-- [ ] Implementado conforme o design
-- [ ] Gate passa: `npm run typecheck && npm run test && npm run build`
-- [ ] Contagem de testes não diminui (sem remoções silenciosas)
+- [x] Implementado conforme o design
+- [x] Gate passa: `npm run typecheck && npm run test && npm run build`
+- [x] Contagem de testes não diminui (sem remoções silenciosas)
 
 **Tests**: none
 **Gate**: build
