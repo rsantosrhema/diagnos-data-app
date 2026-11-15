@@ -9,6 +9,8 @@ export interface LeadRow {
   role: string;
   status: string;
   created_at: string;
+  city?: string | null;
+  state?: string | null;
 }
 
 export interface LeadProfileRow {
@@ -25,7 +27,7 @@ export function createLeadRepository(supabase: SupabaseClient) {
     async findById(id: string): Promise<LeadRow | null> {
       const { data, error } = await supabase
         .from("leads")
-        .select("id, name, company, email, phone, role, status, created_at")
+        .select("id, name, company, email, phone, role, status, created_at, city, state")
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
@@ -35,7 +37,7 @@ export function createLeadRepository(supabase: SupabaseClient) {
     async findByEmail(email: string): Promise<LeadRow | null> {
       const { data, error } = await supabase
         .from("leads")
-        .select("id, name, company, email, phone, role, status, created_at")
+        .select("id, name, company, email, phone, role, status, created_at, city, state")
         .eq("email", email)
         .maybeSingle();
       if (error) throw error;
@@ -59,6 +61,8 @@ export function createLeadRepository(supabase: SupabaseClient) {
       phone: string;
       email: string;
       role: string;
+      city?: string;
+      state?: string;
     }): Promise<string> {
       const { data, error } = await supabase
         .from("leads")
@@ -68,12 +72,22 @@ export function createLeadRepository(supabase: SupabaseClient) {
           phone: params.phone,
           email: params.email,
           role: params.role,
+          city: params.city ?? null,
+          state: params.state ?? null,
           status: "pendente",
         })
         .select("id")
         .single();
       if (error) throw error;
       return data.id;
+    },
+
+    async updateLocation(id: string, location: { city: string; state: string }): Promise<void> {
+      const { error } = await supabase
+        .from("leads")
+        .update({ city: location.city, state: location.state })
+        .eq("id", id);
+      if (error) throw error;
     },
 
     async updateStatus(id: string, status: string): Promise<void> {

@@ -15,6 +15,7 @@ function mockLeadRepo(overrides: Partial<LeadRepository> = {}): LeadRepository {
     findByEmailAndStatus: vi.fn(),
     create: vi.fn(),
     updateStatus: vi.fn(),
+    updateLocation: vi.fn(),
     findAll: vi.fn(),
     findNameAndEmail: vi.fn(),
     findProfileById: vi.fn(),
