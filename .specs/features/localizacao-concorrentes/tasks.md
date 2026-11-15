@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/localizacao-concorrentes/design.md`
-**Status**: In Progress
+**Status**: Done
 
 ---
 
@@ -795,10 +795,10 @@ T21 → T22 → T23 → T24 → T25 → T26 → T27
 
 **Done when**:
 
-- [ ] Implementado conforme o design
-- [ ] Testes escritos conforme a matriz, derivados dos ACs citados
-- [ ] Gate passa: `npm run test`
-- [ ] Contagem de testes não diminui (sem remoções silenciosas)
+- [x] Implementado conforme o design
+- [x] Testes escritos conforme a matriz, derivados dos ACs citados
+- [x] Gate passa: `npm run test`
+- [x] Contagem de testes não diminui (sem remoções silenciosas)
 
 **Tests**: unit
 **Gate**: quick
