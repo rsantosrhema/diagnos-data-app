@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import { act, render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 
 const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }));
 
@@ -256,5 +256,34 @@ describe("HomePage - localização do lead", () => {
     await waitFor(() => expect(api.getMunicipios).toHaveBeenCalledTimes(2));
     expect(screen.queryByRole("option", { name: "Campinas" })).toBeNull();
     expect(screen.queryByRole("option", { name: "São Paulo" })).toBeNull();
+  });
+
+  it("rejeição atrasada de uma UF anterior não ativa o texto livre nem sobrescreve a UF atual", async () => {
+    const api = await import("@/lib/api/client");
+    const spRequest = deferred<string[]>();
+    const rjRequest = deferred<string[]>();
+    vi.mocked(api.getMunicipios).mockReset();
+    vi.mocked(api.getMunicipios)
+      .mockImplementationOnce(() => spRequest.promise)
+      .mockImplementationOnce(() => rjRequest.promise);
+    renderPage();
+
+    chooseState("SP");
+    await waitFor(() => expect(api.getMunicipios).toHaveBeenCalledWith("SP"));
+
+    chooseState("RJ");
+    await waitFor(() => expect(api.getMunicipios).toHaveBeenCalledWith("RJ"));
+
+    rjRequest.resolve(["Rio de Janeiro", "Niterói"]);
+    expect(await screen.findByRole("option", { name: "Niterói" })).toBeTruthy();
+
+    await act(async () => {
+      spRequest.reject(new Error("timeout da UF anterior"));
+      await Promise.resolve();
+    });
+
+    expect(screen.getByLabelText("Cidade").tagName).toBe("SELECT");
+    expect(screen.getByRole("option", { name: "Niterói" })).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Campinas" })).toBeNull();
   });
 });
