@@ -13,6 +13,8 @@ export const agentPayloadSchema = z
       segmento: z.string().nullable(),
       funcionarios: z.string().nullable(),
       faturamento: z.string().nullable(),
+      cidade: z.string().nullable().optional(),
+      estado: z.string().nullable().optional(),
     }),
     contexto: z.record(z.string(), z.string()),
     perfil_empresa: z.record(z.string(), z.string()),

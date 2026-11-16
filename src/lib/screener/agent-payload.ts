@@ -7,6 +7,7 @@ export interface AgentPayloadInput {
   contract: ScreenerContract;
   respondent: { name: string; role: string };
   company?: { name?: string; size?: string };
+  location?: { cidade: string | null; estado: string | null };
   profileAnswers?: Record<string, string>;
   contextAnswers: Record<string, string>;
   dimensionAnswers: { dimensionId: string; nivel: number }[];
@@ -24,6 +25,8 @@ export interface AgentPayload {
     segmento: string | null;
     funcionarios: string | null;
     faturamento: string | null;
+    cidade?: string | null;
+    estado?: string | null;
   };
   contexto: Record<string, string>;
   perfil_empresa: Record<string, string>;
@@ -49,6 +52,7 @@ export function buildAgentPayload(input: AgentPayloadInput): AgentPayload {
     contract,
     respondent,
     company,
+    location,
     profileAnswers,
     contextAnswers,
     dimensionAnswers,
@@ -81,6 +85,8 @@ export function buildAgentPayload(input: AgentPayloadInput): AgentPayload {
       segmento: profileAnswersFlat.perfil_01 ?? null,
       funcionarios: profileAnswersFlat.perfil_02 ?? null,
       faturamento: profileAnswersFlat.perfil_03 ?? null,
+      cidade: location?.cidade ?? null,
+      estado: location?.estado ?? null,
     },
     contexto: { ...contextAnswers },
     perfil_empresa: { ...profileAnswersFlat },

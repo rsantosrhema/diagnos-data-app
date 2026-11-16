@@ -39,6 +39,8 @@ export async function POST(req: Request) {
       phone: sanitizeText(parsed.data.phone),
       email: parsed.data.email.trim().toLowerCase(),
       role: sanitizeText(parsed.data.role),
+      city: sanitizeText(parsed.data.city),
+      state: parsed.data.state,
     });
     return NextResponse.json(result, { status: 201 });
   } catch (err) {

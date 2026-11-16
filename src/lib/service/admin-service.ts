@@ -32,9 +32,12 @@ const ENQUEUEABLE_STATUSES = new Set([
   "analise_pendente",
 ]);
 
+type PdfLocation = NonNullable<GeneratePdfInput["location"]>;
+
 function buildPdfInput(
   payload: AgentPayload,
   extras: { analysis?: GeneratePdfInput["analysis"]; insights?: GeneratePdfInput["insights"] },
+  location?: PdfLocation,
 ): GeneratePdfInput {
   const dimensionScores = payload.respostas.map((r) => ({
     name: r.dimensao,
@@ -51,6 +54,7 @@ function buildPdfInput(
     riskDimension: { name: riskDim?.dimensao ?? "Dimensão", nivel: payload.risco.nivel },
     imbalance: payload.desequilibrio,
     commercialAnswer: payload.resposta_comercial.resposta,
+    ...(location ? { location } : {}),
     ...(extras.analysis ? { analysis: extras.analysis } : {}),
     ...(extras.insights ? { insights: extras.insights } : {}),
   };
@@ -189,11 +193,19 @@ export function createAdminService(deps: {
         throw new AdminServiceError("Geração de PDF indisponível", 500);
       }
 
+      const city = lead.city?.trim() ?? "";
+      const state = lead.state?.trim() ?? "";
+      const location: PdfLocation | undefined = city && state ? { city, state } : undefined;
+
       return generatePdf(
-        buildPdfInput(payloadParsed.data, {
-          analysis: analysisParsed.success ? analysisParsed.data : undefined,
-          insights: briefParsed.success ? briefParsed.data : undefined,
-        }),
+        buildPdfInput(
+          payloadParsed.data,
+          {
+            analysis: analysisParsed.success ? analysisParsed.data : undefined,
+            insights: briefParsed.success ? briefParsed.data : undefined,
+          },
+          location,
+        ),
       );
     },
   };

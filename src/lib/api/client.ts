@@ -53,12 +53,28 @@ export interface LeadInput {
   email: string;
   role: string;
   website?: string;
+  city: string;
+  state: string;
 }
 
 export async function submitLead(
   input: LeadInput,
 ): Promise<{ ok: boolean; leadId?: string }> {
   return apiFetch("/public-proxy/leads", { method: "POST", body: input });
+}
+
+export async function getMunicipios(uf: string): Promise<string[]> {
+  const data = await apiFetch<{ municipios?: unknown }>(
+    `/public-proxy/localidades?uf=${encodeURIComponent(uf)}`,
+  );
+
+  const municipios = data?.municipios;
+
+  if (!Array.isArray(municipios)) {
+    throw new ApiError("Resposta inválida do serviço de localidades", 502, data);
+  }
+
+  return municipios.flatMap((nome) => (typeof nome === "string" ? [nome] : []));
 }
 
 export interface ScreenerInput {
@@ -164,7 +180,13 @@ export interface PortalShareState {
 }
 
 export interface ManagerPortalResponse {
-  lead: { id: string; name: string; company: string };
+  lead: {
+    id: string;
+    name: string;
+    company: string;
+    city?: string | null;
+    state?: string | null;
+  };
   email: string;
   score: { valor: number; faixa: string; descricao: string };
   dimensions: {
@@ -238,7 +260,13 @@ export async function downloadReportPdf(
 }
 
 export interface PublicPortalResponse {
-  lead: { id: string; name: string; company: string };
+  lead: {
+    id: string;
+    name: string;
+    company: string;
+    city?: string | null;
+    state?: string | null;
+  };
   score: { valor: number; faixa: string; descricao: string };
   dimensions: ManagerPortalResponse["dimensions"];
   risk: ManagerPortalResponse["risk"];

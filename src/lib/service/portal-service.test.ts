@@ -142,6 +142,7 @@ function mockLeadRepo(overrides: Partial<LeadRepository> = {}): LeadRepository {
     findByEmailAndStatus: vi.fn(),
     create: vi.fn(),
     updateStatus: vi.fn(),
+    updateLocation: vi.fn(),
     findAll: vi.fn(),
     findNameAndEmail: vi.fn(),
     findProfileById: vi.fn(),
@@ -227,7 +228,13 @@ describe("PortalService.getForManager", () => {
     const service = buildService();
     const dto = await service.getForManager("lead-1");
 
-    expect(dto.lead).toEqual({ id: "lead-1", name: "João", company: "Corp" });
+    expect(dto.lead).toEqual({
+      id: "lead-1",
+      name: "João",
+      company: "Corp",
+      city: null,
+      state: null,
+    });
     expect(dto.email).toBe(LEAD_1_EMAIL);
     expect(dto.score).toEqual({
       valor: 2.9,
@@ -252,6 +259,45 @@ describe("PortalService.getForManager", () => {
       url: null,
       expiresAt: ACTIVE_TOKEN_ROW.expires_at,
     });
+  });
+
+  it("expõe city e state do lead no DTO do gerente (LOC-15)", async () => {
+    const service = buildService({
+      leadRepo: {
+        findById: vi
+          .fn()
+          .mockResolvedValue({ ...LEAD_ROW, city: "São Paulo", state: "SP" }),
+      },
+    });
+
+    const dto = await service.getForManager("lead-1");
+
+    expect(dto.lead.city).toBe("São Paulo");
+    expect(dto.lead.state).toBe("SP");
+  });
+
+  it("mantém city e state nulos para lead antigo sem localização (LOC-15, LOC-18)", async () => {
+    const service = buildService();
+
+    const dto = await service.getForManager("lead-1");
+
+    expect(dto.lead.city).toBeNull();
+    expect(dto.lead.state).toBeNull();
+  });
+
+  it("preserva city e state de forma independente quando só a cidade existe (LOC-15)", async () => {
+    const service = buildService({
+      leadRepo: {
+        findById: vi
+          .fn()
+          .mockResolvedValue({ ...LEAD_ROW, city: "Campinas", state: null }),
+      },
+    });
+
+    const dto = await service.getForManager("lead-1");
+
+    expect(dto.lead.city).toBe("Campinas");
+    expect(dto.lead.state).toBeNull();
   });
 
   it("inclui analysis, insights e sources quando status é analisado", async () => {
@@ -390,6 +436,55 @@ describe("PortalService.getByToken", () => {
     const json = JSON.stringify(dto);
     expect(json).not.toContain(LEAD_1_EMAIL);
     expect(json).not.toContain(LEAD_1_PHONE);
+  });
+
+  it("expõe city e state no DTO público pelo token (LOC-15, LOC-18)", async () => {
+    const service = buildService({
+      leadRepo: {
+        findById: vi
+          .fn()
+          .mockResolvedValue({ ...LEAD_ROW, city: "São Paulo", state: "SP" }),
+      },
+      shareTokenRepo: {
+        findByHash: vi.fn().mockResolvedValue(ACTIVE_TOKEN_ROW),
+      },
+    });
+
+    const dto = await service.getByToken(RAW_TEST_TOKEN);
+
+    expect(dto.lead.city).toBe("São Paulo");
+    expect(dto.lead.state).toBe("SP");
+  });
+
+  it("não expõe nenhum outro dado novo do lead no DTO público (LOC-18)", async () => {
+    const service = buildService({
+      leadRepo: {
+        findById: vi.fn().mockResolvedValue({
+          ...LEAD_ROW,
+          city: "São Paulo",
+          state: "SP",
+          role: "CTO",
+          status: "concluido",
+        }),
+      },
+      shareTokenRepo: {
+        findByHash: vi.fn().mockResolvedValue(ACTIVE_TOKEN_ROW),
+      },
+    });
+
+    const dto = await service.getByToken(RAW_TEST_TOKEN);
+
+    expect(Object.keys(dto.lead).sort()).toEqual([
+      "city",
+      "company",
+      "id",
+      "name",
+      "state",
+    ]);
+    expect("email" in dto.lead).toBe(false);
+    expect("phone" in dto.lead).toBe(false);
+    expect("role" in dto.lead).toBe(false);
+    expect("status" in dto.lead).toBe(false);
   });
 
   it("passa apenas o hash SHA-256 para o repo, nunca o token cru (PORTAL-04)", async () => {

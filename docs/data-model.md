@@ -21,6 +21,8 @@ erDiagram
         boolean consent
         timestamptz consent_at "nullable"
         timestamptz created_at
+        text city "nullable"
+        text state "nullable, check 27 UFs"
     }
     diagnostics {
         uuid id PK
@@ -110,8 +112,12 @@ Todas as tabelas têm **RLS habilitado sem policies** para `anon`/`authenticated
 | `consent` | `boolean` | not null, default `false` |
 | `consent_at` | `timestamptz` | nullable |
 | `created_at` | `timestamptz` | not null, default `now()` |
+| `city` | `text` | nullable (cidade da empresa) |
+| `state` | `text` | nullable, **check** nas 27 UFs (`leads_state_uf_check`) |
 
 **Ciclo de status**: `pendente` (cadastro na landing) → `concluido` (submit do screener). Leads `pendente` podem ser reutilizados por novo cadastro do mesmo email; leads `concluido` são bloqueados (409).
+
+**Localização**: `city` e `state` vêm do cadastro da landing (obrigatórios na aplicação) e alimentam o contexto de busca de concorrentes. São **nullable** porque leads antigos não têm localização e não há backfill. `state` guarda a sigla da UF e tem **check** (`leads_state_uf_check`) restrito às 27 UFs. Migration: `0018_lead_location`.
 
 **RLS**: habilitado, sem policies (service-role only).
 

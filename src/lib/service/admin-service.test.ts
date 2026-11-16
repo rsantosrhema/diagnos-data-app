@@ -15,6 +15,7 @@ function mockLeadRepo(overrides: Partial<LeadRepository> = {}): LeadRepository {
     findByEmailAndStatus: vi.fn(),
     create: vi.fn(),
     updateStatus: vi.fn(),
+    updateLocation: vi.fn(),
     findAll: vi.fn(),
     findNameAndEmail: vi.fn(),
     findProfileById: vi.fn(),
@@ -446,6 +447,121 @@ describe("AdminService", () => {
       expect(input.respondentName).toBe("Alice");
       expect(input.dimensionScores).toEqual([{ name: "Governança", nivel: 3, peso: 10 }]);
       expect(input.band.rotulo).toBe("Estruturado");
+      expect(input.analysis?.resumo).toBe("resumo");
+      expect(input.insights?.bullets).toHaveLength(1);
+    });
+
+    function serviceWithLead(leadOverride: Partial<LeadRow>) {
+      const generatePdf = vi
+        .fn()
+        .mockResolvedValue({ pdf: Buffer.from("pdf"), filename: "diagnostico-alice.pdf" });
+      const service = createAdminServiceForTest({
+        leadRepo: mockLeadRepo({
+          findById: vi.fn().mockResolvedValue({ ...lead, ...leadOverride }),
+        }),
+        assessmentRepo: mockAssessmentRepo({
+          findByLeadId: vi.fn().mockResolvedValue(assessment),
+        }),
+        marketInsightsRepo: mockMarketInsightsRepo({
+          findByLeadId: vi.fn().mockResolvedValue(analyzedInsights),
+        }),
+        generatePdf,
+      });
+      return { service, generatePdf };
+    }
+
+    it("passa location ao PDF quando o lead tem cidade e estado (LOC-16)", async () => {
+      const { service, generatePdf } = serviceWithLead({ city: "São Paulo", state: "SP" });
+
+      await service.getReportPdf("l1");
+
+      expect(generatePdf).toHaveBeenCalledTimes(1);
+      const input = generatePdf.mock.calls[0][0] as GeneratePdfInput;
+      expect(input.location).toEqual({ city: "São Paulo", state: "SP" });
+    });
+
+    it("omite a chave location para lead legado sem cidade e estado (LOC-16)", async () => {
+      const { service, generatePdf } = serviceWithLead({});
+
+      await service.getReportPdf("l1");
+
+      const input = generatePdf.mock.calls[0][0] as GeneratePdfInput;
+      expect(input).not.toHaveProperty("location");
+      expect(Object.keys(input)).not.toContain("location");
+      expect("location" in input).toBe(false);
+    });
+
+    it("omite a chave location para lead legado com cidade e estado nulos (LOC-16)", async () => {
+      const { service, generatePdf } = serviceWithLead({ city: null, state: null });
+
+      await service.getReportPdf("l1");
+
+      const input = generatePdf.mock.calls[0][0] as GeneratePdfInput;
+      expect(input).not.toHaveProperty("location");
+      expect(Object.keys(input)).not.toContain("location");
+    });
+
+    it("omite location quando só a cidade está preenchida (LOC-16)", async () => {
+      const { service, generatePdf } = serviceWithLead({ city: "São Paulo", state: null });
+
+      await service.getReportPdf("l1");
+
+      const input = generatePdf.mock.calls[0][0] as GeneratePdfInput;
+      expect(input).not.toHaveProperty("location");
+    });
+
+    it("omite location quando só o estado está preenchido (LOC-16)", async () => {
+      const { service, generatePdf } = serviceWithLead({ city: null, state: "SP" });
+
+      await service.getReportPdf("l1");
+
+      const input = generatePdf.mock.calls[0][0] as GeneratePdfInput;
+      expect(input).not.toHaveProperty("location");
+    });
+
+    it("omite location quando cidade é apenas espaço em branco (LOC-16)", async () => {
+      const { service, generatePdf } = serviceWithLead({ city: "   ", state: "SP" });
+
+      await service.getReportPdf("l1");
+
+      const input = generatePdf.mock.calls[0][0] as GeneratePdfInput;
+      expect(input).not.toHaveProperty("location");
+    });
+
+    it("faz trim de cidade e estado antes de enviar ao PDF (LOC-16)", async () => {
+      const { service, generatePdf } = serviceWithLead({
+        city: "  São José do Rio Preto  ",
+        state: "  SP ",
+      });
+
+      await service.getReportPdf("l1");
+
+      const input = generatePdf.mock.calls[0][0] as GeneratePdfInput;
+      expect(input.location).toEqual({ city: "São José do Rio Preto", state: "SP" });
+    });
+
+    it("mantém os campos existentes do PDF sem localização (regressão LOC-16)", async () => {
+      const { service, generatePdf } = serviceWithLead({});
+
+      await service.getReportPdf("l1");
+
+      const input = generatePdf.mock.calls[0][0] as GeneratePdfInput;
+      expect(Object.keys(input).sort()).toEqual([
+        "analysis",
+        "band",
+        "commercialAnswer",
+        "dimensionScores",
+        "imbalance",
+        "insights",
+        "respondentName",
+        "riskDimension",
+      ]);
+      expect(input.respondentName).toBe("Alice");
+      expect(input.band).toEqual({ rotulo: "Estruturado", descricao: "desc" });
+      expect(input.dimensionScores).toEqual([{ name: "Governança", nivel: 3, peso: 10 }]);
+      expect(input.riskDimension).toEqual({ name: "Governança", nivel: 3 });
+      expect(input.imbalance).toBe(false);
+      expect(input.commercialAnswer).toBe("a");
       expect(input.analysis?.resumo).toBe("resumo");
       expect(input.insights?.bullets).toHaveLength(1);
     });

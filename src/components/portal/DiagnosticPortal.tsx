@@ -31,6 +31,13 @@ interface DiagnosticPortalProps {
   onReprocess?: () => void;
 }
 
+function formatLocation(lead: DiagnosticPortalData["lead"]): string | null {
+  const city = lead.city?.trim();
+  const state = lead.state?.trim();
+  if (!city || !state) return null;
+  return `${city}/${state}`;
+}
+
 function placeholderStatus(status: DiagnosticPortalData["analysisStatus"]) {
   if (status === "falha") return "falha";
   if (status === "processando") return "processando";
@@ -82,6 +89,7 @@ export function DiagnosticPortal({
 }: DiagnosticPortalProps) {
   const [highlightIds, setHighlightIds] = useState<string[] | null>(null);
   const isManager = mode === "manager";
+  const location = data ? formatLocation(data.lead) : null;
 
   return (
     <>
@@ -115,7 +123,9 @@ export function DiagnosticPortal({
         </h1>
         {data && (
           <p className="mt-3 text-sm text-[#6e6e73]">
-            {data.lead.name} · {data.dimensions.length} dimensões avaliadas
+            {`${data.lead.name} · ${data.dimensions.length} dimensões avaliadas${
+              location ? ` · ${location}` : ""
+            }`}
           </p>
         )}
       </section>

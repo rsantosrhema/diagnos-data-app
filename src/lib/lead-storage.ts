@@ -6,6 +6,8 @@ export interface StoredLead {
   email: string;
   company: string;
   role: string;
+  city?: string;
+  state?: string;
 }
 
 export function readStoredLead(): StoredLead | null {
@@ -24,6 +26,8 @@ export function readStoredLead(): StoredLead | null {
       email: parsed.email,
       company: typeof parsed.company === "string" ? parsed.company : "",
       role: typeof parsed.role === "string" ? parsed.role : "",
+      city: typeof parsed.city === "string" ? parsed.city : "",
+      state: typeof parsed.state === "string" ? parsed.state : "",
     };
   } catch {
     return null;

@@ -9,8 +9,16 @@ import type {
 
 type SectionKey = ResearchSection["key"];
 
+function sanitizeLocationPart(value: string | null | undefined): string | null {
+  if (typeof value !== "string") return null;
+  // sanitizeUntrusted keeps LF/TAB; collapsing whitespace keeps the query on a single line.
+  const sanitized = sanitizeUntrusted(value, 80).replace(/\s+/g, " ").trim();
+  return sanitized.length > 0 ? sanitized : null;
+}
+
 function buildQueries(payload: AgentPayload): { key: SectionKey; query: string }[] {
-  const { segmento, faturamento, funcionarios, nome } = payload.empresa;
+  const { segmento, faturamento, funcionarios, nome, cidade, estado } =
+    payload.empresa;
 
   const queries: { key: SectionKey; query: string }[] = [
     {
@@ -32,9 +40,14 @@ function buildQueries(payload: AgentPayload): { key: SectionKey; query: string }
   ];
 
   if (nome) {
+    const cidadeSanitizada = sanitizeLocationPart(cidade);
+    const estadoSanitizado = sanitizeLocationPart(estado);
     queries.push({
       key: "concorrentes",
-      query: `${nome} concorrentes análise de dados — ${nome} competitors data analytics`,
+      query:
+        cidadeSanitizada && estadoSanitizado
+          ? `${nome} concorrentes em ${cidadeSanitizada} ${estadoSanitizado} análise de dados — ${nome} competitors in ${cidadeSanitizada}, ${estadoSanitizado}, Brazil data analytics`
+          : `${nome} concorrentes análise de dados — ${nome} competitors data analytics`,
     });
   }
 

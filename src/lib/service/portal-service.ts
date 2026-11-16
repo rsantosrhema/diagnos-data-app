@@ -170,7 +170,13 @@ async function loadAndBuild(
   const risk = buildRisk(payload);
 
   const dto: PortalDTO = {
-    lead: { id: lead.id, name: lead.name, company: lead.company },
+    lead: {
+      id: lead.id,
+      name: lead.name,
+      company: lead.company,
+      city: lead.city ?? null,
+      state: lead.state ?? null,
+    },
     score: payload.score,
     dimensions: payload.respostas.map((r) => ({
       id: r.dimensao_id,

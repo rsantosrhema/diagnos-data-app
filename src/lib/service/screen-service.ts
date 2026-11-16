@@ -24,6 +24,7 @@ export interface GeneratePdfInput {
   riskDimension: { name: string; nivel: number };
   imbalance: boolean;
   commercialAnswer: string;
+  location?: { city: string; state: string };
   analysis?: MarketAnalysis;
   insights?: InsightsBrief;
 }
@@ -49,18 +50,22 @@ export function createScreenService(deps: {
 
       // 2. Resolve o lead: via leadId (cadastro na landing) ou fallback por email
       let leadId: string;
+      let location: { cidade: string | null; estado: string | null };
       if (submission.leadId) {
         const lead = await leadRepo.findById(submission.leadId);
         if (!lead) {
           throw new ScreenServiceError("Lead inválido", 401);
         }
         leadId = lead.id;
+        location = { cidade: lead.city ?? null, estado: lead.state ?? null };
       } else {
         // Fallback: tenta reutilizar lead existente não-concluído
         const existing = await leadRepo.findByEmail(email);
         if (existing && existing.status !== "concluido") {
           leadId = existing.id;
+          location = { cidade: existing.city ?? null, estado: existing.state ?? null };
         } else {
+          location = { cidade: null, estado: null };
           leadId = await createLeadWithRepo({
             leadRepo,
             name: submission.name,
@@ -106,6 +111,7 @@ export function createScreenService(deps: {
         contract,
         respondent: { name: submission.name, role },
         company: submission.company,
+        location,
         profileAnswers: profile,
         contextAnswers: submission.context,
         dimensionAnswers,

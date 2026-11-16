@@ -5,6 +5,7 @@ import type {
   EnqueueResult,
 } from "@/lib/repository/analysis-queue-repo";
 import type { MarketInsightsRepository } from "@/lib/repository/market-insights-repo";
+import type { LeadRepository } from "@/lib/repository/lead-repo";
 import type { AgentPayload } from "@/lib/screener/agent-payload";
 import type {
   MarketResearch,
@@ -43,12 +44,18 @@ export interface AnalysisServiceDeps {
     }): Promise<InsightsBrief>;
   };
   payloadLoader: (leadId: string) => Promise<AgentPayload | null>;
-  leadRepo: { updateStatus(id: string, status: string): Promise<void> };
+  leadRepo: Pick<LeadRepository, "updateStatus" | "findById">;
   generatePdf: (input: GeneratePdfInput) => Promise<{ pdf: Buffer; filename: string }>;
   sendEmail: (params: SendReportEmailParams) => Promise<void>;
 }
 
-function buildPdfInput(payload: AgentPayload, output?: AgentOutput): GeneratePdfInput {
+type PdfLocation = NonNullable<GeneratePdfInput["location"]>;
+
+function buildPdfInput(
+  payload: AgentPayload,
+  output?: AgentOutput,
+  location?: PdfLocation,
+): GeneratePdfInput {
   const dims = payload.respostas.map((r) => ({
     name: r.dimensao,
     nivel: r.nivel,
@@ -64,6 +71,7 @@ function buildPdfInput(payload: AgentPayload, output?: AgentOutput): GeneratePdf
     riskDimension: { name: riskDim?.dimensao ?? "Dimensão", nivel: payload.risco.nivel },
     imbalance: payload.desequilibrio,
     commercialAnswer: payload.resposta_comercial.resposta,
+    ...(location ? { location } : {}),
     ...(output ? { analysis: output.analysis, insights: output.insights } : {}),
   };
 }
@@ -133,6 +141,7 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
     leadId: string;
     payload: AgentPayload | null;
     output?: AgentOutput;
+    location?: PdfLocation;
   }): Promise<{ pdf: boolean; email: boolean }> {
     let pdfMs = 0;
     let emailMs = 0;
@@ -141,7 +150,9 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
 
     try {
       const pdfStart = Date.now();
-      const pdfResult = await generatePdf(buildPdfInput(opts.payload!, opts.output));
+      const pdfResult = await generatePdf(
+        buildPdfInput(opts.payload!, opts.output, opts.location),
+      );
       pdfMs = Date.now() - pdfStart;
       pdfOk = true;
       await insightsRepo.logEvent(opts.leadId, "pdf", undefined, pdfMs);
@@ -184,6 +195,23 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
     return { pdf: pdfOk, email: emailOk };
   }
 
+  async function resolveLocation(leadId: string): Promise<PdfLocation | undefined> {
+    try {
+      const lead = await leadRepo.findById(leadId);
+      const city = lead?.city?.trim() ?? "";
+      const state = lead?.state?.trim() ?? "";
+      return city && state ? { city, state } : undefined;
+    } catch (err) {
+      // Localização é informação auxiliar: uma falha de leitura nunca pode
+      // impedir a geração do PDF.
+      console.error(
+        `[analysis-service] falha ao carregar localização do lead ${leadId}:`,
+        err,
+      );
+      return undefined;
+    }
+  }
+
   return {
     async enqueue(leadId: string): Promise<EnqueueResult> {
       return queueRepo.enqueue(leadId);
@@ -207,6 +235,7 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
 
       const leadId = job.leadId;
       let payload: AgentPayload | null = null;
+      let location: PdfLocation | undefined;
       const pipelineStart = Date.now();
 
       try {
@@ -218,6 +247,8 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
           return { processed: true };
         }
 
+        location = await resolveLocation(leadId);
+
         const output = await runPipelineWithLogs(payload, leadId);
         await insightsRepo.upsert({
           leadId,
@@ -228,7 +259,7 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
           status: "analisado",
         });
 
-        const emailResult = await sendAnalysisEmail({ leadId, payload, output });
+        const emailResult = await sendAnalysisEmail({ leadId, payload, output, location });
 
         const totalMs = Date.now() - pipelineStart;
         if (emailResult.pdf) {
@@ -326,7 +357,7 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
           // EMAIL-03: fallback — PDF básico (sem insights/analysis). O e-mail
           // só é enviado aqui, na falha definitiva, para nunca duplicar envio
           // em conjunto com um retry pendente na fila.
-          await sendAnalysisEmail({ leadId, payload });
+          await sendAnalysisEmail({ leadId, payload, location });
         }
         return { processed: true };
       }

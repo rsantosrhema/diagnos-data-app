@@ -34,7 +34,7 @@ export async function proxyToInternal(req: Request, opts: ProxyOptions): Promise
     return NextResponse.json({ error: "INTERNAL_API_KEY não configurada" }, { status: 500 });
   }
 
-  const targetUrl = `${resolveInternalOrigin(req)}/api/${opts.target}`;
+  const targetUrl = `${resolveInternalOrigin(req)}/api/${opts.target}${new URL(req.url).search}`;
 
   const headers = new Headers();
   headers.set("x-internal-api-key", internalKey);

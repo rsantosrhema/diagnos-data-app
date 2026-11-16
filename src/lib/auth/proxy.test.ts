@@ -79,3 +79,114 @@ describe("proxy", () => {
     expect(res.status).toBe(502);
   });
 });
+
+interface ForwardedCall {
+  url: string;
+  init: RequestInit;
+}
+
+function lastForwardedCall(): ForwardedCall {
+  const calls = mockFetch.mock.calls;
+  const call = calls[calls.length - 1];
+  const init: RequestInit = call[1];
+  return { url: String(call[0]), init };
+}
+
+function forwardedBody(init: RequestInit): string {
+  return init.body instanceof Uint8Array ? new TextDecoder().decode(init.body) : "";
+}
+
+function forwardedHeader(init: RequestInit, name: string): string | null {
+  return new Headers(init.headers).get(name);
+}
+
+describe("proxy: query string", () => {
+  it("repassa a query string do request para a URL interna (GET)", async () => {
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ municipios: ["São Paulo"] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+    );
+
+    const { proxyToInternal } = await importFresh();
+    const req = new Request("http://localhost/api/public-proxy/localidades?uf=SP", {
+      method: "GET",
+    });
+
+    const res = await proxyToInternal(req, { target: "localidades" });
+    expect(res.status).toBe(200);
+
+    const { url, init } = lastForwardedCall();
+    expect(url).toBe("http://localhost/api/localidades?uf=SP");
+    expect(init.method).toBe("GET");
+    expect(forwardedHeader(init, "x-internal-api-key")).toBe(process.env.INTERNAL_API_KEY);
+  });
+
+  it("sem query string chama a URL interna sem `?`", async () => {
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ municipios: [] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+    );
+
+    const { proxyToInternal } = await importFresh();
+    const req = new Request("http://localhost/api/public-proxy/localidades", { method: "GET" });
+
+    await proxyToInternal(req, { target: "localidades" });
+
+    const { url } = lastForwardedCall();
+    expect(url).toBe("http://localhost/api/localidades");
+    expect(url).not.toContain("?");
+  });
+
+  it("POST sem query string mantém método, URL e corpo (regressão)", async () => {
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ id: "lead-1" }), {
+        status: 201,
+        headers: { "content-type": "application/json" },
+      })
+    );
+
+    const { proxyToInternal } = await importFresh();
+    const payload = { name: "Test", email: "test@example.com" };
+    const req = new Request("http://localhost/api/public-proxy/leads", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    await proxyToInternal(req, { target: "leads" });
+
+    const { url, init } = lastForwardedCall();
+    expect(url).toBe("http://localhost/api/leads");
+    expect(init.method).toBe("POST");
+    expect(forwardedHeader(init, "content-type")).toBe("application/json");
+    expect(JSON.parse(forwardedBody(init))).toEqual(payload);
+  });
+
+  it("POST com query string ainda encaminha o corpo", async () => {
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+    );
+
+    const { proxyToInternal } = await importFresh();
+    const payload = { response: { answers: { q1: 3 } } };
+    const req = new Request("http://localhost/api/public-proxy/screener?x=1", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    await proxyToInternal(req, { target: "screener" });
+
+    const { url, init } = lastForwardedCall();
+    expect(url).toBe("http://localhost/api/screener?x=1");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(forwardedBody(init))).toEqual(payload);
+  });
+});
