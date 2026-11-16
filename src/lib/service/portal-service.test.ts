@@ -385,6 +385,7 @@ describe("PortalService.getByToken", () => {
     expect(dto.score.valor).toBe(2.9);
     expect("email" in dto).toBe(false);
     expect("phone" in dto).toBe(false);
+    expect(dto.sources).toEqual([]);
 
     const json = JSON.stringify(dto);
     expect(json).not.toContain(LEAD_1_EMAIL);

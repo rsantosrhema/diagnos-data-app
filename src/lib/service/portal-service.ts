@@ -120,7 +120,7 @@ export function createPortalService(deps: {
       }
       assertTokenValid(row);
       const full = await assembleFull(row.lead_id);
-      return stripPii(full);
+      return { ...stripPii(full), sources: [] };
     },
 
     async createShareToken(

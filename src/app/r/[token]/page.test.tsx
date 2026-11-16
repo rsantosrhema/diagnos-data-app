@@ -104,7 +104,8 @@ describe("Portal público /r/[token]", () => {
     expect(screen.getByText("Pergunta dimensão 1?")).toBeTruthy();
     expect(screen.getByText("Concorrente A")).toBeTruthy();
     expect(screen.getByText("Governança sem dono")).toBeTruthy();
-    expect(screen.getByText("Sem fontes de mercado para exibir.")).toBeTruthy();
+    expect(screen.queryByText("Fontes")).toBeNull();
+    expect(screen.queryByText("Sem fontes de mercado para exibir.")).toBeNull();
     expect(screen.queryByRole("button", { name: /copiar/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /revogar/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /reprocessar/i })).toBeNull();

@@ -88,7 +88,8 @@ describe("DiagnosticPortal", () => {
     expect(screen.getByText("Respostas do diagnóstico")).toBeTruthy();
     expect(screen.getByText("Concorrente A")).toBeTruthy();
     expect(screen.getByText("Governança sem dono")).toBeTruthy();
-    expect(screen.getByText("Relatório setorial")).toBeTruthy();
+    expect(screen.queryByText("Relatório setorial")).toBeNull();
+    expect(screen.queryByRole("region", { name: "Fontes" })).toBeNull();
     unmount();
 
     render(<DiagnosticPortal data={portalData()} mode="manager" />);
@@ -203,6 +204,6 @@ describe("DiagnosticPortal", () => {
       screen.getByText("Sem concorrentes mapeados para este diagnóstico."),
     ).toBeTruthy();
     expect(screen.getByText("Sem insights de análise para exibir.")).toBeTruthy();
-    expect(screen.getByText("Sem fontes de mercado para exibir.")).toBeTruthy();
+    expect(screen.queryByText("Sem fontes de mercado para exibir.")).toBeNull();
   });
 });

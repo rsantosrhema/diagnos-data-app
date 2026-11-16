@@ -209,12 +209,14 @@ export function DiagnosticPortal({
                     }
                   />
                 </section>
-                <section aria-label="Fontes">
-                  <h2 className="rd-h mb-4 text-xl">
-                    Fontes
-                  </h2>
-                  <SourcesList sources={data.sources} />
-                </section>
+                {isManager && (
+                  <section aria-label="Fontes">
+                    <h2 className="rd-h mb-4 text-xl">
+                      Fontes
+                    </h2>
+                    <SourcesList sources={data.sources} />
+                  </section>
+                )}
               </>
             ) : (
               <section aria-label="Análise de mercado">
