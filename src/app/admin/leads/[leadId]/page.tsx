@@ -13,6 +13,7 @@ import {
   createShareLink,
   revokeShareLink,
   generateReport,
+  downloadReportPdf,
   ApiError,
   type ManagerPortalResponse,
 } from "@/lib/api/client";
@@ -122,6 +123,7 @@ export default function LeadPortalPage() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [shareBusy, setShareBusy] = useState(false);
   const [reprocessBusy, setReprocessBusy] = useState(false);
+  const [pdfBusy, setPdfBusy] = useState(false);
   const [tick, setTick] = useState(0);
   const leadIdRef = useRef(leadId);
   leadIdRef.current = leadId;
@@ -221,6 +223,29 @@ export default function LeadPortalPage() {
     }
   }
 
+  async function handleDownloadPdf() {
+    setPdfBusy(true);
+    try {
+      const { blob, filename } = await downloadReportPdf(leadId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      pushToast("success", "Download do relatório iniciado");
+    } catch (err) {
+      pushToast(
+        "error",
+        err instanceof Error && err.message ? err.message : "Não foi possível baixar o relatório",
+      );
+    } finally {
+      setPdfBusy(false);
+    }
+  }
+
   const errorCopy = ERROR_COPY[pageError ?? "generic"];
 
   return (
@@ -237,6 +262,13 @@ export default function LeadPortalPage() {
         actions={
           data ? (
             <div className="flex shrink-0 items-center gap-3">
+              <button
+                onClick={handleDownloadPdf}
+                disabled={pdfBusy}
+                className="rounded-full border border-rhema-lavender-light bg-transparent px-5 py-2.5 font-poppins text-sm font-medium text-rhema-dark/70 transition-all duration-300 hover:border-rhema-primary hover:text-rhema-primary disabled:opacity-50"
+              >
+                {pdfBusy ? "Gerando PDF..." : "Exportar PDF"}
+              </button>
               {data.share.active && (
                 <button
                   onClick={handleRevoke}

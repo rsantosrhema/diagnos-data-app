@@ -8,6 +8,7 @@ vi.mock("@/lib/api/client", () => ({
   createShareLink: vi.fn(),
   revokeShareLink: vi.fn(),
   generateReport: vi.fn().mockResolvedValue({ ok: true, queued: true }),
+  downloadReportPdf: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number;
     constructor(message: string, status: number) {
@@ -35,6 +36,7 @@ import {
   createShareLink,
   revokeShareLink,
   generateReport,
+  downloadReportPdf,
   ApiError,
 } from "@/lib/api/client";
 
@@ -133,6 +135,22 @@ describe("Página portal do gerente", () => {
     expect(screen.getByText("Relatório setorial")).toBeTruthy();
     expect(screen.getByRole("button", { name: /copiar/i })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /revogar/i })).toBeNull();
+  });
+
+  it("Exportar PDF baixa o relatório do lead", async () => {
+    mockPortal(portalFixture());
+    vi.mocked(downloadReportPdf).mockResolvedValue({
+      blob: new Blob(["pdf"]),
+      filename: "relatorio.pdf",
+    });
+    window.URL.createObjectURL = vi.fn(() => "blob:x");
+    window.URL.revokeObjectURL = vi.fn();
+    const { default: PortalPage } = await import("./page");
+    render(<PortalPage />);
+    await screen.findByText("Estruturado");
+    fireEvent.click(screen.getByRole("button", { name: /exportar pdf/i }));
+    await waitFor(() => expect(downloadReportPdf).toHaveBeenCalledWith("lead-1"));
+    await screen.findByText("Download do relatório iniciado");
   });
 
   it("análise pendente mostra placeholder sem esconder diagnóstico", async () => {
