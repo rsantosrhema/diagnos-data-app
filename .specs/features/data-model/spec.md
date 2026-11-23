@@ -1,3 +1,5 @@
+> **⚠️ SUPERSEDED — Não aplicar.** Esta spec descreve o modelo da era do token de acesso único (`access_tokens`, `sessions`, `session_drafts`), removido na migration `0008_remove_token_flow` (2026-08-31). Desde então o modelo mudou em nove migrations (0010–0018: fila pgmq com retry/revoke/cancel, scoring versions RLS, `share_tokens`, worker cron, `lead_location`). A referência viva do modelo é o doc que esta spec criou: `docs/data-model.md` (atualizar a cada migration). Este arquivo é mantido apenas por razões históricas.
+
 # Data Model Specification
 
 ## Problem Statement
