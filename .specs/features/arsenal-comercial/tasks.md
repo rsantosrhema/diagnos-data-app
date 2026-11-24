@@ -250,11 +250,11 @@ Field rules: `pontos_chave` array 3..5 of `{ titulo: clampedString(70), texto: c
 
 **Done when**:
 
-- [ ] `loadSpinSkill()` returns text containing each of the 8 headings above
-- [ ] With an injected `readFile` that throws, `loadSpinSkill` throws `CommercialSkillError` whose message starts with `Skill SPIN indisponível`
-- [ ] The markdown has ≤ 120 lines and no price, deadline, client name or percentage
-- [ ] Gate check passes: `npx vitest run src/lib/agents/commercial-skill.test.ts`
-- [ ] Test count: at least 3 new tests, none removed
+- [x] `loadSpinSkill()` returns text containing each of the 8 headings above
+- [x] With an injected `readFile` that throws, `loadSpinSkill` throws `CommercialSkillError` whose message starts with `Skill SPIN indisponível`
+- [x] The markdown has ≤ 120 lines and no price, deadline, client name or percentage
+- [x] Gate check passes: `npx vitest run src/lib/agents/commercial-skill.test.ts`
+- [x] Test count: at least 3 new tests, none removed
 
 **Tests**: unit
 **Gate**: quick

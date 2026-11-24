@@ -211,7 +211,7 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 | ARS-15 | P1: Agente | Tasks | In Tasks |
 | ARS-16 | P1: Agente | Tasks | In Tasks |
 | ARS-17 | P1: Agente | Tasks | In Tasks |
-| ARS-18 | P1: Agente | Tasks | In Tasks |
+| ARS-18 | P1: Agente | Tasks | Implementing |
 | ARS-19 | P1: Pipeline | Tasks | In Tasks |
 | ARS-20 | P1: Pipeline | Tasks | In Tasks |
 | ARS-21 | P1: Pipeline | Tasks | In Tasks |
