@@ -91,6 +91,10 @@ Each asserted value was compared character by character with the spec string. Co
 
 **Status**: ✅ 34/34 ACs covered with spec-exact assertions.
 
+### MET-35 (added after this verification started) — pending
+
+MET-35 (`agent_payload.respostas[].peso` must hold the adjusted weight, found by the coordinator's smoke at `src/lib/screener/agent-payload.ts:72`) and task T15 were added in commit `37641ac`, after the diff range above (`01d16e3..3459616`) was fixed. It is outside the scope of this PASS: no implementation or test was verified for it. Status: ⚠️ Pending, to be covered by a re-verify once T15 is committed (`src/lib/screener/agent-payload.test.ts`).
+
 ### Spec-precision gaps (non-blocking, logged, no fix task)
 
 | # | Observation | Spec ref | Why it does not fail |
