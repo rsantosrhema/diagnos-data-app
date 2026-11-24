@@ -183,21 +183,21 @@ O diagnóstico mistura três referências (DAMA-DMBOK, DCAM e uma escala "CMMI-l
 | MET-17 | P1: Linguagem única | Tasks | Implementing |
 | MET-18 | P1: Linguagem única | Tasks | Implementing |
 | MET-19 | P1: Linguagem única | Tasks | Implementing |
-| MET-20 | P1: PDF | Tasks | Pending |
-| MET-21 | P1: PDF | Tasks | Pending |
-| MET-22 | P1: PDF | Tasks | Pending |
-| MET-23 | P1: PDF | Tasks | Pending |
-| MET-24 | P1: PDF | Tasks | Pending |
-| MET-25 | P1: PDF | Tasks | Pending |
-| MET-26 | P1: PDF | Tasks | Pending |
-| MET-27 | P1: Portal | Tasks | Pending |
-| MET-28 | P1: Portal | Tasks | Pending |
-| MET-29 | P1: Portal | Tasks | Pending |
-| MET-30 | P1: Portal | Tasks | Pending |
-| MET-31 | P1: Portal | Tasks | Pending |
-| MET-32 | P1: Portal | Tasks | Pending |
-| MET-33 | P2: Documentação | Tasks | Pending |
-| MET-34 | P2: Documentação | Tasks | Pending |
+| MET-20 | P1: PDF | Tasks | Implementing |
+| MET-21 | P1: PDF | Tasks | Implementing |
+| MET-22 | P1: PDF | Tasks | Implementing |
+| MET-23 | P1: PDF | Tasks | Implementing |
+| MET-24 | P1: PDF | Tasks | Implementing |
+| MET-25 | P1: PDF | Tasks | Implementing |
+| MET-26 | P1: PDF | Tasks | Implementing |
+| MET-27 | P1: Portal | Tasks | Implementing |
+| MET-28 | P1: Portal | Tasks | Implementing |
+| MET-29 | P1: Portal | Tasks | Implementing |
+| MET-30 | P1: Portal | Tasks | Implementing |
+| MET-31 | P1: Portal | Tasks | Implementing |
+| MET-32 | P1: Portal | Tasks | Implementing |
+| MET-33 | P2: Documentação | Tasks | Implementing |
+| MET-34 | P2: Documentação | Tasks | Implementing |
 
 **Coverage:** 34 total, 34 mapped to tasks, 0 unmapped
 
