@@ -53,6 +53,7 @@ Os 5 skipped são os smokes gated já existentes: `arsenal-sample.smoke.test.ts`
 | Coluna | `select data_type … column_name='arsenal'` | `jsonb` |
 | Constraint | `select pg_get_constraintdef(oid) … analysis_job_logs_step_check` | contém `arsenal` e `arsenal_failed` |
 | Insert do novo step | `begin; insert … 'arsenal_failed' …; rollback;` | `INSERT 0 1`, `ROLLBACK`, exit 0 |
+| Evidência versionada | `.specs/features/arsenal-comercial/evidence/migration-check.txt` | saída das consultas acima no Supabase local: coluna `jsonb` e constraint com `arsenal` e `arsenal_failed` |
 
 ### 1.5 Ponta a ponta pelo admin local
 
@@ -60,7 +61,7 @@ App local (`npm run dev`, `http://localhost:3000`) contra o Supabase local. Lead
 
 | Requisição | Resultado |
 | --- | --- |
-| `GET /api/admin-proxy/portal/<real>/report-pdf` com `Authorization: Bearer <gerente>` | **200**, `content-type: application/pdf`, `content-disposition: attachment; filename="diagnostico-ana-teste.pdf"`, 76.450 B |
+| `GET /api/admin-proxy/portal/<real>/report-pdf` com `Authorization: Bearer <gerente>` | **200**, `content-type: application/pdf`, `content-disposition: attachment; filename="diagnostico-ana-teste.pdf"`, 76.450 B (headers versionados em `evidence/admin-headers.txt`, sem o `authorization`) |
 | Mesma URL sem `Authorization` | **401**, corpo `{"error":"Não autenticado"}` |
 | Conversão do download | `pages=7`; Arsenal nas páginas 5–7 |
 | `GET …/report-pdf` do lead sem Arsenal | **200**, `application/pdf`, **4 páginas**, nenhuma página de Arsenal |
@@ -152,10 +153,10 @@ Status: **46/46 cobertos** (44 por testes automatizados + ARS-43/ARS-45/ARS-46 p
 
 | ARS | Evidência | Status |
 | --- | --- | --- |
-| ARS-43 | Migration aplicada 2× exit 0; coluna `jsonb`; constraint com `arsenal_failed`; insert+rollback exit 0 | ✅ |
+| ARS-43 | Migration aplicada 2× exit 0; coluna `jsonb`; constraint com `arsenal_failed`; insert+rollback exit 0; saída versionada em `evidence/migration-check.txt` | ✅ |
 | ARS-44 | `npm run pdf:arsenal-sample` 2 passed; `npm run pdf:png` `pages=7`/`pages=4`; PDF inexistente exit 1 | ✅ |
-| ARS-45 | `real-arsenal.json` da T26 valida no `commercialArsenalSchema` (5 pontos, 6 objeções, 10 perguntas, serviço `qualidade-mestres`); PDF pós-F1 renderiza as 3 páginas; nenhuma chamada nova ao LLM | ✅ |
-| ARS-46 | Download autenticado 200 `application/pdf`, 7 páginas com Arsenal em 5–7; sem token 401; lead sem Arsenal 4 páginas | ✅ |
+| ARS-45 | `evidence/real-arsenal.json` (T26) valida no `commercialArsenalSchema` (5 pontos, 6 objeções, 10 perguntas, serviço `qualidade-mestres`); PDF pós-F1 renderiza as 3 páginas; nenhuma chamada nova ao LLM | ✅ |
+| ARS-46 | Download autenticado 200 `application/pdf` (`evidence/admin-headers.txt`), 7 páginas com Arsenal em 5–7; sem token 401; lead sem Arsenal 4 páginas | ✅ |
 
 ---
 
@@ -188,8 +189,11 @@ Os testes novos foram derivados da spec (valores esperados de ARS-01..ARS-36), n
 | `.specs/features/arsenal-comercial/evidence/real-page-05.png` | Arsenal `01` Pontos-chave e `02` Serviço ideal + nota do catálogo |
 | `.specs/features/arsenal-comercial/evidence/real-page-06.png` | Arsenal `03` Contorno de objeções com os 6 grupos |
 | `.specs/features/arsenal-comercial/evidence/real-page-07.png` | Arsenal `04` Perguntas SPIN, `01`–`10`, chips e `Objetivo:` |
+| `.specs/features/arsenal-comercial/evidence/real-arsenal.json` | Arsenal real da T26 (5 pontos, 6 objeções, 10 perguntas, serviço `qualidade-mestres`) — sustenta ARS-45 |
+| `.specs/features/arsenal-comercial/evidence/admin-headers.txt` | Headers do download autenticado pós-fix: `200`, `application/pdf`, `attachment`; sem `authorization`/cookie — sustenta ARS-46 |
+| `.specs/features/arsenal-comercial/evidence/migration-check.txt` | Saída psql local: `market_insights.arsenal` `jsonb` e constraint de `analysis_job_logs` com `arsenal`/`arsenal_failed` — sustenta ARS-43 |
 
-PNGs a 80 dpi (661×936), gerados do PDF baixado pelo admin **depois** do F1 (`2b7f368`).
+PNGs a 80 dpi (661×936), gerados do PDF baixado pelo admin **depois** do F1 (`2b7f368`). Os três artefatos de texto/JSON foram copiados de `/tmp` para o repositório na F5; nenhum contém token, cookie ou credencial.
 
 ### 4.2 Fora do repositório (artefatos locais)
 
@@ -200,7 +204,8 @@ PNGs a 80 dpi (661×936), gerados do PDF baixado pelo admin **depois** do F1 (`2
 | `/tmp/arsenal-postfix/no-arsenal.pdf` + `no-arsenal-png` | Lead sem Arsenal (4 páginas) |
 | `/tmp/arsenal-postfix/portal.json` + `r-page.html` | DTO público e HTML do `/r` sem Arsenal |
 | `/tmp/arsenal-test/sample-png` + `sample-png-base` | Fixture 7 páginas vs base 4 páginas |
-| `/tmp/arsenal-evidence/real-arsenal.json` | Arsenal real da T26 reutilizado e validado |
+| `/tmp/arsenal-evidence/real-arsenal.json` | Arsenal real da T26 reutilizado e validado (cópia versionada em `evidence/real-arsenal.json`) |
+| `/tmp/arsenal-postfix/admin-headers.txt` | Headers do download pós-fix (cópia sanitizada em `evidence/admin-headers.txt`) |
 | `/tmp/arsenal-fix/worst.pdf` | Pior caso (todos os campos no máximo) — 9 páginas |
 
 ### 4.3 Conferência visual (pós-fix)

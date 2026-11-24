@@ -1219,7 +1219,7 @@ Scenario 1 `real` (timeout 300 000 ms): `commercial = (input) => createCommercia
 
 ## Fix Tasks
 
-Fixes encontrados na validação independente (iteração 1), no mesmo ciclo da skill (teste → implementação → gate → commit atômico).
+Fixes encontrados na evidência e na validação independente (iteração 1), no mesmo ciclo da skill (teste → implementação → gate → commit atômico).
 
 ### F1: coluna de chips das perguntas (depois de T27)
 
@@ -1259,3 +1259,12 @@ Fixes encontrados na validação independente (iteração 1), no mesmo ciclo da 
 **Prova de discriminação**: cópia isolada em `$TMPDIR/opencode/f4-proof` com a duração logada trocada por `0`; o teste falha (`1 failed | 24 passed`), provando que a asserção não é vazia. Código de produção não mudou.
 **Gates**: `npx vitest run src/lib/service/analysis-service.test.ts` (25 passed), typecheck exit 0.
 **Commit**: `test(service): afere a duração exata do log arsenal` (este commit).
+
+### F5: evidência versionada de ARS-43/45/46 (gap 5)
+
+**What**: a evidência de ARS-43/45/46 vivia só em `/tmp` (banco local, headers do download e JSON do agente real), então um revisor sem esta máquina não conseguia reconferir.
+**Where**: `.specs/features/arsenal-comercial/evidence/` e `test-report.md`.
+**Artefatos**: `real-arsenal.json` (5 pontos, 6 objeções, 10 perguntas, serviço `qualidade-mestres`, origem `/tmp/arsenal-evidence`), `admin-headers.txt` (download pós-fix `200`/`application/pdf`/`attachment`, origem `/tmp/arsenal-postfix`, **sem** `authorization`/cookie/token) e `migration-check.txt` (saída psql no container local: coluna `market_insights.arsenal` `jsonb` e constraint `analysis_job_logs_step_check` com `arsenal`/`arsenal_failed`).
+**Conferência**: `grep` por `authorization|cookie|bearer|token|apikey|password` nos dois arquivos de `/tmp` não encontrou nada; nenhum usa credencial. O test-report aponta para os três artefatos (seções 1.4, 1.5, 2 e 4).
+**Gates**: `npm run lint`, `npm run typecheck`, `npm run test` verdes.
+**Commit**: `docs(specs): versiona evidência de ARS-43, ARS-45 e ARS-46` (este commit).

@@ -1,0 +1,23 @@
+Arsenal Comercial — conferência da migration 0019 no Supabase local
+Data: 2026-11-24
+Ambiente: container local supabase_db_diagnos-data-app, banco postgres, usuário postgres
+Comando: docker exec -i supabase_db_diagnos-data-app psql -U postgres -d postgres -v ON_ERROR_STOP=1
+
+== Coluna market_insights.arsenal ==
+SQL: select column_name, data_type, udt_name, is_nullable, column_default from information_schema.columns where table_schema = 'public' and table_name = 'market_insights' and column_name = 'arsenal';
+ column_name | data_type | udt_name | is_nullable | column_default 
+-------------+-----------+----------+-------------+----------------
+ arsenal     | jsonb     | jsonb    | YES         | 
+(1 row)
+
+
+== Constraints de analysis_job_logs ==
+SQL: select conname, pg_get_constraintdef(oid) as definition from pg_constraint where conrelid = 'public.analysis_job_logs'::regclass and contype = 'c' order by conname;
+           conname            |                                                                                                                                       definition                                                                                                                                        
+------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ analysis_job_logs_step_check | CHECK ((step = ANY (ARRAY['enqueued'::text, 'started'::text, 'researcher'::text, 'analyst'::text, 'writer'::text, 'pdf'::text, 'email'::text, 'completed'::text, 'failed'::text, 'pdf_failed'::text, 'email_failed'::text, 'requeue'::text, 'arsenal'::text, 'arsenal_failed'::text])))
+(1 row)
+
+
+== Steps aceitos pela constraint (extraídos da definição) ==
+CHECK ((step = ANY (ARRAY['enqueued'::text, 'started'::text, 'researcher'::text, 'analyst'::text, 'writer'::text, 'pdf'::text, 'email'::text, 'completed'::text, 'failed'::text, 'pdf_failed'::text, 'email_failed'::text, 'requeue'::text, 'arsenal'::text, 'arsenal_failed'::text])))
