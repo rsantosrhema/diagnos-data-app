@@ -166,41 +166,41 @@ O diagnóstico mistura três referências (DAMA-DMBOK, DCAM e uma escala "CMMI-l
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| MET-01 | P1: Contrato | Tasks | Implementing |
-| MET-02 | P1: Contrato | Tasks | Implementing |
-| MET-03 | P1: Contrato | Tasks | Implementing |
-| MET-04 | P1: Contrato | Tasks | Implementing |
-| MET-05 | P1: Contrato | Tasks | Implementing |
-| MET-06 | P1: Contrato | Tasks | Implementing |
-| MET-07 | P1: Régua única | Tasks | Implementing |
-| MET-08 | P1: Régua única | Tasks | Implementing |
-| MET-09 | P1: Régua única | Tasks | Implementing |
-| MET-10 | P1: Régua única | Tasks | Implementing |
-| MET-11 | P1: Régua única | Tasks | Implementing |
-| MET-12 | P1: Régua única | Tasks | Implementing |
-| MET-13 | P1: Linguagem única | Tasks | Implementing |
-| MET-14 | P1: Linguagem única | Tasks | Implementing |
-| MET-15 | P1: Linguagem única | Tasks | Implementing |
-| MET-16 | P1: Linguagem única | Tasks | Implementing |
-| MET-17 | P1: Linguagem única | Tasks | Implementing |
-| MET-18 | P1: Linguagem única | Tasks | Implementing |
-| MET-19 | P1: Linguagem única | Tasks | Implementing |
-| MET-20 | P1: PDF | Tasks | Implementing |
-| MET-21 | P1: PDF | Tasks | Implementing |
-| MET-22 | P1: PDF | Tasks | Implementing |
-| MET-23 | P1: PDF | Tasks | Implementing |
-| MET-24 | P1: PDF | Tasks | Implementing |
-| MET-25 | P1: PDF | Tasks | Implementing |
-| MET-26 | P1: PDF | Tasks | Implementing |
-| MET-27 | P1: Portal | Tasks | Implementing |
-| MET-28 | P1: Portal | Tasks | Implementing |
-| MET-29 | P1: Portal | Tasks | Implementing |
-| MET-30 | P1: Portal | Tasks | Implementing |
-| MET-31 | P1: Portal | Tasks | Implementing |
-| MET-32 | P1: Portal | Tasks | Implementing |
-| MET-33 | P2: Documentação | Tasks | Implementing |
-| MET-34 | P2: Documentação | Tasks | Implementing |
-| MET-35 | P1: Linguagem única | Tasks | Implementing |
+| MET-01 | P1: Contrato | Tasks | ✅ Verified |
+| MET-02 | P1: Contrato | Tasks | ✅ Verified |
+| MET-03 | P1: Contrato | Tasks | ✅ Verified |
+| MET-04 | P1: Contrato | Tasks | ✅ Verified |
+| MET-05 | P1: Contrato | Tasks | ✅ Verified |
+| MET-06 | P1: Contrato | Tasks | ✅ Verified |
+| MET-07 | P1: Régua única | Tasks | ✅ Verified |
+| MET-08 | P1: Régua única | Tasks | ✅ Verified |
+| MET-09 | P1: Régua única | Tasks | ✅ Verified |
+| MET-10 | P1: Régua única | Tasks | ✅ Verified |
+| MET-11 | P1: Régua única | Tasks | ✅ Verified |
+| MET-12 | P1: Régua única | Tasks | ✅ Verified |
+| MET-13 | P1: Linguagem única | Tasks | ✅ Verified |
+| MET-14 | P1: Linguagem única | Tasks | ✅ Verified |
+| MET-15 | P1: Linguagem única | Tasks | ✅ Verified |
+| MET-16 | P1: Linguagem única | Tasks | ✅ Verified |
+| MET-17 | P1: Linguagem única | Tasks | ✅ Verified |
+| MET-18 | P1: Linguagem única | Tasks | ✅ Verified |
+| MET-19 | P1: Linguagem única | Tasks | ✅ Verified |
+| MET-20 | P1: PDF | Tasks | ✅ Verified |
+| MET-21 | P1: PDF | Tasks | ✅ Verified |
+| MET-22 | P1: PDF | Tasks | ✅ Verified |
+| MET-23 | P1: PDF | Tasks | ✅ Verified |
+| MET-24 | P1: PDF | Tasks | ✅ Verified |
+| MET-25 | P1: PDF | Tasks | ✅ Verified |
+| MET-26 | P1: PDF | Tasks | ✅ Verified |
+| MET-27 | P1: Portal | Tasks | ✅ Verified |
+| MET-28 | P1: Portal | Tasks | ✅ Verified |
+| MET-29 | P1: Portal | Tasks | ✅ Verified |
+| MET-30 | P1: Portal | Tasks | ✅ Verified |
+| MET-31 | P1: Portal | Tasks | ✅ Verified |
+| MET-32 | P1: Portal | Tasks | ✅ Verified |
+| MET-33 | P2: Documentação | Tasks | ✅ Verified |
+| MET-34 | P2: Documentação | Tasks | ✅ Verified |
+| MET-35 | P1: Linguagem única | Tasks | ✅ Verified |
 
 **Coverage:** 35 total, 35 mapped to tasks, 0 unmapped
 
