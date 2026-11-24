@@ -175,7 +175,7 @@ O diagnóstico mistura três referências (DAMA-DMBOK, DCAM e uma escala "CMMI-l
 | MET-09 | P1: Régua única | Tasks | Implementing |
 | MET-10 | P1: Régua única | Tasks | Implementing |
 | MET-11 | P1: Régua única | Tasks | Implementing |
-| MET-12 | P1: Régua única | Tasks | Pending |
+| MET-12 | P1: Régua única | Tasks | Implementing |
 | MET-13 | P1: Linguagem única | Tasks | Pending |
 | MET-14 | P1: Linguagem única | Tasks | Pending |
 | MET-15 | P1: Linguagem única | Tasks | Pending |

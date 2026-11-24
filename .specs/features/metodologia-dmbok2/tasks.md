@@ -154,10 +154,10 @@ T13 → T14
 
 **Done when**:
 
-- [ ] For every segment and band, `min`/`max` equal the contract band with the same `rotulo`; `descricao` texts byte-identical to before
-- [ ] `src/lib/screener/scoring-calibration.test.ts` asserts the equality for all segments; `weight-calculator.test.ts:196` updated if it encoded old limits (citing MET-12)
-- [ ] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build` (last task of the T1→T2→T3 chain)
-- [ ] Test count ≥ previous
+- [x] For every segment and band, `min`/`max` equal the contract band with the same `rotulo`; `descricao` texts byte-identical to before
+- [x] `src/lib/screener/scoring-calibration.test.ts` asserts the equality for all segments; `weight-calculator.test.ts:196` updated if it encoded old limits (citing MET-12) — it only asserts 1.0–5.0 coverage, still valid, unchanged
+- [x] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build` (last task of the T1→T2→T3 chain)
+- [x] Test count ≥ previous
 
 **Tests**: unit
 **Gate**: build

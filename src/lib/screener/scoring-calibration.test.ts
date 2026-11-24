@@ -7,6 +7,7 @@ import {
   getProfileFactorNames,
   type ScoringCalibration,
 } from "./scoring-calibration";
+import { SCREENER_CONTRACT } from "./contract";
 import calibrationJson from "../../../docs/scoring-calibration.json";
 
 describe("scoringCalibrationSchema", () => {
@@ -147,5 +148,87 @@ describe("getProfileFactorNames", () => {
     expect(names).toContain("segmento");
     expect(names).toContain("porte_funcionarios");
     expect(names).toContain("porte_faturamento");
+  });
+});
+
+describe("recalibrated_bands alinhadas ao contrato (MET-12)", () => {
+  it("cada faixa setorial tem min/max iguais à faixa do contrato com o mesmo rótulo", () => {
+    const contractBands = SCREENER_CONTRACT.scoring.faixas;
+    for (const [seg, bands] of Object.entries(
+      SCORING_CALIBRATION.recalibrated_bands,
+    )) {
+      for (const band of bands) {
+        const contractBand = contractBands.find(
+          (faixa) => faixa.rotulo === band.rotulo,
+        );
+        expect(
+          contractBand,
+          `${seg}/${band.rotulo} sem faixa correspondente no contrato`,
+        ).toBeDefined();
+        expect({
+          segmento: seg,
+          rotulo: band.rotulo,
+          min: band.min,
+          max: band.max,
+        }).toEqual({
+          segmento: seg,
+          rotulo: band.rotulo,
+          min: contractBand!.min,
+          max: contractBand!.max,
+        });
+      }
+    }
+  });
+
+  it("cada segmento cobre os 5 rótulos do contrato, na mesma ordem", () => {
+    const rotulosContrato = SCREENER_CONTRACT.scoring.faixas.map(
+      (faixa) => faixa.rotulo,
+    );
+    for (const [seg, bands] of Object.entries(
+      SCORING_CALIBRATION.recalibrated_bands,
+    )) {
+      expect({ seg, rotulos: bands.map((b) => b.rotulo) }).toEqual({
+        seg,
+        rotulos: rotulosContrato,
+      });
+    }
+  });
+
+  it("mantém as descrições setoriais intactas", () => {
+    const descricoes = Object.fromEntries(
+      Object.entries(SCORING_CALIBRATION.recalibrated_bands).map(
+        ([seg, bands]) => [seg, bands.map((b) => b.descricao)],
+      ),
+    );
+    expect(descricoes).toEqual({
+      Indústria: [
+        "Dados tratados de forma reativa. Processos industriais dependem de planilhas e sistemas desconectados.",
+        "Iniciativas isoladas de dados na produção. Integração com ERP/SAP ainda incipiente.",
+        "Plataforma de dados existe para operações. Gargalo é governança e qualidade de dados de chão de fábrica.",
+        "Dados industriais são ativo gerenciado. IoT e analytics preditivo em evolução.",
+        "Indústria 4.0 com dados como produto. Manutenção preditiva e digital twin operacionais.",
+      ],
+      Varejo: [
+        "Cadastros de produto e cliente fragmentados. E-commerce e loja física com dados desconectados.",
+        "Alguma integração entre canais. Dados de cliente ainda inconsistentes.",
+        "MDM de produtos existe. Automação de marketing usa dados integrados.",
+        "Omnichannel com dados unificados. Personalização em tempo real operacional.",
+        "Data-driven retail. Precificação dinâmica, recomendação e previsão de demanda avançadas.",
+      ],
+      "Finanças/Fintech": [
+        "Dados financeiros sem governança. Risco regulatório alto (BACEN, LGPD).",
+        "Compliance reativo. Dados de crédito e fraude em silos.",
+        "Governança de dados regulatórios existe. Modelos de risco em produção sem monitoramento formal.",
+        "Dados como ativo regulatório gerenciado. Modelos versionados e auditáveis.",
+        "Data governance madura. IA/ML com governança formal e compliance automatizado.",
+      ],
+      Saúde: [
+        "Prontuários e dados de pacientes fragmentados. Risco de compliance LGPD/ANS alto.",
+        "Sistemas clínicos parcialmente integrados. Qualidade de dados de saúde precária.",
+        "Interoperação via RNDS em progresso. Dados de pacientes classificados e protegidos.",
+        "Dados de saúde unificados e governados. Analytics clínico operacional.",
+        "Saúde digital avançada. IA diagnóstica com dados de qualidade e governança formal.",
+      ],
+    });
   });
 });
