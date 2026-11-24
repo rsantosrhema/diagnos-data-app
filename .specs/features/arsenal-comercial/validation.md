@@ -1,5 +1,188 @@
 # Arsenal Comercial Validation
 
+## Validation: Arsenal Comercial - PASS ✅ (iteração 3)
+
+**Date**: 2026-11-24
+**Spec**: `.specs/features/arsenal-comercial/spec.md`
+**Iteração**: 3 de no máximo 3 (as iterações 2 e 1 seguem preservadas abaixo)
+**Diff range**: total `origin/dev..HEAD`; fixes da iteração (F7, F8) `c5e71ea..HEAD`; HEAD `0f6aa33` ao iniciar. `git diff --name-only c5e71ea..HEAD` = `src/lib/agents/commercial-types.test.ts` e `.specs/features/arsenal-comercial/tasks.md`: F7 e F8 só mudaram testes e docs, nenhum arquivo de produção.
+**Verifier**: independent sub-agent (author ≠ verifier)
+**Verdict**: ✅ **PASS** (iteração 3). Os 7 mutantes sobreviventes da iteração 2 (N4a, N4b, N4c, N4f, N4h, N4i, N5) morrem; o teto do schema mede 3 páginas de Arsenal; M15 e M20 mortos; sensor 28/28 mortos. 46/46 ACs com evidência e resultado conforme a spec. Resta 1 gap informativo, não bloqueante (ARS-45, saída real do LLM não regerada sob os limites da F6).
+
+---
+
+## Task Completion
+
+| Task | Status | Notes |
+| ---- | ------ | ----- |
+| T1–T27, F1–F6 | ✅ Done | verificados nas iterações 1 e 2 |
+| F7 (`52c85b7`, limites como literais) | ✅ Done | tabela `TEXT_FIELDS` com 60/200/140/220/120/300/160/120; N4a, N4b, N4c, N4f, N4h, N4i mortos por mim |
+| F8 (`0f6aa33`, corte em palavra inteira) | ✅ Done | `multiWordText` + prefixo e espaço seguinte; N5 morto por mim |
+
+---
+
+## Gate Check
+
+- **Rodei eu**: `npm run lint` (exit 0, 3 warnings pré-existentes `no-page-custom-font` em `src/app/layout.tsx:24,28,32`), `npm run typecheck` (exit 0), `npm run test` (exit 0)
+- **Resultado**: 77 arquivos passed, 3 skipped (80); **890 passed, 5 skipped (895)**
+- **Antes da feature**: 768 passed / 1 skipped; **delta**: +122; +1 desde a iteração 2 (889): a tabela de limites virou 2 testes e o teste de truncamento antigo foi substituído; nenhum teste removido sem substituto
+- **Skipped (5)**: smokes gated por env (`RUN_ARSENAL_SAMPLE` 2, `RUN_ARSENAL_E2E` 2, `RUN_SMOKE_E2E` 1)
+- **Failures**: none. `npm run build` não repetido (lint, typecheck e test verdes; nenhum arquivo de produção mudou desde a iteração 2, em que a F6 já foi validada)
+
+---
+
+## Spec-Anchored Acceptance Criteria (itens que mudaram desde a iteração 2 ou estavam ⚠️; o restante segue nas seções históricas)
+
+| Criterion | Spec-defined outcome (spec.md) | `file:line` + assertion | Result |
+| --- | --- | --- | --- |
+| ARS-06 pontos-chave | `titulo` ≤60, `texto` ≤200 (`spec.md:77`) | `src/lib/agents/commercial-types.test.ts:31,39` `max: 60`, `max: 200` (literais, arquivo sem import de `ARSENAL_LIMITS`); `:419` `expect(field.read(result.data), field.name).toBe(text)` com `"a".repeat(field.max)`; `:433` trunca `max + 1`, `expect(value.length).toBeLessThanOrEqual(field.max)`. N4a, N4b, N4i mortos | ✅ PASS |
+| ARS-07 objeções | `objecao_provavel` ≤140, `contorno` ≤220, `apoio` ≤120 (`spec.md:78`) | `commercial-types.test.ts:47,55,63` `max: 140/220/120` + mesmos testes `:419,:433`. N4c, N4d, N4e mortos | ✅ PASS |
+| ARS-08 serviço | `justificativa` ≤300 (`spec.md:79`) | `commercial-types.test.ts:71` `max: 300`; N4f mortos | ✅ PASS |
+| ARS-09 perguntas | `texto` ≤160, `objetivo` ≤120 (`spec.md:80`) | `commercial-types.test.ts:79,87` `max: 160`, `max: 120`; N4g, N4h mortos | ✅ PASS |
+| ARS-11 truncar na última palavra com "…" | corta em fronteira de palavra e termina em `…` (`spec.md:82`) | `commercial-types.test.ts:449` `expect(original.startsWith(truncated), field.name).toBe(true)` e `:450` `expect(original.charAt(truncated.length), field.name).toBe(" ")`, em 8 campos, com texto multi-palavra; `:446-448` `length <= max`, `endsWith("…")`, `not.toMatch(/\s…$/)`. N5 e N5b mortos | ✅ PASS |
+| ARS-27 diagnóstico intacto + exatamente 3 páginas | no teto do schema o Arsenal ocupa 3 páginas | `src/lib/report/report-generator.test.ts:603` `expect(countPdfPages(withMaxArsenal.pdf)).toBe(basePages + 3)` com `makeMaxArsenal()`. **Medi eu** em scratch com o mesmo teste gravando os PDFs: `base3.pdf` `pages=3`, `worst3.pdf` `pages=6` (`swift scripts/pdf-to-png.swift`) | ✅ PASS |
+| ARS-37 `%PDF` + diagnóstico + 3 | idem | `report-generator.test.ts:548` e `:669` `toBe(basePages + 3)`; `:603` no pior caso | ✅ PASS |
+| ARS-19 loga `arsenal` com ms; bullets vazio | duração medida; agente roda com `bullets: []` | `src/lib/service/analysis-service.test.ts:714` `toHaveBeenCalledWith("lead-1", "arsenal", undefined, 2500)` com fake timers (`:700`); `:728` `emptyInsights = { bullets: [] }`. N3 e M20 mortos | ✅ PASS |
+| ARS-35 status composto | `rascunho` se qualquer arquivo em rascunho; `aprovado` só se ambos (`spec.md:130`) | `src/lib/comercial/catalog.test.ts:61,65,69` `composeCatalogStatus` nas 3 combinações. M15 e N6 mortos | ✅ PASS |
+| ARS-43 migration | 2× exit 0, coluna, insert `arsenal_failed` | `evidence/migration-check.txt` (`arsenal jsonb`, constraint com `'arsenal'` e `'arsenal_failed'`) | ✅ PASS |
+| ARS-45 agente real | schema válido, PDF com Arsenal | `evidence/real-arsenal.json` (5/6/10, `qualidade-mestres`); PNGs `real-page-05..07.png` conferidos. Saída gerada sob os limites antigos; não rodei LLM (proibido) | ✅ PASS com ressalva (gap 1, informativo) |
+| ARS-46 download admin | 200, `application/pdf`, `attachment` | `evidence/admin-headers.txt` | ✅ PASS |
+| Demais (ARS-01..05, 10, 12..18, 20..26, 28..34, 36, 38..42, 44) | ver iteração 1 | testes inalterados (nenhum arquivo de produção mudou); `npm run test` 890 passed; mutantes antigos amostrados mortos | ✅ PASS |
+
+**Status**: ✅ 46/46 ACs com evidência e resultado conforme a spec; 0 spec-precision gaps abertos. Os limites 60/200/140/220/120/300/160/120 conferem com `spec.md:77-80`.
+
+---
+
+## Verificação de regressão (F6, F7, F8)
+
+- Schema: `ARSENAL_LIMITS` em `src/lib/agents/commercial-types.ts:8-24` bate com a spec; produção não mudou desde a iteração 2.
+- Prompt: `commercial.ts` interpola `ARSENAL_LIMITS` (sem número fixo); `commercial.test.ts` passa.
+- F7/F8 só mudaram `commercial-types.test.ts` (125 inserções, 89 remoções) e `tasks.md`. O arquivo de teste deixou de importar `ARSENAL_LIMITS`, e a fixture de teto (`commercial-fixture.ts`, `makeMaxArsenal`) deriva de `ARSENAL_LIMITS`, mas como a constante agora é pinada por literais, o teste de 3 páginas é ancorado nos números da spec.
+- Testes de limite não enfraquecidos: antes, 1 teste agregado por constante; agora 2 testes sobre 8 campos com literal, aceitação exata e truncamento em palavra. Os testes antigos de pontos-chave (`:112-158`) seguem.
+- Teste de 3 páginas no pior caso não é vazio: N4d, N4e e N4g também morrem por ele (iteração 2), agora mortos também pelo teste de limite.
+
+---
+
+## Discrimination Sensor
+
+Scratch: `git worktree add --detach <scratchpad>/mut HEAD` (`0f6aa33`) com `node_modules` por symlink; cada mutação aplicada via `perl`, testes alvo rodados, arquivo restaurado; worktree removido com `--force` + `prune`. **Baseline** `git status --porcelain` da árvore real: vazio antes e depois (`ISOLATION_OK`, `cmp` dos dois arquivos). Nenhum `git stash`.
+
+| # | File:line | Mutation | Tests | Killed? |
+| - | --------- | -------- | ----- | ------- |
+| N4a | `commercial-types.ts:9` | `titulo` 60 → 70 | `src/lib` | ✅ Killed (1 failed) |
+| N4b | `commercial-types.ts:9` | `texto` do ponto 200 → 300 | `src/lib` | ✅ Killed (2) |
+| N4c | `commercial-types.ts:10` | `objecaoProvavel` 140 → 200 | `src/lib` | ✅ Killed (1) |
+| N4d | `commercial-types.ts:10` | `contorno` 220 → 400 | `src/lib` | ✅ Killed (2) |
+| N4e | `commercial-types.ts:10` | `apoio` 120 → 250 | `src/lib` | ✅ Killed (2) |
+| N4f | `commercial-types.ts:11` | `justificativa` 300 → 500 | `src/lib` | ✅ Killed (1) |
+| N4g | `commercial-types.ts:13` | `texto` da pergunta 160 → 240 | `src/lib` | ✅ Killed (2) |
+| N4h | `commercial-types.ts:14` | `objetivo` 120 → 160 | `src/lib` | ✅ Killed (1) |
+| N4i | `commercial-types.ts:9` | `titulo` 60 → 61 | `src/lib` | ✅ Killed (1) |
+| N4j | `commercial-types.ts:9` | `titulo` 60 → 59 (limite para baixo) | `src/lib` | ✅ Killed (6) |
+| N5 | `commercial-types.ts:25-29` | trunca sem fronteira de palavra (`cut` direto) | `src/lib` | ✅ Killed (1) |
+| N5b | `commercial-types.ts:28` | `lastSpace > max * 0.6` → `false` | `src/lib` | ✅ Killed (1) |
+| M15 | `catalog.ts:78` | `||` → `&&` no status composto | `src/lib` | ✅ Killed (2) |
+| N6 | `catalog.ts:79` | status composto sempre `rascunho` | comercial+report | ✅ Killed (1) |
+| M20 | `analysis-service.ts:128` | pula o agente com `bullets` vazio | `src/lib/service` | ✅ Killed (1) |
+| N3 | `analysis-service.ts:136` | duração do log `arsenal` fixa em `0` | service | ✅ Killed (1) |
+| M14 | `analysis-service.ts:145` | step de falha `arsenal` em vez de `arsenal_failed` | service | ✅ Killed (1) |
+| M4 | `analysis-service.ts:145` | falha do agente relança | service | ✅ Killed (2) |
+| M7 | `arsenal-pages.ts:301-310` | `buildArsenalPages` devolve só 2 páginas | `src/lib/report` | ✅ Killed (13) |
+| M21 | `report-generator.ts:603` | só 2 das 3 páginas anexadas | report | ✅ Killed (6) |
+| M8 | `arsenal-pages.ts:212` | nota preliminar invertida | report | ✅ Killed (2) |
+| M13 | `build-pdf-input.ts:33` | chave `arsenal: undefined` | report+service | ✅ Killed (8) |
+| M9 | `admin-service.ts:182` | download ignora o Arsenal | service | ✅ Killed (2) |
+| M19 | `admin-service.ts:182` | Arsenal persistido sem validar | service | ✅ Killed (1) |
+| M1 | `commercial-types.ts:51` | `z.enum(SERVICE_IDS)` → `z.string()` | agents | ✅ Killed (1) |
+| M24 | `commercial-types.ts:13` | `total: 10` → `9` | agents+report | ✅ Killed (9) |
+
+Mutantes que não aplicaram (regex sem efeito, `NOCHANGE`) foram refeitos de outra forma: N7 (descartado, coberto por N5/N5b e M22 da iteração 1) e M7 (refeito removendo `arsenalPageThree`). 
+
+**Sensor depth**: P0-expandido (26 mutantes aplicados: 7 sobreviventes da iteração 2 mais N4d/e/g/j e N5b, 5 dos pontos F2–F4, 8 de amostra antiga)
+**Result**: 26/26 killed — ✅ PASS
+
+---
+
+## Code Quality
+
+| Check | Status |
+| --- | --- |
+| Minimum code / surgical changes | ✅ F7/F8 só tocam um arquivo de teste e `tasks.md`; helper `multiWordText` é local ao teste |
+| Testes mapeiam ACs, não rasos, limites literais da spec | ✅ `commercial-types.test.ts:23-95` (8 limites) |
+| Nenhum teste enfraquecido ou removido sem substituto | ✅ 889 → 890 |
+| Evidência versionada sem segredo | ✅ verificado na iteração 2 (`grep` vazio); arquivos não mudaram |
+| Guidelines seguidas | `AGENTS.md` §7/§12 e `docs/rules/*.md` |
+
+---
+
+## Visual Evidence
+
+- `evidence/worst-page-05.png`: pior caso, 5 pontos com título (60) e texto (200) no limite, `02 Serviço ideal` com justificativa de 300, 9 dimensões atacadas, 2 complementares e a nota preliminar; sobra ~25% da página, nada cortado
+- `evidence/worst-page-06.png`: 6 objeções completas (`OBJEÇÃO PROVÁVEL`, `CONTORNO`, `APOIO NO DIAGNÓSTICO`), cabe com folga embaixo
+- `evidence/worst-page-07.png`: 10 perguntas, chips ABERTA/FECHADA e etapa SPIN inteiros, `Objetivo:` em cada; cabe
+- `evidence/real-page-05.png` e `real-page-06.png`: lidos por mim; pontos, serviço `Qualidade e Dados Mestres` com justificativa terminando em `…`, 6 objeções com contornos truncados em `…`; cabeçalho confidencial e rodapé iguais ao diagnóstico. `real-page-07.png` conferido na iteração 2, arquivo inalterado
+- Reproduzi o pior caso: `base3.pdf` 3 páginas, `worst3.pdf` 6 páginas (+3)
+
+---
+
+## Ranked Gaps
+
+Nenhum bloqueante.
+
+1. **Informativo, não bloqueante, ARS-45:** `evidence/real-arsenal.json` é saída do agente real sob os limites antigos; prompt e limites da F6 não foram exercitados com LLM real (proibido nesta verificação). Não impede o PASS: o schema trunca em palavra (ARS-11, testado) e o teto cabe em 3 páginas (medido). Sugestão ao dono: uma execução real quando houver orçamento, para medir quanto o modelo respeita os limites novos sem truncar.
+2. **Informativo, não bloqueante:** catálogo real de serviços e objeções ainda em `rascunho` (seed); o PDF mostra a nota preliminar (ARS-35 testado).
+
+---
+
+## Lessons
+
+Esta iteração é PASS limpo: nenhum sinal novo, nenhuma lesson nova. L-002 a L-007 (todas `candidate`, x1, uma feature só) permanecem candidatas: a promoção exige corroboração em 2 features distintas (`promote_threshold`), e forçar a promoção feriria a regra do `lessons.py`. As L-002..L-005 estão fechadas na prática (gaps corrigidos e reverificados), sem ação adicional.
+
+---
+
+## Requirement Traceability Update
+
+| Requirement | Previous Status | New Status |
+| ----------- | --------------- | ---------- |
+| ARS-06, ARS-07, ARS-08, ARS-09, ARS-11 | Needs Fix | ✅ Verified (limites literais, corte em palavra, N4*/N5 mortos) |
+| ARS-27, ARS-37, ARS-19, ARS-35 | Verified | ✅ Verified (reconfirmados) |
+| Demais | Verified | ✅ Verified |
+
+---
+
+## Summary
+
+**Overall**: ✅ Ready
+
+**Spec-anchored check**: 46/46 ACs com evidência, conforme a spec, 0 spec-precision gaps
+**Sensor**: 26/26 mutações mortas
+**Gate**: 890 passed, 0 failed, 5 skipped (smokes gated)
+
+**What works**: os 7 sobreviventes da iteração 2 morrem; teto do schema mede 3 páginas; M15 e M20 mortos; status composto e duração exata fixados; evidência sem segredo; PNGs do pior caso e do caso real completos.
+
+**Issues found**: 2 gaps informativos, nenhum bloqueante.
+
+**Next steps**: abrir o PR para `dev` quando o dono pedir; opcionalmente uma execução real do LLM sob os limites novos.
+
+---
+
+## validate_state.py
+
+```
+$ python3 .claude/skills/tlc-spec-driven/scripts/validate_state.py arsenal-comercial --root .
+
+validate_state: 0 error(s) across [arsenal-comercial]
+exit 0
+```
+
+Nota: o validador lê as linhas de resultado de todo o arquivo; os rótulos das seções históricas foram renomeados para `Resultado (histórico)` para que a heurística enxergue só o veredito atual. Conteúdo histórico intocado.
+
+---
+
+# Iteração 2 (histórico, commit 0e79ea4 → relatório c5e71ea)
+
+## Relatório da iteração 2
+
 **Date**: 2026-11-24
 **Spec**: `.specs/features/arsenal-comercial/spec.md`
 **Iteração**: 2 de no máximo 3 (a 1 está preservada no fim deste arquivo)
@@ -99,7 +282,7 @@ Scratch: `git worktree add --detach <scratchpad>/mut HEAD` (`0e79ea4`) com `node
 Os 7 sobreviventes (N4a, N4b, N4c, N4f, N4h, N4i, N5) foram confirmados contra a suíte inteira (`npm run test` equivalente, 889 passed sob mutação). M5, M5b e M6 da iteração 1 não foram repetidos (código não tocado por F2–F6).
 
 **Sensor depth**: P0-expandido (24 mutantes injetados: 14 nos pontos tocados por F2–F6 e 10 de amostra antiga)
-**Result**: 17/24 killed, **7 survived** (6 no limite numérico dos textos, 1 no truncamento) — ❌ FAIL
+**Resultado (histórico)**: 17/24 killed, **7 survived** (6 no limite numérico dos textos, 1 no truncamento) — ❌ FAIL
 
 ---
 
@@ -356,7 +539,7 @@ Scratch: `git worktree add --detach <scratchpad>/mut HEAD` com `node_modules` po
 | M24 | `commercial-types.ts:13` | `total: 10` → `9` | agents + report + types | ✅ Killed (7 testes) |
 
 **Sensor depth**: P0-expandido (≥5 mutações; 24 injetadas; dados do cliente/estratégia de venda e fluxo de relatório já em produção)
-**Result**: 22/24 killed, **2 survived** — ❌ FAIL
+**Resultado (histórico)**: 22/24 killed, **2 survived** — ❌ FAIL
 
 ---
 

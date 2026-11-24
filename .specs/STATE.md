@@ -23,11 +23,11 @@
 
 ## Handoff
 
-- **Feature**: arsenal-comercial (.specs/features/arsenal-comercial) — **T1–T27 e F1–F6 concluídos; Verifier independente, iteração 2 (2026-11-24): FAIL**
-- **Phase / Task**: validação (iteração 2 de no máximo 3 do fix→re-verify)
-- **Completed**: gates verdes (lint, typecheck, 889 testes passed / 5 skipped); gaps da iteração 1 fechados e reverificados (teto do schema em 3 páginas, M15, M20, duração exata, status composto na spec, evidência versionada); sensor 17/24 mortos; lessons L-002..L-007 candidatas
+- **Feature**: arsenal-comercial (.specs/features/arsenal-comercial) — **T1–T27 e F1–F8 concluídos; Verifier independente, iteração 3 (2026-11-24): PASS ✅**
+- **Phase / Task**: validação concluída (fix→re-verify encerrou na iteração 3 de 3)
+- **Completed**: gates verdes (lint, typecheck, 890 testes passed / 5 skipped); sensor 26/26 mortos (N4a, N4b, N4c, N4f, N4h, N4i, N5, M15, M20 e amostra antiga); teto do schema medido em 3 páginas de Arsenal; 46/46 ACs Verified; validate_state.py exit 0; lessons L-002..L-007 candidatas (uma feature só, sem promoção)
 - **In-progress** (file:line): none
-- **Next step**: rotear Fix 7 (Major: `commercial-types.test.ts` volta a assertar os limites da spec como literais; N4a, N4b, N4c, N4f, N4h, N4i devem morrer) e Fix 8 (Minor: truncamento em fronteira de palavra; N5 deve morrer) e re-dispatch do Verifier (iteração 3, a última)
-- **Blockers**: catálogo real de serviços e objeções ainda não enviado (seed em rascunho); saída real do LLM ainda não exercitada com os limites da F6
+- **Next step**: aguardar o dono para abrir o PR `feat/arsenal-comercial` → `dev` (nada foi enviado); opcional: uma execução real do LLM sob os limites da F6
+- **Blockers**: nenhum bloqueante; informativos: catálogo real de serviços e objeções ainda em rascunho (seed); saída real do LLM não regerada com os limites da F6
 - **Uncommitted files**: none (após o commit da validação)
 - **Branch**: feat/arsenal-comercial (commits locais; sem push)
