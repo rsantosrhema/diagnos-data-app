@@ -75,6 +75,12 @@ T8 → T12
 T13 → T14
 ```
 
+### Phase 5: Fix from smoke
+
+```
+T15
+```
+
 ---
 
 ## Task Breakdown
@@ -449,6 +455,32 @@ T13 → T14
 **Gate**: build
 
 **Commit**: `docs(decisions): ADR 011 base metodológica DAMA-DMBOK2`
+
+---
+
+### T15: Agent payload stores adjusted sector weights
+
+**What**: In `buildAgentPayload`, set `respostas[].peso` from `result.dimensionScores` (adjusted weight) with fallback to the contract `peso`, per MET-35.
+**Where**: `src/lib/screener/agent-payload.ts`
+**Depends on**: None
+**Reuses**: `ScreenerResult.dimensionScores`
+**Requirement**: MET-35
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`
+
+**Done when**:
+
+- [ ] `agent-payload.test.ts` asserts that a result whose `dimensionScores` has d07 peso 13 (contract 10) yields `respostas` d07 `peso` 13, and that a dimension absent from the result falls back to the contract peso
+- [ ] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build`
+- [ ] Test count ≥ previous (765)
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `fix(screener): payload do agente grava o peso ajustado ao setor`
 
 ---
 

@@ -94,7 +94,9 @@ O diagnóstico mistura três referências (DAMA-DMBOK, DCAM e uma escala "CMMI-l
 6. WHEN `getBaseWeight("d07")` is called THEN the module SHALL return `10`; IF the id is unknown THEN it SHALL return `null`. <!-- MET-18 -->
 7. WHEN `getAreaDmbok("d09")` is called THEN the module SHALL return `"Big Data & Data Science"`; IF the id is unknown THEN it SHALL return `null`. WHEN `describeDimension("x99", 7)` is called THEN it SHALL return `{ pesoPadrao: 7, areaDmbok: "" }`. <!-- MET-19 -->
 
-**Independent Test**: `src/lib/maturity/methodology.test.ts`.
+8. WHEN a screener submission is persisted THEN each `agent_payload.respostas[].peso` SHALL equal the adjusted weight of that dimension in the scoring result (`result.dimensionScores[].peso`), not the contract base weight; IF the dimension is missing from the result THEN it SHALL fall back to the contract `peso`. <!-- MET-35 (found by smoke: Saúde d07 stored 10 instead of 13) -->
+
+**Independent Test**: `src/lib/maturity/methodology.test.ts`; MET-35 in `src/lib/screener/agent-payload.test.ts`.
 
 ---
 
@@ -198,8 +200,9 @@ O diagnóstico mistura três referências (DAMA-DMBOK, DCAM e uma escala "CMMI-l
 | MET-32 | P1: Portal | Tasks | Implementing |
 | MET-33 | P2: Documentação | Tasks | Implementing |
 | MET-34 | P2: Documentação | Tasks | Implementing |
+| MET-35 | P1: Linguagem única | Tasks | Pending |
 
-**Coverage:** 34 total, 34 mapped to tasks, 0 unmapped
+**Coverage:** 35 total, 35 mapped to tasks, 0 unmapped
 
 ---
 
