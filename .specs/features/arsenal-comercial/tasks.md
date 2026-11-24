@@ -1036,11 +1036,14 @@ Scenario 1 `real` (timeout 300 000 ms): `commercial = (input) => createCommercia
 
 **Done when**:
 
-- [ ] The real scenario passed: `status` `analisado`, `arsenal` valid, log step `arsenal`, e-mail counter 1
-- [ ] The failed scenario passed: `arsenal` null, log step `arsenal_failed` with message `falha simulada`, PDF has 3 pages
-- [ ] `smoke-test.md` has `## Agente real`, `## Falha forçada` and `## Conteúdo avaliado` with the judgments above and the LLM run count (≤ 2)
-- [ ] No e-mail was sent (the counter is a no-op; `sendReportEmail` is never imported by the smoke)
-- [ ] Build gate passes: `npm run typecheck && npm run lint && npm run test && npm run build`
+- [x] The real scenario passed: `status` `analisado`, `arsenal` valid, log step `arsenal`, e-mail counter 1
+- [x] The failed scenario passed: `arsenal` null, log step `arsenal_failed` with message `falha simulada`, PDF has 3 pages
+- [x] `smoke-test.md` has `## Agente real`, `## Falha forçada` and `## Conteúdo avaliado` with the judgments above and the LLM run count (≤ 2)
+- [x] No e-mail was sent (the counter is a no-op; `sendReportEmail` is never imported by the smoke)
+- [x] Build gate passes: `npm run typecheck && npm run lint && npm run test && npm run build`
+
+**SPEC_DEVIATION**: o PDF real sai com 7 páginas (4 do diagnóstico + 3 do Arsenal) e o da falha com 4, não 6 e 3: o fixture do smoke tem 3 dores + 1 concorrente + 4 insights e o `pageTwo` do diagnóstico já transborda. O invariante de ARS-37 (diagnóstico + 3) se mantém. O primeiro run também revelou que 6 objeções transbordavam a página de contornos; corrigido no commit `9e52965`, com teste de regressão em `report-generator.test.ts` (arquivo fora da lista original desta task, adicionado só para provar a correção).
+**Reason**: a contagem fixa 6/3 do plano veio do fixture mínimo de T18. O limite de campos no máximo absoluto ainda pagina em 5 páginas de Arsenal; registrado como limite conhecido em `smoke-test.md`.
 
 **Tests**: integration (gated smoke from T23)
 **Gate**: build
