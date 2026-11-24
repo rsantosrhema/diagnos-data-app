@@ -869,10 +869,10 @@ In `package.json` `scripts` add: `"pdf:png": "swift scripts/pdf-to-png.swift"`, 
 
 **Done when**:
 
-- [ ] `npm run pdf:png -- docs/branding-kit.pdf <out dir>` prints one PNG path per page and ends with `pages=5` (use a directory under `/tmp`, never inside the repo)
-- [ ] Calling it with a missing PDF path exits non-zero
-- [ ] `package.json` is valid JSON and only the three scripts were added
-- [ ] Phase 5 build gate passes: `npm run typecheck && npm run lint && npm run test && npm run build`
+- [x] `npm run pdf:png -- docs/branding-kit.pdf <out dir>` prints one PNG path per page and ends with `pages=5` (use a directory under `/tmp`, never inside the repo)
+- [x] Calling it with a missing PDF path exits non-zero
+- [x] `package.json` is valid JSON and only the three scripts were added
+- [x] Phase 5 build gate passes: `npm run typecheck && npm run lint && npm run test && npm run build`
 
 **Tests**: none (tooling script, verified by the commands above)
 **Gate**: build
