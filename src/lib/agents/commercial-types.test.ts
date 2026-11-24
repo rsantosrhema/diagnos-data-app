@@ -113,6 +113,19 @@ describe("commercialArsenalSchema", () => {
       expect(result.success).toBe(false);
     });
 
+    it("rejeita grupo fora do catálogo", () => {
+      const arsenal = makeArsenal();
+      const result = commercialArsenalSchema.safeParse({
+        ...arsenal,
+        objecoes: [
+          { ...arsenal.objecoes[0], grupo: "inexistente" },
+          ...arsenal.objecoes.slice(1),
+        ],
+      });
+
+      expect(result.success).toBe(false);
+    });
+
     it("rejeita grupo repetido com a mensagem e o grupo ofensor", () => {
       const arsenal = makeArsenal();
       const result = commercialArsenalSchema.safeParse({
@@ -157,6 +170,20 @@ describe("commercialArsenalSchema", () => {
 
       expect(commercialArsenalSchema.safeParse(arsenal).success).toBe(false);
     });
+
+    it("rejeita complementares repetidos entre si", () => {
+      const arsenal = makeArsenal();
+      arsenal.servico_recomendado.complementares = [
+        "qualidade-mestres",
+        "qualidade-mestres",
+      ];
+
+      const result = commercialArsenalSchema.safeParse(arsenal);
+
+      expect(issueMessages(result)).toContain(
+        "complementares não pode repetir o serviço principal ou outro complementar",
+      );
+    });
   });
 
   describe("perguntas", () => {
@@ -170,6 +197,25 @@ describe("commercialArsenalSchema", () => {
 
       expect(commercialArsenalSchema.safeParse(nine).success).toBe(false);
       expect(commercialArsenalSchema.safeParse(eleven).success).toBe(false);
+    });
+
+    it("rejeita formato e etapa SPIN fora do contrato", () => {
+      const arsenal = makeArsenal();
+      const formatoInvalido = commercialArsenalSchema.safeParse({
+        ...arsenal,
+        perguntas: arsenal.perguntas.map((question, index) =>
+          index === 0 ? { ...question, formato: "mista" } : question,
+        ),
+      });
+      const spinInvalido = commercialArsenalSchema.safeParse({
+        ...arsenal,
+        perguntas: arsenal.perguntas.map((question, index) =>
+          index === 0 ? { ...question, spin: "abertura" } : question,
+        ),
+      });
+
+      expect(formatoInvalido.success).toBe(false);
+      expect(spinInvalido.success).toBe(false);
     });
 
     it("rejeita 3 abertas com a contagem recebida", () => {
@@ -279,5 +325,93 @@ describe("commercialArsenalSchema", () => {
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.data.pontos_chave[0].titulo).toBe(title);
+  });
+
+  it("trunca cada campo de texto no seu próprio limite (ARS-11)", () => {
+    const longText = Array.from({ length: 400 }, () => "dado").join(" ");
+    const fields: Array<{
+      name: string;
+      max: number;
+      mutate: (arsenal: ReturnType<typeof makeArsenal>) => void;
+      read: (arsenal: ReturnType<typeof makeArsenal>) => string;
+    }> = [
+      {
+        name: "titulo do ponto",
+        max: 70,
+        mutate: (arsenal) => {
+          arsenal.pontos_chave[0].titulo = longText;
+        },
+        read: (arsenal) => arsenal.pontos_chave[0].titulo,
+      },
+      {
+        name: "texto do ponto",
+        max: 300,
+        mutate: (arsenal) => {
+          arsenal.pontos_chave[0].texto = longText;
+        },
+        read: (arsenal) => arsenal.pontos_chave[0].texto,
+      },
+      {
+        name: "objecao_provavel",
+        max: 200,
+        mutate: (arsenal) => {
+          arsenal.objecoes[0].objecao_provavel = longText;
+        },
+        read: (arsenal) => arsenal.objecoes[0].objecao_provavel,
+      },
+      {
+        name: "contorno",
+        max: 400,
+        mutate: (arsenal) => {
+          arsenal.objecoes[0].contorno = longText;
+        },
+        read: (arsenal) => arsenal.objecoes[0].contorno,
+      },
+      {
+        name: "apoio",
+        max: 250,
+        mutate: (arsenal) => {
+          arsenal.objecoes[0].apoio = longText;
+        },
+        read: (arsenal) => arsenal.objecoes[0].apoio,
+      },
+      {
+        name: "justificativa",
+        max: 500,
+        mutate: (arsenal) => {
+          arsenal.servico_recomendado.justificativa = longText;
+        },
+        read: (arsenal) => arsenal.servico_recomendado.justificativa,
+      },
+      {
+        name: "texto da pergunta",
+        max: 240,
+        mutate: (arsenal) => {
+          arsenal.perguntas[0].texto = longText;
+        },
+        read: (arsenal) => arsenal.perguntas[0].texto,
+      },
+      {
+        name: "objetivo",
+        max: 160,
+        mutate: (arsenal) => {
+          arsenal.perguntas[0].objetivo = longText;
+        },
+        read: (arsenal) => arsenal.perguntas[0].objetivo,
+      },
+    ];
+
+    for (const field of fields) {
+      const arsenal = makeArsenal();
+      field.mutate(arsenal);
+      const result = commercialArsenalSchema.safeParse(arsenal);
+
+      expect(result.success, field.name).toBe(true);
+      if (!result.success) continue;
+      const value = field.read(result.data);
+      expect(value.length, field.name).toBeLessThanOrEqual(field.max);
+      expect(value.endsWith("…"), field.name).toBe(true);
+      expect(value, field.name).not.toMatch(/\s…$/);
+    }
   });
 });

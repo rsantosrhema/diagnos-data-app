@@ -110,6 +110,43 @@ describe("catálogo comercial", () => {
     ).toBe(false);
   });
 
+  it("rejeita serviço sem campo obrigatório e com dimensoes vazio (ARS-01)", () => {
+    const { id, nome, resumo, dimensoes } = servicosJson.servicos[0];
+    const semQuandoIndicar = { id, nome, resumo, dimensoes };
+    const semCampo = serviceCatalogSchema.safeParse({
+      ...servicosJson,
+      servicos: [semQuandoIndicar, ...servicosJson.servicos.slice(1)],
+    });
+    const semDimensao = serviceCatalogSchema.safeParse({
+      ...servicosJson,
+      servicos: [
+        { ...servicosJson.servicos[0], dimensoes: [] },
+        ...servicosJson.servicos.slice(1),
+      ],
+    });
+
+    expect(semCampo.success).toBe(false);
+    expect(semDimensao.success).toBe(false);
+  });
+
+  it("rejeita grupo de objeção sem nome ou sem descrição (ARS-03)", () => {
+    const { id, nome } = objecoesJson.grupos[0];
+    const semDescricao = objectionCatalogSchema.safeParse({
+      ...objecoesJson,
+      grupos: [{ id, nome }, ...objecoesJson.grupos.slice(1)],
+    });
+    const nomeVazio = objectionCatalogSchema.safeParse({
+      ...objecoesJson,
+      grupos: [
+        { ...objecoesJson.grupos[0], nome: "" },
+        ...objecoesJson.grupos.slice(1),
+      ],
+    });
+
+    expect(semDescricao.success).toBe(false);
+    expect(nomeVazio.success).toBe(false);
+  });
+
   it("consulta serviços e grupos por id, devolvendo undefined quando não existe", () => {
     expect(getService("governanca")?.nome).toBe("Governança de Dados");
     expect(getObjectionGroup("preco")?.nome).toBe("Preço e orçamento");
