@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Toolbar, SiteFooter, Icon } from "@/app/components/PageShell";
 import type { MarketAnalysis, InsightsBrief } from "@/lib/agents/types";
 import type { PortalDTO } from "@/lib/dto/portal";
+import { METHOD_NOTE } from "@/lib/maturity/methodology";
 import { AnalysisPlaceholder } from "./AnalysisPlaceholder";
 import { AnswersTable } from "./AnswersTable";
 import { CompetitorsGrid } from "./CompetitorsGrid";
@@ -239,6 +240,18 @@ export function DiagnosticPortal({
                 />
               </section>
             )}
+
+            <section
+              aria-label="Nota metodológica"
+              className="rd-card p-6"
+            >
+              <h2 className="rd-h text-base">
+                Nota metodológica
+              </h2>
+              <p className="mt-2 max-w-4xl text-sm leading-relaxed text-[#6e6e73]">
+                {METHOD_NOTE}
+              </p>
+            </section>
           </div>
         )}
       </div>

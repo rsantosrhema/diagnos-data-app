@@ -391,9 +391,9 @@ T13 → T14
 
 **Done when**:
 
-- [ ] `DiagnosticPortal.test.tsx` asserts heading "Nota metodológica" and `METHOD_NOTE` text in `mode="public"` and in `mode="manager"`
-- [ ] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build` (last task of Phase 3)
-- [ ] Test count ≥ previous
+- [x] `DiagnosticPortal.test.tsx` asserts heading "Nota metodológica" and `METHOD_NOTE` text in `mode="public"` and in `mode="manager"`
+- [x] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build` (last task of Phase 3)
+- [x] Test count ≥ previous
 
 **Tests**: component
 **Gate**: build
