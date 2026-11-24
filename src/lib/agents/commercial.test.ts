@@ -8,7 +8,7 @@ import { makeArsenal } from "./commercial-fixture";
 import type { AgentPayload } from "@/lib/screener/agent-payload";
 import type { MarketAnalysis, InsightsBrief } from "./types";
 import type { GenerateValidatedJsonOptions } from "./llm-json";
-import { OBJECTION_GROUP_IDS, SERVICE_IDS } from "@/lib/comercial/catalog";
+import { OBJECTION_GROUP_IDS, SERVICE_IDS, COMMERCIAL_CATALOG } from "@/lib/comercial/catalog";
 
 type GenerateFn = NonNullable<GenerateValidatedJsonOptions<unknown>["generate"]>;
 
@@ -130,6 +130,57 @@ describe("createCommercialAgent", () => {
     expect(prompt).toContain("Até R$ 50 mil");
     expect(prompt).toContain("Governança: Governança ad hoc");
     expect(prompt).toContain("[alta] Definir dono dos dados");
+  });
+
+  it("lista nome, resumo e dimensões de cada serviço e nome e descrição de cada grupo (ARS-13)", async () => {
+    const generate = fakeGenerate([fenced(makeArsenal())]);
+    const agent = makeAgent(generate);
+
+    await agent.run({
+      payload: makePayload(),
+      analysis: makeAnalysis(),
+      insights: makeInsights(),
+    });
+
+    const prompt = String(generate.mock.calls[0][0].prompt);
+    for (const service of COMMERCIAL_CATALOG.servicos) {
+      expect(prompt).toContain(service.nome);
+      expect(prompt).toContain(service.resumo);
+      expect(prompt).toContain(service.dimensoes.join(", "));
+    }
+    for (const group of COMMERCIAL_CATALOG.grupos) {
+      expect(prompt).toContain(group.nome);
+      expect(prompt).toContain(group.descricao);
+    }
+  });
+
+  it("sanitiza resposta do diagnóstico e insights além do resumo da análise (ARS-14)", async () => {
+    const generate = fakeGenerate([fenced(makeArsenal())]);
+    const agent = makeAgent(generate);
+    const payload = makePayload();
+    payload.respostas[0].resposta = "Conciliação manual\u200B\u0007 com planilhas";
+
+    await agent.run({
+      payload,
+      analysis: makeAnalysis(),
+      insights: makeInsights({
+        bullets: [
+          {
+            texto: "Bullet com controle\u200B\u0007 invisível",
+            prioridade: "alta",
+            titulo: "Título crítico\u200B\u0007",
+          },
+        ],
+      }),
+    });
+
+    const prompt = String(generate.mock.calls[0][0].prompt);
+    expect(prompt).toContain("Conciliação manual");
+    expect(prompt).toContain("com planilhas");
+    expect(prompt).toContain("Bullet com controle");
+    expect(prompt).toContain("Título crítico");
+    expect(prompt).not.toContain("\u200B");
+    expect(prompt).not.toContain("\u0007");
   });
 
   it("usa o system prompt de segurança e remove caracteres de controle dos dados", async () => {
