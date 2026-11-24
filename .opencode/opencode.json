@@ -6,23 +6,43 @@
   "permission": {
     "edit": "allow",
     "bash": {
+      "*": "ask",
       "npm *": "allow",
       "git *": "allow",
-      "*": "ask"
+      "git push * main": "deny",
+      "git push * main *": "deny",
+      "git push * HEAD:main": "deny",
+      "git push * HEAD:main *": "deny",
+      "git push --force*": "deny",
+      "git push -f*": "deny",
+      "gh pr create*--base main*": "deny",
+      "gh pr merge*": "ask"
     }
   },
   "mcp": {
-    "supabase-mcp": {
+    "supabase": {
       "type": "remote",
-      "enabled": true,
-      "url": "https://mcp.supabase.com/mcp?features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching"
+      "url": "http://supabasekong-jtrdrv8ijdq003npm6cwteda.187.127.55.238.sslip.io/mcp",
+      "enabled": true
     },
     "coolify": {
       "type": "remote",
       "enabled": true,
       "url": "http://187.127.55.238:8000/mcp",
       "headers": {
-        "Authorization": "Bearer 4|N1Gmq4aM9wpN3IaMfdfWgvQAnupciJjgGsmgloVx898a813c"
+        "Authorization": "Bearer 9|hnYQlRiybyrcnIFREZPSUKBjjvgvIDJoUqJ76TlF4b7eed90"
+      }
+    },
+    "servers": {
+      "pencil": {
+        "type": "local",
+        "command": [
+          "/Applications/Pen.app/Contents/Resources/app.asar.unpacked/out/mcp-server-darwin-arm64",
+          "--app",
+          "desktop",
+          "--agent",
+          "openCodeCLI"
+        ]
       }
     }
   }

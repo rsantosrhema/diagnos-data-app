@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(git push origin main*)",
+      "Bash(git push origin HEAD:main*)",
+      "Bash(git push origin HEAD:refs/heads/main*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push origin +*)",
+      "Bash(gh pr create --base main*)",
+      "Bash(gh pr create -B main*)"
+    ],
+    "ask": [
+      "Bash(gh pr merge*)",
+      "mcp__coolify__deploy",
+      "mcp__coolify__rollback_application"
+    ]
+  }
+}

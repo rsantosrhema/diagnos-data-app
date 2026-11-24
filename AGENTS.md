@@ -2,6 +2,8 @@
 
 This file is the **system prompt** for any code agent (OpenCode, Claude Code, Cursor, etc.) working on this repository. Read it fully before making changes. It defines the product, the architecture, and the conventions every agent must follow.
 
+> **Dev-first rule:** every feature, fix and migration is branched from `dev`, merged into `dev`, and validated on the dev environment before anything reaches `main` (production). Never push or merge to `main`. Details in section 13 and `docs/rules/git-workflow.md`.
+
 ---
 
 ## 1. Project Overview
@@ -41,15 +43,18 @@ The questionnaire content is data-driven: it lives in `docs/snapshot-maturidade-
 ```
 diagnos-data-app/
 ├── AGENTS.md                     # This file - agent system prompt
+├── CLAUDE.md                     # Claude Code entry point (imports AGENTS.md)
+├── .claude/settings.json         # Claude Code shared permissions (blocks pushes to main)
 ├── .opencode/                    # OpenCode configuration
-│   ├── opencode.json             # OpenCode project config
-│   └── command/init.md           # /init command (bootstrap/onboard)
+│   ├── opencode.json             # OpenCode project config (permissions, MCP)
+│   └── command/                  # /init (bootstrap/onboard), /pr (PR into dev)
 ├── docs/
 │   ├── decisions/                # ADRs (Architecture Decision Records)
 │   ├── rules/                    # Detailed development rules
 │   │   ├── security.md           # Security rules (auth, env vars, Supabase)
 │   │   ├── validation.md         # Validation rules (Zod patterns, boundaries)
-│   │   └── architecture.md       # Architecture rules (layers, server/client)
+│   │   ├── architecture.md       # Architecture rules (layers, server/client)
+│   │   └── git-workflow.md       # Dev-first branching, environments, migrations
 │   ├── snapshot-maturidade-dados.json  # Single source of truth for the questionnaire
 │   ├── architecture.md           # High-level architecture notes
 │   └── data-model.md             # Living schema reference (Supabase)
@@ -332,6 +337,7 @@ Route (thin) → Service (logic) → Repository (data) → DTO (safe shape)
 - OpenCode config lives in `.opencode/opencode.json`.
 - The `/init` command (`.opencode/command/init.md`) bootstraps and onboards the project. Run it when starting fresh.
 - After editing any `.opencode/**` file, **restart OpenCode** for changes to take effect.
+- Claude Code reads `CLAUDE.md` (which imports this file) and `.claude/settings.json`. Orca uses `origin/dev` as the default base ref for new worktrees (section 13).
 
 ---
 
@@ -353,3 +359,38 @@ A task is done when:
 - [ ] Tests pass (if tests exist for the touched area).
 - [ ] `npm run lint` and `npm run build` pass.
 - [ ] No secrets are committed; env vars are documented in `.env.example`.
+- [ ] Work was branched from `origin/dev`, the PR targets `dev`, and the change was verified on the dev URL after the auto deploy (section 13).
+- [ ] Nothing was pushed or merged to `main`; migrations were applied to the dev database only.
+---
+
+## 13. Git Workflow & Environments (dev-first)
+
+> Full details: `docs/rules/git-workflow.md`
+
+Two long-lived branches, two isolated environments (separate Coolify apps, Supabase databases and secrets):
+
+| | Branch | URL | Deploy |
+| --- | --- | --- | --- |
+| **dev** (staging) | `dev` | http://w3fh1crzxtmzioaxsvp16rpz.187.127.55.238.sslip.io | Automatic on push/merge to `dev` |
+| **prod** | `main` | https://diagnosdata.rhemadata.com | Manual, by the owner |
+
+### 13.1 Rules
+
+- All work (feature, fix, refactor, migration, docs) branches from `origin/dev` as `feat/<slug>` or `fix/<slug>`, and is merged into `dev` through a PR with base `dev`.
+- After the merge, check the Coolify deployment and test the change on the dev URL before calling it done.
+- `dev` → `main` is a separate promotion PR, opened and merged only when the owner asks.
+- **Never** commit, push, merge or force-push to `main`. Never open a PR with base `main` on your own initiative.
+- **Never** deploy, restart, roll back or change env vars on the prod Coolify app, or run SQL/migrations on the prod database, without explicit instruction in the current conversation. Coolify MCP actions target the dev app.
+- Migrations must apply on an empty database and are applied to the dev Supabase first.
+- New env vars go to `.env.example` and to both Coolify apps. Local `.env.local` points at the dev Supabase, never prod.
+- No tokens or passwords in tracked files; reference env vars instead.
+
+### 13.2 Typical sequence
+
+```bash
+git fetch origin && git switch -c feat/<slug> origin/dev
+# ...work, then
+npm run lint && npm run typecheck && npm run test
+git push -u origin feat/<slug>
+gh pr create --base dev
+```
