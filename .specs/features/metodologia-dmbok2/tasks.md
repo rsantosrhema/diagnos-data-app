@@ -313,9 +313,9 @@ T13 → T14
 
 **Done when**:
 
-- [ ] `StageHero.test.tsx` asserts `INDEX_LABEL` present, "CMMI" absent, and `"2,3 de 5"` for valor 2.34
-- [ ] Gate check passes: `npx vitest run src/components/portal`
-- [ ] Test count ≥ previous
+- [x] `StageHero.test.tsx` asserts `INDEX_LABEL` present, "CMMI" absent, and `"2,3 de 5"` for valor 2.34
+- [x] Gate check passes: `npx vitest run src/components/portal`
+- [x] Test count ≥ previous
 
 **Tests**: component
 **Gate**: quick
