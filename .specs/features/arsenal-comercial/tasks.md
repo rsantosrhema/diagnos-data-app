@@ -803,9 +803,12 @@ Page one: `h(Page, { key: "arsenal-1", size: "A4", style: styles.page }, ...chil
 
 **Done when**:
 
-- [ ] The test passes on the current tree; adding the word `arsenal` to any file under `src/app/r` makes it fail (verify manually once, then revert)
-- [ ] Gate check passes: `npx vitest run src/lib/comercial`
-- [ ] Test count: at least 3 new tests, none removed
+- [x] The test passes on the current tree; adding the word `arsenal` to any file under `src/app/r` makes it fail (verify manually once, then revert)
+- [x] Gate check passes: `npx vitest run src/lib/comercial`
+- [x] Test count: at least 3 new tests, none removed
+
+**SPEC_DEVIATION**: o wiring do T12 usa o nome `commercial`, não a palavra `arsenal`, então hoje nenhum arquivo de `src/app/api` menciona o termo. O teste usa a allowlist exata `src/app/api/analysis-worker/route.ts` e falha para qualquer outro arquivo de `src/app/api` que mencione `arsenal`.
+**Reason**: exigir a string literal no worker criaria uma referência artificial; a propriedade de ARS-42 é a allowlist (nenhuma menção fora do worker), que o teste verifica.
 
 **Tests**: unit
 **Gate**: quick
