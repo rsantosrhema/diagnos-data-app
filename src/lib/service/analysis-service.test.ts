@@ -688,27 +688,36 @@ describe("AnalysisService", () => {
       expect(updateStatus).toHaveBeenCalledWith("lead-1", "analise_pendente");
     });
 
-    it("chama o agente comercial com a saída do pipeline e loga arsenal entre writer e pdf (ARS-19)", async () => {
-      const queueRepo = mockQueueRepo({
-        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
-        ack: vi.fn().mockResolvedValue(undefined),
-      });
-      const commercial = vi.fn().mockResolvedValue(arsenal);
-      const orchestrator = mockOrchestrator(commercial);
-      const logEvent = vi.fn().mockResolvedValue(undefined);
-      const insightsRepo = mockInsightsRepo({ logEvent });
+    it("chama o agente comercial com a saída do pipeline e loga arsenal entre writer e pdf com a duração exata (ARS-19)", async () => {
+      vi.useFakeTimers();
+      try {
+        vi.setSystemTime(new Date("2026-11-24T12:00:00.000Z"));
+        const queueRepo = mockQueueRepo({
+          read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+          ack: vi.fn().mockResolvedValue(undefined),
+        });
+        const commercial = vi.fn(async () => {
+          vi.advanceTimersByTime(2500);
+          return arsenal;
+        });
+        const orchestrator = mockOrchestrator(commercial);
+        const logEvent = vi.fn().mockResolvedValue(undefined);
+        const insightsRepo = mockInsightsRepo({ logEvent });
 
-      const service = createService({ queueRepo, insightsRepo, orchestrator });
+        const service = createService({ queueRepo, insightsRepo, orchestrator });
 
-      const result = await service.processNext();
+        const result = await service.processNext();
 
-      expect(result).toEqual({ processed: true });
-      expect(commercial).toHaveBeenCalledTimes(1);
-      expect(commercial).toHaveBeenCalledWith({ payload, analysis, insights });
-      expect(logEvent).toHaveBeenCalledWith("lead-1", "arsenal", undefined, expect.any(Number));
-      const steps = logEvent.mock.calls.map((call) => call[1]);
-      expect(steps.indexOf("arsenal")).toBeGreaterThan(steps.indexOf("writer"));
-      expect(steps.indexOf("arsenal")).toBeLessThan(steps.indexOf("pdf"));
+        expect(result).toEqual({ processed: true });
+        expect(commercial).toHaveBeenCalledTimes(1);
+        expect(commercial).toHaveBeenCalledWith({ payload, analysis, insights });
+        expect(logEvent).toHaveBeenCalledWith("lead-1", "arsenal", undefined, 2500);
+        const steps = logEvent.mock.calls.map((call) => call[1]);
+        expect(steps.indexOf("arsenal")).toBeGreaterThan(steps.indexOf("writer"));
+        expect(steps.indexOf("arsenal")).toBeLessThan(steps.indexOf("pdf"));
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it("chama o agente comercial e persiste o arsenal com insights sem bullets (ARS-19)", async () => {

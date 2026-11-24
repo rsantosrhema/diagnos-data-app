@@ -1250,3 +1250,12 @@ Fixes encontrados na validação independente (iteração 1), no mesmo ciclo da 
 **Prova do mutante**: cópia isolada em `$TMPDIR/opencode/m20-proof` (árvore real intocada, sem `git stash`), guarda de `runCommercialStep` alterada para `!orchestrator.commercial || output.insights.bullets.length === 0`, `npx vitest run src/lib/service/analysis-service.test.ts` → **1 failed | 24 passed** (`expected "vi.fn()" to be called 1 times, but got 0 times`); M20 morto. Código de produção não mudou.
 **Gates**: `npx vitest run src/lib/service/analysis-service.test.ts` (25 passed), typecheck exit 0.
 **Commit**: `test(service): cobre agente comercial com insights sem bullets` (este commit).
+
+### F4: duração exata do log `arsenal` (gap 4, ARS-19)
+
+**What**: o teste de ARS-19 só asseria `expect.any(Number)` na duração do step `arsenal`; qualquer número, inclusive `0`, passava.
+**Where**: `src/lib/service/analysis-service.test.ts` (teste de ARS-19).
+**Teste**: `vi.useFakeTimers()` + `vi.setSystemTime` fixo; o mock de `commercial` avança o relógio em 2500 ms e o teste exige `logEvent("lead-1", "arsenal", undefined, 2500)`. Relógio real restaurado no `finally`.
+**Prova de discriminação**: cópia isolada em `$TMPDIR/opencode/f4-proof` com a duração logada trocada por `0`; o teste falha (`1 failed | 24 passed`), provando que a asserção não é vazia. Código de produção não mudou.
+**Gates**: `npx vitest run src/lib/service/analysis-service.test.ts` (25 passed), typecheck exit 0.
+**Commit**: `test(service): afere a duração exata do log arsenal` (este commit).
