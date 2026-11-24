@@ -17,6 +17,7 @@
 | AD-009 | Relatório sob demanda (sem cron): endpoint de reprocess enfileira e dispara fire-and-forget `POST /api/analysis-worker` com `x-internal-api-key`; resposta imediata `{ok,queued}`; sem depender de agendador externo | active | 2026-08-31 | Cron Hobby da Vercel bloqueado/removido; pipeline dos agentes (~50s) roda em background no clique do gerente |
 | AD-010 | Links públicos compartilháveis usam token opaco 256-bit com somente hash SHA-256 persistido, TTL 90 dias, um ativo por lead (novo invalida anterior), comparação com timingSafeEqual e 404 genérico idêntico para inválido/expirado/revogado | active | 2026-10-08 | Portal-analise: link do cliente /r/[token]; não distinguir motivo evita enumeração; revogação é delete lógico |
 | AD-011 | Portal do diagnóstico renderizado por um único componente (`DiagnosticPortal`) com `mode: public \| manager`; as rotas mantêm só fetch, estados e ações do gerente | active | 2026-11-13 | As duas telas já compartilhavam DTO e componentes, mas duplicavam ~200 linhas de layout; unificar evita divergência visual e correção em dobro |
+| AD-012 | DAMA-DMBOK2 (cap. 15) como base metodológica única; faixas de estágio sempre as do contrato (1.8 / 2.6 / 3.4 / 4.2) para todo segmento, com diferenciação setorial só pelos pesos da calibração | active | 2026-11-24 | Híbrido DMBOK + DCAM + "CMMI-like" e faixas por segmento contradiziam o score no portal; decisão detalhada no ADR-011 |
 
 ## Handoff
 
