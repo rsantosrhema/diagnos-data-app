@@ -354,16 +354,16 @@ describe("insightsBriefSchema", () => {
     expect(insightsBriefSchema.safeParse(INSIGHTS_BRIEF).success).toBe(true);
   });
 
-  it("aceita até 10 bullets", () => {
-    const bullets = Array.from({ length: 10 }, (_, i) => ({
+  it("aceita até 13 bullets", () => {
+    const bullets = Array.from({ length: 13 }, (_, i) => ({
       texto: `Bullet ${i}`,
       prioridade: "media" as const,
     }));
     expect(insightsBriefSchema.safeParse({ bullets }).success).toBe(true);
   });
 
-  it("rejeita mais de 10 bullets", () => {
-    const bullets = Array.from({ length: 11 }, (_, i) => ({
+  it("rejeita mais de 13 bullets", () => {
+    const bullets = Array.from({ length: 14 }, (_, i) => ({
       texto: `Bullet ${i}`,
       prioridade: "media" as const,
     }));

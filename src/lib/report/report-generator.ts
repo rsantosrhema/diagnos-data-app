@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from "@react-pdf/renderer";
 import type { GeneratePdfInput } from "@/lib/service/screen-service";
+import { normalizeInsights } from "@/lib/agents/normalize-insights";
 import { RadarChart } from "./radar-chart";
 import { shortDimensionLabel } from "./dimension-label";
 import { registerReportFonts } from "./fonts";
@@ -1121,7 +1122,7 @@ function pageThree(input: GeneratePdfInput) {
     }
   }
 
-  const bullets = input.insights?.bullets.slice(0, 4) ?? [];
+  const bullets = normalizeInsights(input.insights?.bullets ?? []).slice(0, 4);
   if (bullets.length > 0) {
     children.push(
       spacer(24, "space-6"),

@@ -368,6 +368,24 @@ describe("PortalService.getForManager", () => {
     expect(dto.insights?.bullets[0]?.titulo).toBeUndefined();
   });
 
+  it("normaliza insights antigos para 3/5/5 na leitura", async () => {
+    const bullets = Array.from({ length: 8 }, (_, i) => ({
+      texto: `Insight ${i}`,
+      prioridade: "alta" as const,
+    }));
+    const service = buildService({
+      insightsRepo: {
+        findByLeadId: vi.fn().mockResolvedValue({
+          ...INSIGHTS_ROW_ANALISADO,
+          insights: { bullets },
+        }),
+      },
+    });
+    const dto = await service.getForManager("lead-1");
+    const count = (p: string) => dto.insights?.bullets.filter((b) => b.prioridade === p).length;
+    expect([count("alta"), count("media"), count("baixa")]).toEqual([3, 5, 0]);
+  });
+
   it("lança 404 quando o lead não existe", async () => {
     const service = buildService({
       leadRepo: { findById: vi.fn().mockResolvedValue(null) },
@@ -414,6 +432,22 @@ describe("PortalService.getForManager", () => {
 describe("PortalService.getByToken", () => {
   beforeEach(() => {
     vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  it("omite proximo_passo dos insights no link do cliente e mantém para o gerente", async () => {
+    const service = buildService({
+      shareTokenRepo: {
+        findByHash: vi.fn().mockResolvedValue(ACTIVE_TOKEN_ROW),
+      },
+    });
+    const publicDto = await service.getByToken(RAW_TEST_TOKEN);
+    const managerDto = await service.getForManager("lead-1");
+
+    expect(publicDto.insights?.bullets.length).toBeGreaterThan(0);
+    for (const bullet of publicDto.insights?.bullets ?? []) {
+      expect("proximo_passo" in bullet).toBe(false);
+    }
+    expect(managerDto.insights?.bullets[0]?.proximo_passo).toBe("Nomear donos.");
   });
 
   it("retorna DTO público sem email/phone quando o token resolve (PORTAL-07/08)", async () => {

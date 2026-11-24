@@ -14,6 +14,7 @@ import { agentPayloadSchema } from "@/lib/schemas/agent-payload";
 import type { PortalDTO, ManagerPortalDTO } from "@/lib/dto/portal";
 import { stripPii } from "@/lib/dto/portal";
 import { marketAnalysisSchema, insightsBriefSchema } from "@/lib/agents/types";
+import { normalizeInsights } from "@/lib/agents/normalize-insights";
 import { getStageByFaixa } from "@/lib/cmmi/stages";
 
 export class PortalServiceError extends Error {
@@ -120,7 +121,7 @@ export function createPortalService(deps: {
       }
       assertTokenValid(row);
       const full = await assembleFull(row.lead_id);
-      return { ...stripPii(full), sources: [] };
+      return { ...stripPii(full), insights: stripNextSteps(full.insights), sources: [] };
     },
 
     async createShareToken(
@@ -241,6 +242,13 @@ function parseSources(raw: unknown): { url: string }[] {
   return raw.flatMap((s) => (typeof s === "string" && s.length > 0 ? [{ url: s }] : []));
 }
 
+function stripNextSteps(insights: PortalDTO["insights"]): PortalDTO["insights"] {
+  if (!insights) return insights;
+  return {
+    bullets: insights.bullets.map(({ proximo_passo: _proximoPasso, ...rest }) => rest),
+  };
+}
+
 function extractAnalysisState(insights: MarketInsightsRow | null): {
   status: MarketInsightsStatus;
   analysis: PortalDTO["analysis"];
@@ -257,7 +265,9 @@ function extractAnalysisState(insights: MarketInsightsRow | null): {
   return {
     status,
     analysis: analysisParsed.success ? analysisParsed.data : undefined,
-    insights: briefParsed.success ? briefParsed.data : undefined,
+    insights: briefParsed.success
+      ? { bullets: normalizeInsights(briefParsed.data.bullets) }
+      : undefined,
     sources: parseSources(insights.sources),
   };
 }

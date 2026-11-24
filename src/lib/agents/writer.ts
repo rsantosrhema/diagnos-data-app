@@ -1,6 +1,7 @@
 import { insightsBriefSchema, type InsightsBrief, type MarketAnalysis } from "./types";
 import { sanitizeUntrusted } from "./sanitize";
 import { generateValidatedJson } from "./llm-json";
+import { normalizeInsights, type InsightPriority } from "./normalize-insights";
 import type { AgentPayload } from "@/lib/screener/agent-payload";
 import type { LanguageModel } from "ai";
 
@@ -11,7 +12,8 @@ export class WriterError extends Error {
   }
 }
 
-const MAX_BULLETS = 10;
+const MAX_BULLETS = 13;
+const PRIORITIES: readonly string[] = ["alta", "media", "baixa"];
 
 const WRITER_SYSTEM_PROMPT = [
   "Você é um redator comercial.",
@@ -37,9 +39,21 @@ export type WriterDeps = {
 
 const WRITER_MAX_OUTPUT_TOKENS = 8_000;
 
+function hasValidPriority(item: unknown): item is { prioridade: InsightPriority } {
+  return (
+    typeof item === "object" &&
+    item !== null &&
+    PRIORITIES.includes((item as { prioridade?: string }).prioridade as string)
+  );
+}
+
 function capBullets(raw: unknown): unknown {
   if (raw && typeof raw === "object" && Array.isArray((raw as { bullets?: unknown }).bullets)) {
-    return { ...raw, bullets: (raw as { bullets: unknown[] }).bullets.slice(0, MAX_BULLETS) };
+    const bullets = (raw as { bullets: unknown[] }).bullets;
+    const normalized = bullets.every(hasValidPriority)
+      ? normalizeInsights(bullets)
+      : bullets.slice(0, MAX_BULLETS);
+    return { ...raw, bullets: normalized };
   }
   return raw;
 }
@@ -83,7 +97,7 @@ export function createWriterAgent(deps: WriterDeps) {
         }
       }
 
-      const bullets = Array.isArray(raw?.bullets) ? raw.bullets.slice(0, MAX_BULLETS) : [];
+      const bullets = (capBullets(raw) as { bullets?: unknown[] }).bullets ?? [];
 
       const parsed = insightsBriefSchema.safeParse({ bullets });
       if (!parsed.success) {
@@ -113,7 +127,7 @@ const WRITER_OUTPUT_SCHEMA_HINT = JSON.stringify(
     properties: {
       bullets: {
         type: "array",
-        maxItems: 10,
+        maxItems: 13,
         items: {
           type: "object",
           properties: {
@@ -149,8 +163,10 @@ function buildWriterPrompt(analysis: MarketAnalysis, payload: AgentPayload): str
           .join("\n");
 
   return [
-    "Regras: no máximo 10 bullets, em português do Brasil, linguagem clara e objetiva para um comercial (não-técnico).",
+    "Regras: no máximo 13 bullets, em português do Brasil, linguagem clara e objetiva para um comercial (não-técnico).",
+    "Distribuição por prioridade: no máximo 3 'alta', 5 'media' e 5 'baixa'. Esses são tetos, não cotas: não invente bullets para completar.",
     "Cada bullet deve ter uma prioridade entre 'alta', 'media' e 'baixa', baseada na dor da empresa combinada com a evidência de mercado.",
+    "Reserve 'alta' apenas para as dores mais críticas; o que for relevante mas menos urgente é 'media'; oportunidades de evolução e boas práticas são 'baixa'. Inclua bullets de prioridade 'baixa' sempre que houver o que apontar.",
     "REGRA: cada bullet deve ter um `titulo` de no máximo 70 caracteres, curto e comercial.",
     "REGRA: quando aplicável, informe `dimensao_ids` apenas com ids válidos das dores citadas na análise; não invente ids.",
     "REGRA: cada bullet deve ter um `proximo_passo` de no máximo 300 caracteres, uma ação concreta com prazo ou referência.",

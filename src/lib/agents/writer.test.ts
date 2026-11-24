@@ -76,7 +76,7 @@ describe("createWriterAgent", () => {
     expect(insightsBriefSchema.safeParse(brief).success).toBe(true);
   });
 
-  it("pede até 10 bullets em PT-BR com prioridade alta/media/baixa no prompt", async () => {
+  it("pede até 3 altas, 5 médias e 5 baixas em PT-BR com prioridade alta/media/baixa no prompt", async () => {
     generateObjectMock.mockResolvedValue({ object: { bullets: [] } });
 
     const llm = { modelId: "x", doGenerate: vi.fn() } as never;
@@ -86,7 +86,7 @@ describe("createWriterAgent", () => {
 
     const options = generateObjectMock.mock.calls[0][0];
     const promptText = String(options.prompt);
-    expect(promptText).toContain("10");
+    expect(promptText).toContain("no máximo 3 'alta', 5 'media' e 5 'baixa'");
     expect(promptText.toLowerCase()).toContain("português");
     expect(promptText).toContain("alta");
     expect(promptText).toContain("media");
@@ -95,7 +95,7 @@ describe("createWriterAgent", () => {
     expect(options.schema).toBe(insightsBriefSchema);
   });
 
-  it("trunca para 10 bullets mantendo a ordem quando o LLM devolve mais", async () => {
+  it("normaliza para 3 altas, 5 médias e 5 baixas rebaixando o excedente", async () => {
     generateObjectMock.mockResolvedValue({
       object: { bullets: makeBullets(15, "alta") },
     });
@@ -105,9 +105,10 @@ describe("createWriterAgent", () => {
 
     const brief = await agent.run({ analysis: makeAnalysis(), payload: makePayload() });
 
-    expect(brief.bullets).toHaveLength(10);
+    const count = (p: string) => brief.bullets.filter((b) => b.prioridade === p).length;
+    expect([count("alta"), count("media"), count("baixa")]).toEqual([3, 5, 5]);
     expect(brief.bullets[0].texto).toBe("Bullet 0");
-    expect(brief.bullets[9].texto).toBe("Bullet 9");
+    expect(brief.bullets[3].texto).toBe("Bullet 3");
   });
 
   it("lança WriterError quando o LLM devolve JSON inválido", async () => {

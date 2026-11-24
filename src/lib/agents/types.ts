@@ -98,7 +98,7 @@ export type InsightBullet = z.infer<typeof insightBulletSchema>;
 
 export const insightsBriefSchema = z
   .object({
-    bullets: z.array(insightBulletSchema).max(10),
+    bullets: z.array(insightBulletSchema).max(13),
   })
   .strict();
 export type InsightsBrief = z.infer<typeof insightsBriefSchema>;

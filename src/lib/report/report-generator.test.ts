@@ -137,6 +137,26 @@ describe("generateScreenerPdf", () => {
     expect(result.pdf.length).toBeGreaterThan(0);
   });
 
+  it("ordena por prioridade antes de limitar a 4 bullets", () => {
+    const input = makeInput({
+      insights: {
+        bullets: [
+          { texto: "B1", prioridade: "baixa" },
+          { texto: "B2", prioridade: "baixa" },
+          { texto: "M1", prioridade: "media" },
+          { texto: "A1", prioridade: "alta" },
+          { texto: "A2", prioridade: "alta" },
+        ],
+      },
+    });
+    const children = buildReportChildren(input);
+    expect(countText(children, "A1")).toBe(1);
+    expect(countText(children, "A2")).toBe(1);
+    expect(countText(children, "M1")).toBe(1);
+    expect(countText(children, "B1")).toBe(1);
+    expect(countText(children, "B2")).toBe(0);
+  });
+
   it("gera PDF com bullets priorizados (alta/media/baixa) sem fonte", async () => {
     const input = makeInput({
       insights: {
