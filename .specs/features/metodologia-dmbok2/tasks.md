@@ -208,9 +208,9 @@ T13 → T14
 
 **Done when**:
 
-- [ ] `analysis-service.test.ts` and `admin-service.test.ts` assert `pesoPadrao` and `areaDmbok` values for a known id (e.g. d07 → 10 / "Data Security") and the fallback for an unknown id
-- [ ] Gate check passes: `npx vitest run src/lib/service`
-- [ ] Test count ≥ previous
+- [x] `analysis-service.test.ts` and `admin-service.test.ts` assert `pesoPadrao` and `areaDmbok` values for a known id (e.g. d07 → 10 / "Data Security") and the fallback for an unknown id
+- [x] Gate check passes: `npx vitest run src/lib/service`
+- [x] Test count ≥ previous
 
 **Tests**: unit
 **Gate**: quick

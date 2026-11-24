@@ -371,7 +371,16 @@ describe("AnalysisService", () => {
         expect.objectContaining({
           respondentName: "João",
           band: { rotulo: "Emergente", descricao: "descrição da faixa" },
-          dimensionScores: [{ name: "Governança de Dados", nivel: 2, peso: 15 }],
+          // MET-26: a dimensão passa a carregar peso padrão e área DMBOK2.
+          dimensionScores: [
+            {
+              name: "Governança de Dados",
+              nivel: 2,
+              peso: 15,
+              pesoPadrao: 12,
+              areaDmbok: "Data Governance",
+            },
+          ],
           riskDimension: { name: "Governança de Dados", nivel: 2 },
           imbalance: true,
           commercialAnswer: "Até R$ 50 mil",
@@ -379,6 +388,87 @@ describe("AnalysisService", () => {
       );
       const pdfInput = generatePdf.mock.calls[0]?.[0];
       expect(pdfInput).not.toHaveProperty("location");
+    });
+
+    it("dimensionScores carregam peso padrão e área DMBOK2 da dimensão (MET-26)", async () => {
+      const queueRepo = mockQueueRepo({
+        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        ack: vi.fn().mockResolvedValue(undefined),
+      });
+      const generatePdf = mockGeneratePdf();
+      const payloadComPesoSetorial: AgentPayload = {
+        ...payload,
+        respostas: [
+          {
+            dimensao_id: "d07",
+            dimensao: "Segurança e Conformidade (LGPD)",
+            pergunta: "Como a segurança é tratada?",
+            nivel: 3,
+            peso: 13,
+            resposta: "Política formalizada",
+          },
+        ],
+        risco: { dimensao_id: "d07", nivel: 3 },
+      };
+
+      const service = createService({
+        queueRepo,
+        payloadLoader: async () => payloadComPesoSetorial,
+        generatePdf,
+      });
+
+      await service.processNext();
+
+      expect(generatePdf.mock.calls[0]?.[0].dimensionScores).toEqual([
+        {
+          name: "Segurança e Conformidade (LGPD)",
+          nivel: 3,
+          peso: 13,
+          pesoPadrao: 10,
+          areaDmbok: "Data Security",
+        },
+      ]);
+    });
+
+    it("dimensão fora do contrato usa o peso informado e área vazia, sem lançar (MET-26 edge)", async () => {
+      const queueRepo = mockQueueRepo({
+        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        ack: vi.fn().mockResolvedValue(undefined),
+      });
+      const generatePdf = mockGeneratePdf();
+      const payloadComDimensaoDesconhecida: AgentPayload = {
+        ...payload,
+        respostas: [
+          {
+            dimensao_id: "x99",
+            dimensao: "Dimensão Legada",
+            pergunta: "p",
+            nivel: 2,
+            peso: 7,
+            resposta: "r",
+          },
+        ],
+        risco: { dimensao_id: "x99", nivel: 2 },
+      };
+
+      const service = createService({
+        queueRepo,
+        payloadLoader: async () => payloadComDimensaoDesconhecida,
+        generatePdf,
+      });
+
+      const result = await service.processNext();
+
+      expect(result).toEqual({ processed: true });
+      expect(generatePdf.mock.calls[0]?.[0].dimensionScores).toEqual([
+        {
+          name: "Dimensão Legada",
+          nivel: 2,
+          peso: 7,
+          pesoPadrao: 7,
+          areaDmbok: "",
+        },
+      ]);
     });
 
     it("payload ausente: ack falha + log failed e NÃO envia e-mail", async () => {

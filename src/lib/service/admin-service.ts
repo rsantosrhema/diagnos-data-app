@@ -14,6 +14,7 @@ import type { GeneratePdfInput } from "@/lib/service/screen-service";
 import type { AgentPayload } from "@/lib/schemas/agent-payload";
 import { agentPayloadSchema } from "@/lib/schemas/agent-payload";
 import { marketAnalysisSchema, insightsBriefSchema } from "@/lib/agents/types";
+import { describeDimension } from "@/lib/maturity/methodology";
 
 export class AdminServiceError extends Error {
   constructor(
@@ -43,6 +44,7 @@ function buildPdfInput(
     name: r.dimensao,
     nivel: r.nivel,
     peso: r.peso,
+    ...describeDimension(r.dimensao_id, r.peso),
   }));
   const riskDim = payload.respostas.find(
     (r) => r.dimensao_id === payload.risco.dimensao_id,
