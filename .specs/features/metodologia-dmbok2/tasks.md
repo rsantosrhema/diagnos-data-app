@@ -181,10 +181,10 @@ T13 → T14
 
 **Done when**:
 
-- [ ] All exact values/examples from MET-13..MET-19 asserted in `src/lib/maturity/methodology.test.ts`
-- [ ] Module has no `server-only` import and no `process.env` access
-- [ ] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build` (last task of Phase 1)
-- [ ] Test count ≥ previous
+- [x] All exact values/examples from MET-13..MET-19 asserted in `src/lib/maturity/methodology.test.ts`
+- [x] Module has no `server-only` import and no `process.env` access
+- [x] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build` (last task of Phase 1)
+- [x] Test count ≥ previous
 
 **Tests**: unit
 **Gate**: build

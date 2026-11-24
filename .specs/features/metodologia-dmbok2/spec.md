@@ -176,13 +176,13 @@ O diagnóstico mistura três referências (DAMA-DMBOK, DCAM e uma escala "CMMI-l
 | MET-10 | P1: Régua única | Tasks | Implementing |
 | MET-11 | P1: Régua única | Tasks | Implementing |
 | MET-12 | P1: Régua única | Tasks | Implementing |
-| MET-13 | P1: Linguagem única | Tasks | Pending |
-| MET-14 | P1: Linguagem única | Tasks | Pending |
-| MET-15 | P1: Linguagem única | Tasks | Pending |
-| MET-16 | P1: Linguagem única | Tasks | Pending |
-| MET-17 | P1: Linguagem única | Tasks | Pending |
-| MET-18 | P1: Linguagem única | Tasks | Pending |
-| MET-19 | P1: Linguagem única | Tasks | Pending |
+| MET-13 | P1: Linguagem única | Tasks | Implementing |
+| MET-14 | P1: Linguagem única | Tasks | Implementing |
+| MET-15 | P1: Linguagem única | Tasks | Implementing |
+| MET-16 | P1: Linguagem única | Tasks | Implementing |
+| MET-17 | P1: Linguagem única | Tasks | Implementing |
+| MET-18 | P1: Linguagem única | Tasks | Implementing |
+| MET-19 | P1: Linguagem única | Tasks | Implementing |
 | MET-20 | P1: PDF | Tasks | Pending |
 | MET-21 | P1: PDF | Tasks | Pending |
 | MET-22 | P1: PDF | Tasks | Pending |
