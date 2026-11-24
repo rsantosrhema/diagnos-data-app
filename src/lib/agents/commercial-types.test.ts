@@ -2,6 +2,20 @@ import { describe, it, expect } from "vitest";
 import { commercialArsenalSchema, type CommercialArsenal } from "./commercial-types";
 import { makeArsenal } from "./commercial-fixture";
 
+const WORDS = ["dado", "governanca", "qualidade", "metadados", "arquitetura", "analytics"];
+
+function multiWordText(length: number): string {
+  const parts: string[] = [];
+  let size = 0;
+  while (size < length - 14) {
+    const word = WORDS[parts.length % WORDS.length];
+    parts.push(word);
+    size += parts.length === 1 ? word.length : word.length + 1;
+  }
+  parts.push("x".repeat(length - size - 1));
+  return parts.join(" ");
+}
+
 type ParseResult = ReturnType<typeof commercialArsenalSchema.safeParse>;
 
 type TextField = {
@@ -416,19 +430,24 @@ describe("commercialArsenalSchema", () => {
       }
     });
 
-    it("trunca cada campo um caractere acima do limite literal da spec (ARS-06 a ARS-11)", () => {
+    it("trunca em palavra inteira cada campo um caractere acima do limite da spec (ARS-11)", () => {
       for (const field of TEXT_FIELDS) {
+        const original = multiWordText(field.max + 1);
         const arsenal = makeArsenal();
-        field.write(arsenal, "a".repeat(field.max + 1));
+        field.write(arsenal, original);
 
         const result = commercialArsenalSchema.safeParse(arsenal);
 
         expect(result.success, field.name).toBe(true);
         if (!result.success) continue;
         const value = field.read(result.data);
+        const truncated = value.slice(0, -1);
+
         expect(value.length, field.name).toBeLessThanOrEqual(field.max);
         expect(value.endsWith("…"), field.name).toBe(true);
         expect(value, field.name).not.toMatch(/\s…$/);
+        expect(original.startsWith(truncated), field.name).toBe(true);
+        expect(original.charAt(truncated.length), field.name).toBe(" ");
       }
     });
   });

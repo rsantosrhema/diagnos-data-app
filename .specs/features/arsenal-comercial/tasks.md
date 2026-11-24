@@ -1288,3 +1288,12 @@ Fixes encontrados na evidência e na validação independente (iteração 1), no
 **Prova dos mutantes**: `git worktree add --detach "$TMPDIR/opencode/f7-proof" HEAD` (árvore real intocada, nenhum `git stash`), teste novo copiado e `node_modules` por symlink; cada limite mutado em `commercial-types.ts` e `npx vitest run src/lib/agents/commercial-types.test.ts` → **1 failed | 26 passed** em N4a, N4c, N4f, N4h e N4i, **2 failed | 25 passed** em N4b; arquivo restaurado entre os passos e worktree descartado depois.
 **Gates**: `npm run lint` exit 0, `npm run typecheck` exit 0, `npm run test` **890 passed / 5 skipped (895)**, 77 arquivos passed.
 **Commit**: `test(agents): afere os limites de texto do Arsenal como literais da spec` (este commit).
+
+### F8: truncamento em palavra inteira (gap 2, N5)
+
+**What**: a tabela de truncamento por campo usava `"a".repeat(max + 1)`, texto sem espaço, então o mutante N5 (cortar no meio da palavra, ignorando a fronteira) sobrevivia à suíte inteira; nenhuma asserção provava o corte em palavra.
+**Where**: `src/lib/agents/commercial-types.test.ts`.
+**Teste**: `multiWordText(max + 1)` gera texto multi-palavra com palavras de 4 a 11 letras e a última palavra preenchida até o comprimento exato. Para cada um dos 8 campos, além de `length <= limite`, terminação em "…" e ausência de espaço antes das reticências, o teste exige `original.startsWith(value.slice(0, -1))` e `original.charAt(value.slice(0, -1).length) === " "`, provando que o corte caiu em fim de palavra.
+**Prova do mutante**: worktree isolado `$TMPDIR/opencode/n5-proof` (HEAD `52c85b7`, árvore real intocada, nenhum `git stash`), `truncateAtWord` trocado por `text.slice(0, max - 1).trimEnd() + "…"`; `npx vitest run src/lib/agents/commercial-types.test.ts` → **1 failed | 26 passed**, com `AssertionError: titulo do ponto: expected 'x' to be ' '`; produção restaurada e worktree descartado.
+**Gates**: `npm run lint` exit 0, `npm run typecheck` exit 0, `npm run test` **890 passed / 5 skipped (895)**, 77 arquivos passed.
+**Commit**: `test(agents): exige corte em palavra inteira em cada campo` (este commit).
