@@ -12,7 +12,7 @@ Per-task cycle (every task, no exceptions): state assumptions/files/success → 
 
 **Design**: `.specs/features/arsenal-comercial/design.md`
 **Spec**: `.specs/features/arsenal-comercial/spec.md`
-**Status**: Approved (aprovado pelo usuário em 2026-11-24)
+**Status**: Done
 
 ---
 
@@ -1078,11 +1078,14 @@ Scenario 1 `real` (timeout 300 000 ms): `commercial = (input) => createCommercia
 
 **Done when**:
 
-- [ ] Authenticated download answers 200 `application/pdf` with 6 pages; the Arsenal is on pages 4 to 6 and equals `real-arsenal.json`
-- [ ] Unauthenticated request answers 401
-- [ ] `smoke-test.md` has `## Download pelo admin` (commands without secrets, status codes, page count) and `## Gates finais` (test count before/after, build result)
-- [ ] All four final gates exit 0
-- [ ] `spec.md` traceability rows for ARS-01..ARS-46 are marked `Implementing` (the Verifier flips them to `Verified`) and `tasks.md` Status is `Done`
+- [x] Authenticated download answers 200 `application/pdf` with 6 pages; the Arsenal is on pages 4 to 6 and equals `real-arsenal.json`
+- [x] Unauthenticated request answers 401
+- [x] `smoke-test.md` has `## Download pelo admin` (commands without secrets, status codes, page count) and `## Gates finais` (test count before/after, build result)
+- [x] All four final gates exit 0
+- [x] `spec.md` traceability rows for ARS-01..ARS-46 are marked `Implementing` (the Verifier flips them to `Verified`) and `tasks.md` Status is `Done`
+
+**SPEC_DEVIATION**: o download autenticado devolve 7 páginas (Arsenal nas páginas 5 a 7), não 6 com o Arsenal em 4 a 6, pela mesma razão das tasks anteriores (o diagnóstico deste fixture ocupa 4 páginas). As 7 páginas renderizadas são idênticas pixel a pixel às do PDF do cenário real de T26, o que cobre ARS-38/ARS-40. Ferramenta de navegador indisponível: o clique no botão não foi exercitado, só a rota que ele chama.
+**Reason**: a contagem absoluta do plano supõe o fixture mínimo de T18; a spec fixa a soma (diagnóstico + 3).
 
 **Tests**: integration (local app + local Supabase, commands above)
 **Gate**: build

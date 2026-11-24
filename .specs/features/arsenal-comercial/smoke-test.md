@@ -96,3 +96,50 @@ Julgamento do `real-arsenal.json` da segunda execução, como gerente comercial:
 | Sem nomes de clientes, números, preços, prazos ou ROI inventados | Passa | Nenhum nome de cliente, preço, prazo ou ROI. Os únicos números são os níveis do próprio diagnóstico (d04 nível 1, d03 nível 5, quatro níveis de diferença). A objeção de confiança instrui: "Não prometa resultado" |
 
 Contagens dentro do contrato: 5 pontos-chave (3 a 5), 6 objeções (3 a 6, grupos únicos), 1 serviço principal + 2 complementares (até 2), 10 perguntas exatamente. Nenhum e-mail foi enviado e nenhum `sendReportEmail` foi importado pelo smoke.
+
+## Download pelo admin
+
+Só local: `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321`, app em `http://localhost:3000`. A senha do gerente foi gerada na hora, usada só em memória e apagada; nada dela foi gravado em arquivo do repositório.
+
+```sh
+set -a; source .env.local; set +a
+MANAGER_EMAIL=$(echo "$MANAGER_EMAILS" | cut -d',' -f1 | tr -d ' ')
+# usuário já existia no Auth local; senha trocada via admin API
+curl -s -X PUT "$NEXT_PUBLIC_SUPABASE_URL/auth/v1/admin/users/<id>" \
+  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+  -H "Content-Type: application/json" -d '{"password":"<senha descartável>","email_confirm":true}'
+TOKEN=$(curl -s -X POST "$NEXT_PUBLIC_SUPABASE_URL/auth/v1/token?grant_type=password" \
+  -H "apikey: $NEXT_PUBLIC_SUPABASE_ANON_KEY" -H "Content-Type: application/json" \
+  -d '{"email":"<gerente>","password":"<senha descartável>"}' | jq -r .access_token)
+npm run dev &                       # sobe em 3000
+curl -s -o /tmp/arsenal-evidence/admin-download.pdf -D - \
+  -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:3000/api/admin-proxy/portal/$(cat /tmp/arsenal-evidence/real-lead-id.txt)/report-pdf"
+curl -s -o /dev/null -w '%{http_code}\n' \
+  "http://localhost:3000/api/admin-proxy/portal/$(cat /tmp/arsenal-evidence/real-lead-id.txt)/report-pdf"
+npm run pdf:png -- /tmp/arsenal-evidence/admin-download.pdf /tmp/arsenal-evidence/admin-png
+```
+
+| Requisição | Resultado |
+| --- | --- |
+| Com `Authorization: Bearer <token do gerente>` | `200`, `content-type: application/pdf`, `content-disposition: attachment; filename="diagnostico-ana-teste.pdf"`, 76.660 bytes |
+| Sem `Authorization` | `401`, corpo `{"error":"Não autenticado"}` |
+
+- Lead usado: `real-lead-id.txt` (o lead do cenário real de T26, com Arsenal persistido).
+- Conversor: `pages=7`. O Arsenal está nas páginas 5 a 7 (diagnóstico ocupa 1 a 4; ver a divergência de contagem registrada na task).
+- Conteúdo igual ao do e-mail: as 7 páginas renderizadas do download são idênticas pixel a pixel (md5) às 7 páginas de `real.pdf`, o PDF enviado no cenário real. A página 5 mostra os mesmos 5 pontos-chave e o serviço "Qualidade e Dados Mestres" de `real-arsenal.json`.
+- PNGs: `/tmp/arsenal-evidence/admin-png`.
+- Ferramenta de navegador indisponível nesta sessão, então o clique em "Exportar PDF" na tela do admin não foi exercitado; a rota que o botão chama (`GET /api/admin-proxy/portal/<leadId>/report-pdf`, ver `src/lib/api/client.ts`) foi exercitada direto, com e sem token.
+
+## Gates finais
+
+Executados depois de parar o dev server, no worktree:
+
+| Gate | Comando | Resultado |
+| --- | --- | --- |
+| Typecheck | `npm run typecheck` | exit 0 |
+| Lint | `npm run lint` | exit 0 |
+| Testes | `npm run test` | 77 arquivos passaram, 3 skipped (80); 873 testes passaram, 5 skipped (878); exit 0 |
+| Build | `npm run build` | exit 0, 24 rotas geradas |
+
+Contagem antes da feature: **67 arquivos passaram, 1 skipped; 768 testes passaram, 1 skipped** (baseline em `tasks.md`). Depois: **77 arquivos passaram, 3 skipped; 873 testes passaram, 5 skipped**. Os 5 testes skipped são os dois smokes gated desta feature e o smoke E2E antigo. Nenhum teste foi removido ou enfraquecido.
