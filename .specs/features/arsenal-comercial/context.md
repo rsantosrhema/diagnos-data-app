@@ -4,7 +4,7 @@
 **Spec:** `.specs/features/arsenal-comercial/spec.md`
 **Status:** Ready for design
 
-> **Aprovação:** o coordenador encerrou a sessão sem responder ao checkpoint 1 (modo Quick). Por instrução do orquestrador, o planejador decidiu sozinho, adotando os defaults recomendados abaixo. Nenhuma decisão desta página foi confirmada pelo usuário; todas estão marcadas `Confirmed? n` na spec e podem ser trocadas antes do Execute.
+> **Aprovação:** o usuário aprovou todos os defaults desta página em 2026-11-24 (checkpoints Discuss, spec, design e tasks aprovados de uma vez).
 
 ---
 

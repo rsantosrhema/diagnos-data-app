@@ -30,18 +30,18 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 | --------------------- | -------------- | --------- | ---------- |
-| Origem do catálogo e das objeções | `docs/comercial/servicos.json` e `objecoes.json`, `status: "rascunho"`, Zod no load, enums derivados | Dono ainda não enviou o conteúdo; troca vira mudança de dado | n |
-| Seed de serviços | 7 serviços: `diagnostico-360`, `governanca`, `qualidade-mestres`, `arquitetura-integracao`, `analytics-bi`, `seguranca-lgpd`, `ia-analytics-avancado` | Um por frente DMBOK2 mais o Diagnóstico 360 já citado em `docs/rules/architecture.md` | n |
-| Seed de grupos de objeção | 6 grupos: `preco`, `timing`, `ja-temos`, `confianca`, `risco-dados`, `decisao` | Cobrem as objeções típicas de venda consultiva de dados | n |
-| Nota de catálogo preliminar | O PDF mostra "Catálogo de serviços preliminar: validar antes de ofertar" enquanto `status` for `rascunho` | Evita que um serviço rascunho seja ofertado como oficial | n |
-| Tamanho do Arsenal | 3 a 5 pontos-chave; 3 a 6 objeções (1 por grupo); 1 serviço + até 2 complementares; 10 perguntas | Cabe em 3 páginas A4 e respeita o pedido (10 perguntas) | n |
-| Mix das perguntas | ≥4 abertas, ≥3 fechadas, ≤1 Situação, ≥2 de cada Problema/Implicação/Necessidade | O screener já respondeu a Situação; foco SPIN em dor e valor | n |
-| Limites de texto | Campo acima do limite é truncado na última palavra com "…", como `clampedOptionalString` | Padrão existente; evita rejeitar saída útil do LLM | n |
-| Guardrail de conteúdo | Prompt proíbe inventar cases, números de clientes, preços, prazos e ROI | Material vai para a mão do vendedor; invenção vira promessa | n |
-| Retry do Arsenal | Nenhum retry de job; só as 3 tentativas internas de schema | Falha do Arsenal não pode reabrir o pipeline principal | n |
-| Reprocesso | `arsenal` é sempre sobrescrito, inclusive com `null` | Nunca mistura diagnóstico novo com Arsenal antigo | n |
-| Arsenal persistido inválido no download | PDF sem Arsenal, sem erro | Catálogo pode mudar depois da geração | n |
-| Fonte dos pontos de decisão da skill SPIN | `docs/agents/skills/comercial/spin-selling.md`, texto por conta do planejador | Mesmo padrão das skills de segmento | n |
+| Origem do catálogo e das objeções | `docs/comercial/servicos.json` e `objecoes.json`, `status: "rascunho"`, Zod no load, enums derivados | Dono ainda não enviou o conteúdo; troca vira mudança de dado | y (usuário, 2026-11-24) |
+| Seed de serviços | 7 serviços: `diagnostico-360`, `governanca`, `qualidade-mestres`, `arquitetura-integracao`, `analytics-bi`, `seguranca-lgpd`, `ia-analytics-avancado` | Um por frente DMBOK2 mais o Diagnóstico 360 já citado em `docs/rules/architecture.md` | y (usuário, 2026-11-24) |
+| Seed de grupos de objeção | 6 grupos: `preco`, `timing`, `ja-temos`, `confianca`, `risco-dados`, `decisao` | Cobrem as objeções típicas de venda consultiva de dados | y (usuário, 2026-11-24) |
+| Nota de catálogo preliminar | O PDF mostra "Catálogo de serviços preliminar: validar antes de ofertar" enquanto `status` for `rascunho` | Evita que um serviço rascunho seja ofertado como oficial | y (usuário, 2026-11-24) |
+| Tamanho do Arsenal | 3 a 5 pontos-chave; 3 a 6 objeções (1 por grupo); 1 serviço + até 2 complementares; 10 perguntas | Cabe em 3 páginas A4 e respeita o pedido (10 perguntas) | y (usuário, 2026-11-24) |
+| Mix das perguntas | ≥4 abertas, ≥3 fechadas, ≤1 Situação, ≥2 de cada Problema/Implicação/Necessidade | O screener já respondeu a Situação; foco SPIN em dor e valor | y (usuário, 2026-11-24) |
+| Limites de texto | Campo acima do limite é truncado na última palavra com "…", como `clampedOptionalString` | Padrão existente; evita rejeitar saída útil do LLM | y (usuário, 2026-11-24) |
+| Guardrail de conteúdo | Prompt proíbe inventar cases, números de clientes, preços, prazos e ROI | Material vai para a mão do vendedor; invenção vira promessa | y (usuário, 2026-11-24) |
+| Retry do Arsenal | Nenhum retry de job; só as 3 tentativas internas de schema | Falha do Arsenal não pode reabrir o pipeline principal | y (usuário, 2026-11-24) |
+| Reprocesso | `arsenal` é sempre sobrescrito, inclusive com `null` | Nunca mistura diagnóstico novo com Arsenal antigo | y (usuário, 2026-11-24) |
+| Arsenal persistido inválido no download | PDF sem Arsenal, sem erro | Catálogo pode mudar depois da geração | y (usuário, 2026-11-24) |
+| Fonte dos pontos de decisão da skill SPIN | `docs/agents/skills/comercial/spin-selling.md`, texto por conta do planejador | Mesmo padrão das skills de segmento | y (usuário, 2026-11-24) |
 | Chamadas ao LLM na verificação local | No máximo 2 execuções do agente comercial, sem e-mail | Limite do dono; chaves de LLM são reais | y |
 
 **Open questions:** none - all resolved or logged above.

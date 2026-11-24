@@ -2,7 +2,7 @@
 
 **Spec**: `.specs/features/arsenal-comercial/spec.md`
 **Context**: `.specs/features/arsenal-comercial/context.md`
-**Status**: Draft (abordagem escolhida pelo planejador; o coordenador não respondeu ao checkpoint 3)
+**Status**: Approved (abordagem A aprovada pelo usuário em 2026-11-24)
 
 ---
 

@@ -12,7 +12,7 @@ Per-task cycle (every task, no exceptions): state assumptions/files/success → 
 
 **Design**: `.specs/features/arsenal-comercial/design.md`
 **Spec**: `.specs/features/arsenal-comercial/spec.md`
-**Status**: Draft (aguarda aprovação; o coordenador não respondeu ao checkpoint 4)
+**Status**: Approved (aprovado pelo usuário em 2026-11-24)
 
 ---
 
