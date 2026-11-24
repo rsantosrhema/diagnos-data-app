@@ -997,11 +997,14 @@ Scenario 1 `real` (timeout 300 000 ms): `commercial = (input) => createCommercia
 
 **Done when**:
 
-- [ ] `arsenal-sample.pdf` has 6 pages and the base PDF has 3 (confirmed by `pages=` printed by the converter)
-- [ ] Every Arsenal page was inspected and the table in `smoke-test.md` has one row per page
-- [ ] Any layout defect found (overflow, cut text, overlapping, wrong color) is fixed in `src/lib/report/arsenal-pages.ts` in a SEPARATE commit `fix(report): ...` BEFORE this evidence commit, with the unit tests still green; if a defect cannot be fixed in 2 attempts, record it under `## Problemas encontrados` and continue
-- [ ] The PNG folder path is written in `smoke-test.md`
-- [ ] Build gate passes: `npm run typecheck && npm run lint && npm run test && npm run build`
+- [x] `arsenal-sample.pdf` has 6 pages and the base PDF has 3 (confirmed by `pages=` printed by the converter)
+- [x] Every Arsenal page was inspected and the table in `smoke-test.md` has one row per page
+- [x] Any layout defect found (overflow, cut text, overlapping, wrong color) is fixed in `src/lib/report/arsenal-pages.ts` in a SEPARATE commit `fix(report): ...` BEFORE this evidence commit, with the unit tests still green; if a defect cannot be fixed in 2 attempts, record it under `## Problemas encontrados` and continue
+- [x] The PNG folder path is written in `smoke-test.md`
+- [x] Build gate passes: `npm run typecheck && npm run lint && npm run test && npm run build`
+
+**SPEC_DEVIATION**: o fixture do T22 rende 4 páginas de diagnóstico e 7 com o Arsenal, não 3 e 6. A evidência registra `pages=7` e `pages=4` e confere o invariante de ARS-37 (diagnóstico + 3). O defeito de sobreposição encontrado nas perguntas foi corrigido no commit `4b235ee`, antes deste commit de evidência.
+**Reason**: a contagem 3/6 do plano veio do fixture mínimo de T18; a spec fixa a soma, não o total, e reduzir o fixture esconderia conteúdo pedido.
 
 **Tests**: integration (gated smoke from T22)
 **Gate**: build
