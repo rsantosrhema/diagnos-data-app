@@ -410,12 +410,12 @@ Apply ONLY to the local container (never `npm run db:reset`, never a remote): ru
 
 **Done when**:
 
-- [ ] For a fixture payload the output equals the exact object the old function produced (dimension `name`, `nivel`, `peso`, `pesoPadrao`, `areaDmbok`; `riskDimension`; `imbalance`; `commercialAnswer`)
-- [ ] With no extras and no location the result has none of the keys `location`, `analysis`, `insights`, `arsenal` (`"arsenal" in result` is false)
-- [ ] With `arsenal: makeArsenal()` the result has `arsenal` deep equal to it; with `location` the result has it
-- [ ] Risk dimension not found in `respostas` gives `riskDimension.name` `"Dimensão"`
-- [ ] Gate check passes: `npx vitest run src/lib/report/build-pdf-input.test.ts` and `npm run typecheck`
-- [ ] Test count: at least 4 new tests, none removed
+- [x] For a fixture payload the output equals the exact object the old function produced (dimension `name`, `nivel`, `peso`, `pesoPadrao`, `areaDmbok`; `riskDimension`; `imbalance`; `commercialAnswer`)
+- [x] With no extras and no location the result has none of the keys `location`, `analysis`, `insights`, `arsenal` (`"arsenal" in result` is false)
+- [x] With `arsenal: makeArsenal()` the result has `arsenal` deep equal to it; with `location` the result has it
+- [x] Risk dimension not found in `respostas` gives `riskDimension.name` `"Dimensão"`
+- [x] Gate check passes: `npx vitest run src/lib/report/build-pdf-input.test.ts` and `npm run typecheck`
+- [x] Test count: at least 4 new tests, none removed
 
 **Tests**: unit
 **Gate**: quick

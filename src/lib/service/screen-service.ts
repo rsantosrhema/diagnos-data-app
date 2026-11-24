@@ -4,6 +4,7 @@ import type { ScreenerContract } from "@/lib/screener/contract";
 import type { ScreenerSubmission } from "@/lib/schemas/screener";
 import type { ScoringCalibration } from "@/lib/screener/scoring-calibration";
 import type { InsightsBrief, MarketAnalysis } from "@/lib/agents/types";
+import type { CommercialArsenal } from "@/lib/agents/commercial-types";
 import { computeScores, computeContextualScores } from "@/lib/screener/scoring";
 import { buildAgentPayload } from "@/lib/screener/agent-payload";
 
@@ -33,6 +34,7 @@ export interface GeneratePdfInput {
   location?: { city: string; state: string };
   analysis?: MarketAnalysis;
   insights?: InsightsBrief;
+  arsenal?: CommercialArsenal;
 }
 
 export function createScreenService(deps: {
