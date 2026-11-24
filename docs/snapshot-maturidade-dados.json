@@ -1,10 +1,19 @@
 {
   "meta": {
     "nome": "Diagnóstico de maturidade de dados",
-    "versao": "1.1",
+    "versao": "1.2",
     "autor": "Rhema Data",
     "tipo": "self-assessment",
-    "escala": "1 a 5 (CMMI-like: Inexistente, Ad-hoc, Definido, Gerenciado, Otimizado)",
+    "nome_indice": "Índice de Maturidade Rhema",
+    "escala": "DAMA-DMBOK2 (cap. 15): 1 Inicial · 2 Repetível · 3 Definido · 4 Gerenciado · 5 Otimizado",
+    "escala_niveis": [
+      { "nivel": 1, "rotulo": "Inicial" },
+      { "nivel": 2, "rotulo": "Repetível" },
+      { "nivel": 3, "rotulo": "Definido" },
+      { "nivel": 4, "rotulo": "Gerenciado" },
+      { "nivel": 5, "rotulo": "Otimizado" }
+    ],
+    "referencia": "Índice proprietário da Rhema Data, estruturado sobre as áreas de conhecimento do DAMA-DMBOK2 e sua abordagem de avaliação de maturidade (cap. 15), com pesos ajustados ao segmento e ao porte da empresa. Instrumento de triagem por autoavaliação; não é certificação.",
     "aviso_metodologico": "Instrumento de triagem baseado em autoavaliação. Não substitui diagnóstico com evidência documental. Resultado deve ser reportado como faixa, não como número exato.",
     "tempo_estimado_min": 5
   },
@@ -72,7 +81,7 @@
       "opcoes": [
         { "nivel": 1, "texto": "Não há dono definido — quem está disponível resolve" },
         { "nivel": 2, "texto": "TI assume tudo, mesmo quando o problema é da área de negócio" },
-        { "nivel": 3, "texto": "Há responsáveis reconhecidos, mas sem papel formal" },
+        { "nivel": 3, "texto": "Papéis de dono formalizados, mas cobrindo só parte dos dados críticos" },
         { "nivel": 4, "texto": "Donos designados por domínio, com papéis documentados" },
         { "nivel": 5, "texto": "Comitê de dados ativo com priorização e resolução de conflitos" }
       ]
@@ -81,7 +90,7 @@
       "id": "d02",
       "nome": "Patrocínio Executivo e Business Case",
       "peso": 12,
-      "area_dmbok": "DCAM — Data Management Strategy & Business Case",
+      "area_dmbok": "Data Governance (Data Strategy)",
       "pergunta": "Iniciativas de dados têm orçamento e patrocínio executivo?",
       "opcoes": [
         { "nivel": 1, "texto": "Sem orçamento — dados são sobra de projetos de TI" },
@@ -100,7 +109,7 @@
       "opcoes": [
         { "nivel": 1, "texto": "Exportamos planilhas e cruzamos manualmente" },
         { "nivel": 2, "texto": "Integrações sob demanda, cada uma com tecnologia diferente" },
-        { "nivel": 3, "texto": "Repositório central existe, mas sem padrão único" },
+        { "nivel": 3, "texto": "Repositório central com padrões de integração definidos, aplicados a parte das fontes" },
         { "nivel": 4, "texto": "Plataforma unificada com pipelines versionados" },
         { "nivel": 5, "texto": "Dados como produtos, com contratos de interface" }
       ]
@@ -128,7 +137,7 @@
       "opcoes": [
         { "nivel": 1, "texto": "Ninguém sabe a origem com segurança" },
         { "nivel": 2, "texto": "Dá para descobrir, mas leva dias" },
-        { "nivel": 3, "texto": "Documentação existe, mas está desatualizada" },
+        { "nivel": 3, "texto": "Documentação padronizada para os dados críticos, atualizada manualmente" },
         { "nivel": 4, "texto": "Catálogo com glossário de negócio mantido ativamente" },
         { "nivel": 5, "texto": "Linhagem automática da origem ao consumo" }
       ]
@@ -156,7 +165,7 @@
       "opcoes": [
         { "nivel": 1, "texto": "Sem mapeamento — assumimos que está tudo nos sistemas" },
         { "nivel": 2, "texto": "Conhecemos os sistemas principais, mas não planilhas paralelas" },
-        { "nivel": 3, "texto": "Inventário existe, mas atualizado esporadicamente" },
+        { "nivel": 3, "texto": "Inventário de dados pessoais formalizado, com revisão em ciclo definido" },
         { "nivel": 4, "texto": "Dados classificados com controle de acesso e auditoria" },
         { "nivel": 5, "texto": "Classificação automatizada com mascaramento e revisão periódica" }
       ]
@@ -179,7 +188,7 @@
       "id": "d09",
       "nome": "IA, Modelos e Analytics Avançado",
       "peso": 6,
-      "area_dmbok": "DCAM — Analytics Management",
+      "area_dmbok": "Big Data & Data Science",
       "pergunta": "A empresa usa IA ou modelos de machine learning?",
       "opcoes": [
         { "nivel": 1, "texto": "Sem uso de IA conectada aos dados" },
@@ -193,7 +202,7 @@
       "id": "d10",
       "nome": "Time e Capacidade",
       "peso": 8,
-      "area_dmbok": "DMBOK — Organization & Cultural Change",
+      "area_dmbok": "Data Management Organization & Role Expectations",
       "pergunta": "Como está estruturado o time de dados?",
       "opcoes": [
         { "nivel": 1, "texto": "Responsabilidade acumulada de quem cuida de sistemas" },

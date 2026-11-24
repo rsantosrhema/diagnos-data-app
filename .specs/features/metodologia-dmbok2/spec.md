@@ -164,12 +164,12 @@ O diagnóstico mistura três referências (DAMA-DMBOK, DCAM e uma escala "CMMI-l
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| MET-01 | P1: Contrato | Tasks | Pending |
-| MET-02 | P1: Contrato | Tasks | Pending |
-| MET-03 | P1: Contrato | Tasks | Pending |
-| MET-04 | P1: Contrato | Tasks | Pending |
-| MET-05 | P1: Contrato | Tasks | Pending |
-| MET-06 | P1: Contrato | Tasks | Pending |
+| MET-01 | P1: Contrato | Tasks | Implementing |
+| MET-02 | P1: Contrato | Tasks | Implementing |
+| MET-03 | P1: Contrato | Tasks | Implementing |
+| MET-04 | P1: Contrato | Tasks | Implementing |
+| MET-05 | P1: Contrato | Tasks | Implementing |
+| MET-06 | P1: Contrato | Tasks | Implementing |
 | MET-07 | P1: Régua única | Tasks | Pending |
 | MET-08 | P1: Régua única | Tasks | Pending |
 | MET-09 | P1: Régua única | Tasks | Pending |

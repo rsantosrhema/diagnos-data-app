@@ -94,12 +94,12 @@ T13 → T14
 
 **Done when**:
 
-- [ ] `meta.versao` = "1.2"; `meta.escala` = "DAMA-DMBOK2 (cap. 15): 1 Inicial · 2 Repetível · 3 Definido · 4 Gerenciado · 5 Otimizado"; `meta.nome_indice`, `meta.referencia`, `meta.escala_niveis` exactly as in spec
-- [ ] `metaSchema` validates `nome_indice`, `referencia`, `escala_niveis` (length 5, nivel int 1–5, rotulo non-empty)
-- [ ] d02/d09/d10 `area_dmbok` and the 4 nível-3 option texts exactly as in spec; the other 46 option texts and 7 `area_dmbok` values unchanged
-- [ ] `src/lib/screener/contract.test.ts` asserts each value above and that `JSON.stringify(SCREENER_CONTRACT)` contains none of "CMMI", "DCAM", "DMM"
-- [ ] Gate check passes: `npx vitest run src/lib/screener`
-- [ ] Test count ≥ baseline
+- [x] `meta.versao` = "1.2"; `meta.escala` = "DAMA-DMBOK2 (cap. 15): 1 Inicial · 2 Repetível · 3 Definido · 4 Gerenciado · 5 Otimizado"; `meta.nome_indice`, `meta.referencia`, `meta.escala_niveis` exactly as in spec
+- [x] `metaSchema` validates `nome_indice`, `referencia`, `escala_niveis` (length 5, nivel int 1–5, rotulo non-empty)
+- [x] d02/d09/d10 `area_dmbok` and the 4 nível-3 option texts exactly as in spec; the other 46 option texts and 7 `area_dmbok` values unchanged
+- [x] `src/lib/screener/contract.test.ts` asserts each value above and that `JSON.stringify(SCREENER_CONTRACT)` contains none of "CMMI", "DCAM", "DMM"
+- [x] Gate check passes: `npx vitest run src/lib/screener`
+- [x] Test count ≥ baseline
 
 **Tests**: unit
 **Gate**: quick
