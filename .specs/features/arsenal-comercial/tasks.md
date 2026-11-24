@@ -673,13 +673,13 @@ Page one: `h(Page, { key: "arsenal-1", size: "A4", style: styles.page }, ...chil
 
 **Done when**:
 
-- [ ] Page two text contains `03`, `Contorno de objeções`, the catalog `nome` of every `grupo` in the fixture (`Preço e orçamento`, `Timing e prioridade`, `Já temos time ou ferramenta`, `Risco e segurança dos dados`), and for each item its `objecao_provavel`, `contorno` and `apoio`
-- [ ] The label `OBJEÇÃO PROVÁVEL` appears exactly as many times as there are objections; same for `CONTORNO` and `APOIO NO DIAGNÓSTICO`
-- [ ] The group `nome` appears before its `objecao_provavel` in the flattened text
-- [ ] A catalog without a group id falls back to showing the raw id (no throw)
-- [ ] The color/font token walk from T15 also passes for page two
-- [ ] Gate check passes: `npx vitest run src/lib/report/arsenal-pages.test.tsx`
-- [ ] Test count: at least 5 new tests, none removed
+- [x] Page two text contains `03`, `Contorno de objeções`, the catalog `nome` of every `grupo` in the fixture (`Preço e orçamento`, `Timing e prioridade`, `Já temos time ou ferramenta`, `Risco e segurança dos dados`), and for each item its `objecao_provavel`, `contorno` and `apoio`
+- [x] The label `OBJEÇÃO PROVÁVEL` appears exactly as many times as there are objections; same for `CONTORNO` and `APOIO NO DIAGNÓSTICO`
+- [x] The group `nome` appears before its `objecao_provavel` in the flattened text
+- [x] A catalog without a group id falls back to showing the raw id (no throw)
+- [x] The color/font token walk from T15 also passes for page two
+- [x] Gate check passes: `npx vitest run src/lib/report/arsenal-pages.test.tsx`
+- [x] Test count: at least 5 new tests, none removed
 
 **Tests**: unit
 **Gate**: quick

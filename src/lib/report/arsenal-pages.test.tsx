@@ -146,3 +146,66 @@ describe("buildArsenalPages - página 1", () => {
     expectOnlyReportTokens(buildArsenalPages(makeArsenal())[0]);
   });
 });
+
+describe("buildArsenalPages - página 2", () => {
+  function pageTwo(arsenal = makeArsenal(), catalog = COMMERCIAL_CATALOG) {
+    return buildArsenalPages(arsenal, catalog)[1];
+  }
+
+  it("mostra a seção 03, o nome de cada grupo e os três textos de cada objeção (ARS-33)", () => {
+    const arsenal = makeArsenal();
+    const texts = textOf(pageTwo(arsenal));
+
+    expect(texts).toContain("03");
+    expect(texts).toContain("Contorno de objeções");
+
+    for (const objection of arsenal.objecoes) {
+      const group = COMMERCIAL_CATALOG.grupos.find(
+        (item) => item.id === objection.grupo,
+      );
+      expect(texts).toContain(group?.nome);
+      expect(texts).toContain(objection.objecao_provavel);
+      expect(texts).toContain(objection.contorno);
+      expect(texts).toContain(objection.apoio);
+    }
+  });
+
+  it("repete cada rótulo exatamente uma vez por objeção (ARS-33)", () => {
+    const arsenal = makeArsenal();
+    const texts = textOf(pageTwo(arsenal));
+    const count = (label: string) => texts.filter((text) => text === label).length;
+
+    expect(count("OBJEÇÃO PROVÁVEL")).toBe(arsenal.objecoes.length);
+    expect(count("CONTORNO")).toBe(arsenal.objecoes.length);
+    expect(count("APOIO NO DIAGNÓSTICO")).toBe(arsenal.objecoes.length);
+  });
+
+  it("mostra o nome do grupo antes da objeção provável (ARS-33)", () => {
+    const arsenal = makeArsenal();
+    const texts = textOf(pageTwo(arsenal));
+
+    for (const objection of arsenal.objecoes) {
+      const groupName = COMMERCIAL_CATALOG.grupos.find(
+        (item) => item.id === objection.grupo,
+      )?.nome;
+      expect(texts.indexOf(String(groupName))).toBeLessThan(
+        texts.indexOf(objection.objecao_provavel),
+      );
+    }
+  });
+
+  it("usa o id cru quando o grupo não existe no catálogo (ARS-33)", () => {
+    const catalogWithoutPreco = {
+      ...COMMERCIAL_CATALOG,
+      grupos: COMMERCIAL_CATALOG.grupos.filter((group) => group.id !== "preco"),
+    };
+    const texts = textOf(pageTwo(makeArsenal(), catalogWithoutPreco));
+
+    expect(texts).toContain("preco");
+    expect(texts).not.toContain("Preço e orçamento");
+  });
+
+  it("usa apenas tokens de cor do relatório e as fontes Inter/Poppins (ARS-36)", () => {
+    expectOnlyReportTokens(pageTwo());
+  });
+});

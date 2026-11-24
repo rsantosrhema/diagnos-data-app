@@ -4,6 +4,7 @@ import { COMMERCIAL_CATALOG } from "@/lib/comercial/catalog";
 import { getDimensionById } from "@/lib/screener/contract";
 import { shortDimensionLabel } from "./dimension-label";
 import {
+  COLORS,
   footer,
   h,
   p,
@@ -20,6 +21,11 @@ const PRELIMINARY_CATALOG_NOTE =
 const arsenalStyles = StyleSheet.create({
   pointCard: {
     paddingBottom: p(12),
+  },
+  objectionCard: {
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.hairline,
+    padding: p(10),
   },
 });
 
@@ -100,6 +106,30 @@ function preliminaryCatalogNote() {
   );
 }
 
+function objectionCard(
+  objection: CommercialArsenal["objecoes"][number],
+  index: number,
+  catalog: Catalog,
+) {
+  const groupName =
+    catalog.grupos.find((group) => group.id === objection.grupo)?.nome ??
+    objection.grupo;
+
+  const block = (label: string, text: string, key: string) => [
+    h(Text, { key: `${key}-label`, style: styles.readingLabel }, label),
+    h(Text, { key: `${key}-text`, style: styles.painText }, text),
+  ];
+
+  return h(
+    View,
+    { key: `arsenal-objection-${index}`, style: arsenalStyles.objectionCard, wrap: false },
+    h(Text, { style: styles.competitorName }, groupName),
+    ...block("OBJEÇÃO PROVÁVEL", objection.objecao_provavel, "objection"),
+    ...block("CONTORNO", objection.contorno, "objection-handling"),
+    ...block("APOIO NO DIAGNÓSTICO", objection.apoio, "objection-support"),
+  );
+}
+
 function arsenalPageOne(arsenal: CommercialArsenal, catalog: Catalog) {
   const children: ReturnType<typeof h>[] = [
     runningHead(ARSENAL_RUNNING_HEAD, "Pontos-chave e serviço ideal"),
@@ -125,11 +155,24 @@ function arsenalPageOne(arsenal: CommercialArsenal, catalog: Catalog) {
   return h(Page, { key: "arsenal-1", size: "A4", style: styles.page }, ...children, footer());
 }
 
-function arsenalPageTwo() {
+function arsenalPageTwo(arsenal: CommercialArsenal, catalog: Catalog) {
+  const count = arsenal.objecoes.length;
+
   return h(
     Page,
     { key: "arsenal-2", size: "A4", style: styles.page },
     runningHead(ARSENAL_RUNNING_HEAD, "Contorno de objeções"),
+    spacer(22, "arsenal-2-space-1"),
+    sectionHeader(
+      "03",
+      "Contorno de objeções",
+      `${count} ${count === 1 ? "grupo" : "grupos"}`,
+      "section-arsenal-3",
+    ),
+    spacer(12, "arsenal-2-space-2"),
+    ...arsenal.objecoes.map((objection, index) =>
+      objectionCard(objection, index, catalog),
+    ),
     footer(),
   );
 }
@@ -147,5 +190,5 @@ export function buildArsenalPages(
   arsenal: CommercialArsenal,
   catalog: Catalog = COMMERCIAL_CATALOG,
 ): ReturnType<typeof h>[] {
-  return [arsenalPageOne(arsenal, catalog), arsenalPageTwo(), arsenalPageThree()];
+  return [arsenalPageOne(arsenal, catalog), arsenalPageTwo(arsenal, catalog), arsenalPageThree()];
 }
