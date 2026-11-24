@@ -123,14 +123,14 @@ T13 → T14
 
 **Done when**:
 
-- [ ] Indústria score in [1.8, 2.0) → `band.rotulo` "Emergente" and `band.descricao` = Indústria's Emergente text from calibration
-- [ ] Segment "Outro" (no recalibrated bands) → contract `descricao`
-- [ ] A calibration object whose `recalibrated_bands` limits differ from the contract (e.g. Inicial up to 2.0) still classifies 1.9 as "Emergente"
-- [ ] Boundaries: score 2.6 → "Estruturado"; 5.0 → "Otimizado"
-- [ ] Adjusted weights in `dimensionScores[].peso` unchanged versus `computeAdjustedWeights` for the same profile
-- [ ] Tests in `src/lib/screener/scoring.test.ts`; any existing assertion that encoded segment-specific limits is updated citing MET-07 (never deleted)
-- [ ] Gate check passes: `npx vitest run src/lib/screener`
-- [ ] Test count ≥ previous
+- [x] Indústria score in [1.8, 2.0) → `band.rotulo` "Emergente" and `band.descricao` = Indústria's Emergente text from calibration
+- [x] Segment "Outro" (no recalibrated bands) → contract `descricao`
+- [x] A calibration object whose `recalibrated_bands` limits differ from the contract (e.g. Inicial up to 2.0) still classifies 1.9 as "Emergente"
+- [x] Boundaries: score 2.6 → "Estruturado"; 5.0 → "Otimizado"
+- [x] Adjusted weights in `dimensionScores[].peso` unchanged versus `computeAdjustedWeights` for the same profile
+- [x] Tests in `src/lib/screener/scoring.test.ts`; any existing assertion that encoded segment-specific limits is updated citing MET-07 (never deleted)
+- [x] Gate check passes: `npx vitest run src/lib/screener`
+- [x] Test count ≥ previous
 
 **Tests**: unit
 **Gate**: quick

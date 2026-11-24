@@ -4,7 +4,7 @@ import {
   type ScreenerContract,
   type ScoreBand,
 } from "./contract";
-import type { ScoringCalibration, RecalibratedBand } from "./scoring-calibration";
+import type { ScoringCalibration } from "./scoring-calibration";
 import { computeAdjustedWeights, getRecalibratedBands } from "./weight-calculator";
 
 export interface DimensionAnswer {
@@ -125,9 +125,6 @@ export function computeContextualScores(params: ContextualScoringParams): Screen
 
   const adjustedWeights = computeAdjustedWeights({ calibration, profile });
 
-  const segmento = profile[calibration.profile_factors.segmento.source_field] ?? "";
-  const recalibratedBands = getRecalibratedBands(calibration, segmento);
-
   const contractWithAdjustedWeights: ScreenerContract = {
     ...contract,
     dimensoes: contract.dimensoes.map((dim) => {
@@ -137,13 +134,24 @@ export function computeContextualScores(params: ContextualScoringParams): Screen
         peso: adjusted ? adjusted.adjustedWeight : dim.peso,
       };
     }),
-    scoring: recalibratedBands.length > 0
-      ? {
-          ...contract.scoring,
-          faixas: recalibratedBands,
-        }
-      : contract.scoring,
   };
 
-  return computeScores(contractWithAdjustedWeights, answers, contextAnswers, role);
+  const result = computeScores(
+    contractWithAdjustedWeights,
+    answers,
+    contextAnswers,
+    role,
+  );
+
+  const segmento = profile[calibration.profile_factors.segmento.source_field] ?? "";
+  const segmentBand = getRecalibratedBands(calibration, segmento).find(
+    (band) => band.rotulo === result.band.rotulo,
+  );
+
+  if (!segmentBand) return result;
+
+  return {
+    ...result,
+    band: { ...result.band, descricao: segmentBand.descricao },
+  };
 }

@@ -170,11 +170,11 @@ O diagnóstico mistura três referências (DAMA-DMBOK, DCAM e uma escala "CMMI-l
 | MET-04 | P1: Contrato | Tasks | Implementing |
 | MET-05 | P1: Contrato | Tasks | Implementing |
 | MET-06 | P1: Contrato | Tasks | Implementing |
-| MET-07 | P1: Régua única | Tasks | Pending |
-| MET-08 | P1: Régua única | Tasks | Pending |
-| MET-09 | P1: Régua única | Tasks | Pending |
-| MET-10 | P1: Régua única | Tasks | Pending |
-| MET-11 | P1: Régua única | Tasks | Pending |
+| MET-07 | P1: Régua única | Tasks | Implementing |
+| MET-08 | P1: Régua única | Tasks | Implementing |
+| MET-09 | P1: Régua única | Tasks | Implementing |
+| MET-10 | P1: Régua única | Tasks | Implementing |
+| MET-11 | P1: Régua única | Tasks | Implementing |
 | MET-12 | P1: Régua única | Tasks | Pending |
 | MET-13 | P1: Linguagem única | Tasks | Pending |
 | MET-14 | P1: Linguagem única | Tasks | Pending |

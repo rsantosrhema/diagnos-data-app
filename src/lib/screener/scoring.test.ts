@@ -2,7 +2,8 @@ import { describe, it, expect } from "vitest";
 import { SCREENER_CONTRACT } from "./contract";
 import { computeScores, computeContextualScores, ScoringError } from "./scoring";
 import type { DimensionAnswer } from "./scoring";
-import { SCORING_CALIBRATION } from "./scoring-calibration";
+import { SCORING_CALIBRATION, type ScoringCalibration } from "./scoring-calibration";
+import { computeAdjustedWeights } from "./weight-calculator";
 
 const DIMS = SCREENER_CONTRACT.dimensoes;
 
@@ -14,6 +15,16 @@ function answersWith(levels: Record<string, number>): DimensionAnswer[] {
   return DIMS.map((d) => ({
     dimensionId: d.id,
     nivel: levels[d.id] ?? 3,
+  }));
+}
+
+function allAnswersAt(
+  nivel: number,
+  overrides: Record<string, number> = {},
+): DimensionAnswer[] {
+  return DIMS.map((d) => ({
+    dimensionId: d.id,
+    nivel: overrides[d.id] ?? nivel,
   }));
 }
 
@@ -183,7 +194,9 @@ describe("computeContextualScores", () => {
     expect(totalPeso).toBe(100);
   });
 
-  it("usa faixas recalibradas para segmento conhecido", () => {
+  it("aplica a descrição setorial da faixa classificada pelo contrato (MET-09)", () => {
+    // Era "usa faixas recalibradas para segmento conhecido": a classificação passou a vir do
+    // contrato (MET-07) e a faixa setorial só empresta a `descricao` (MET-09).
     const result = computeContextualScores({
       contract: SCREENER_CONTRACT,
       calibration: SCORING_CALIBRATION,
@@ -191,11 +204,14 @@ describe("computeContextualScores", () => {
       contextAnswers: {},
       profile: { perfil_01: "Finanças/Fintech" },
     });
-    expect(result.band).toBeDefined();
-    expect(result.band.rotulo).toBeDefined();
+    expect(result.band.rotulo).toBe("Estruturado");
+    expect(result.band.descricao).toBe(
+      "Governança de dados regulatórios existe. Modelos de risco em produção sem monitoramento formal.",
+    );
   });
 
   it("usa faixas padrão para segmento sem recalibração", () => {
+    // MET-10: sem entrada setorial, a descrição vem da faixa do contrato.
     const result = computeContextualScores({
       contract: SCREENER_CONTRACT,
       calibration: SCORING_CALIBRATION,
@@ -204,6 +220,9 @@ describe("computeContextualScores", () => {
       profile: { perfil_01: "Outro" },
     });
     expect(result.band.rotulo).toBe("Estruturado");
+    expect(result.band.descricao).toBe(
+      "Base técnica existe. O gargalo costuma ser governança e processo, não tecnologia.",
+    );
   });
 
   it("retorna dimensionScores com pesos ajustados", () => {
@@ -246,5 +265,141 @@ describe("computeContextualScores", () => {
     });
     expect(contextual.score).toBe(original.score);
     expect(contextual.band.rotulo).toBe(original.band.rotulo);
+  });
+
+  it("Indústria com score 1,93 cai em Emergente com a descrição setorial (MET-08, MET-09)", () => {
+    const result = computeContextualScores({
+      contract: SCREENER_CONTRACT,
+      calibration: SCORING_CALIBRATION,
+      answers: allAnswersAt(2, { d06: 1 }),
+      contextAnswers: {},
+      profile: { perfil_01: "Indústria" },
+    });
+    expect(result.score).toBeCloseTo(1.93, 10);
+    expect(result.band.rotulo).toBe("Emergente");
+    expect(result.band.min).toBe(1.8);
+    expect(result.band.max).toBe(2.6);
+    expect(result.band.descricao).toBe(
+      "Iniciativas isoladas de dados na produção. Integração com ERP/SAP ainda incipiente.",
+    );
+  });
+
+  it.each([
+    [1, "Inicial"],
+    [2, "Emergente"],
+    [3, "Estruturado"],
+    [4, "Gerenciado"],
+    [5, "Otimizado"],
+  ])(
+    "classifica a mesma régua do contrato para Saúde com todos os níveis %i → %s (MET-07)",
+    (nivel, rotulo) => {
+      const result = computeContextualScores({
+        contract: SCREENER_CONTRACT,
+        calibration: SCORING_CALIBRATION,
+        answers: allAnswers(nivel),
+        contextAnswers: {},
+        profile: { perfil_01: "Saúde" },
+      });
+      const contractBand = SCREENER_CONTRACT.scoring.faixas.find(
+        (faixa) => faixa.rotulo === rotulo,
+      )!;
+      const segmentBand = SCORING_CALIBRATION.recalibrated_bands.Saúde.find(
+        (faixa) => faixa.rotulo === rotulo,
+      )!;
+      expect(result.score).toBe(nivel);
+      expect(result.band.rotulo).toBe(rotulo);
+      expect(result.band.min).toBe(contractBand.min);
+      expect(result.band.max).toBe(contractBand.max);
+      expect(result.band.descricao).toBe(segmentBand.descricao);
+    },
+  );
+
+  it("ignora limites setoriais divergentes vindos da calibração (MET-07)", () => {
+    const divergentBands = [
+      { min: 1.0, max: 2.0, rotulo: "Inicial", descricao: "Setorial Inicial" },
+      { min: 2.0, max: 2.8, rotulo: "Emergente", descricao: "Setorial Emergente" },
+      { min: 2.8, max: 3.6, rotulo: "Estruturado", descricao: "Setorial Estruturado" },
+      { min: 3.6, max: 4.4, rotulo: "Gerenciado", descricao: "Setorial Gerenciado" },
+      { min: 4.4, max: 5.0, rotulo: "Otimizado", descricao: "Setorial Otimizado" },
+    ];
+    const calibration: ScoringCalibration = {
+      ...SCORING_CALIBRATION,
+      recalibrated_bands: {
+        ...SCORING_CALIBRATION.recalibrated_bands,
+        Outro: divergentBands,
+      },
+    };
+    const result = computeContextualScores({
+      contract: SCREENER_CONTRACT,
+      calibration,
+      answers: allAnswersAt(2, { d05: 1 }),
+      contextAnswers: {},
+      profile: { perfil_01: "Outro" },
+    });
+    expect(result.score).toBeCloseTo(1.9, 10);
+    expect(result.band.rotulo).toBe("Emergente");
+    expect(result.band.min).toBe(1.8);
+    expect(result.band.max).toBe(2.6);
+    expect(result.band.descricao).toBe("Setorial Emergente");
+  });
+
+  it("score exatamente 2,6 cai em Estruturado (limite pertence à faixa superior)", () => {
+    const result = computeContextualScores({
+      contract: SCREENER_CONTRACT,
+      calibration: SCORING_CALIBRATION,
+      answers: answersWith({
+        d01: 3,
+        d02: 3,
+        d03: 3,
+        d04: 3,
+        d05: 3,
+        d06: 2,
+        d07: 2,
+        d08: 2,
+        d09: 2,
+        d10: 2,
+      }),
+      contextAnswers: {},
+      profile: { perfil_01: "Indústria" },
+    });
+    expect(result.score).toBeCloseTo(2.6, 10);
+    expect(result.band.rotulo).toBe("Estruturado");
+  });
+
+  it("score exatamente 5,0 cai em Otimizado", () => {
+    const result = computeContextualScores({
+      contract: SCREENER_CONTRACT,
+      calibration: SCORING_CALIBRATION,
+      answers: allAnswers(5),
+      contextAnswers: {},
+      profile: { perfil_01: "Indústria" },
+    });
+    expect(result.score).toBe(5.0);
+    expect(result.band.rotulo).toBe("Otimizado");
+    expect(result.band.descricao).toBe(
+      "Indústria 4.0 com dados como produto. Manutenção preditiva e digital twin operacionais.",
+    );
+  });
+
+  it("mantém os pesos ajustados de computeAdjustedWeights para o mesmo perfil (MET-11)", () => {
+    const profile = {
+      perfil_01: "Indústria",
+      perfil_02: "51 a 200",
+      perfil_03: "R$ 5 a 50 milhões",
+    };
+    const expected = computeAdjustedWeights({
+      calibration: SCORING_CALIBRATION,
+      profile,
+    });
+    const result = computeContextualScores({
+      contract: SCREENER_CONTRACT,
+      calibration: SCORING_CALIBRATION,
+      answers: allAnswers(3),
+      contextAnswers: {},
+      profile,
+    });
+    expect(result.dimensionScores.map((d) => d.peso)).toEqual(
+      expected.map((w) => w.adjustedWeight),
+    );
   });
 });
