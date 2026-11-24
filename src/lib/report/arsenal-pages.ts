@@ -52,6 +52,12 @@ const arsenalStyles = StyleSheet.create({
     flex: 1,
     gap: p(3),
   },
+  questionText: {
+    fontFamily: "Inter",
+    fontSize: p(12),
+    lineHeight: 1.55,
+    color: COLORS.ink,
+  },
 });
 
 type Catalog = typeof COMMERCIAL_CATALOG;
@@ -234,7 +240,7 @@ function questionRow(
     h(
       View,
       { key: "body", style: arsenalStyles.questionBody },
-      h(Text, { style: styles.insightBody }, question.texto),
+      h(Text, { style: arsenalStyles.questionText }, question.texto),
       h(Text, { style: styles.colArea }, `Objetivo: ${question.objetivo}`),
     ),
   );
