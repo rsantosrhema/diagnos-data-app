@@ -231,8 +231,8 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 | ARS-35 | P1: PDF | Tasks | In Tasks |
 | ARS-36 | P1: PDF | Tasks | In Tasks |
 | ARS-37 | P1: PDF | Tasks | In Tasks |
-| ARS-38 | P1: Download | Tasks | In Tasks |
-| ARS-39 | P1: Download | Tasks | In Tasks |
+| ARS-38 | P1: Download | Tasks | Implementing |
+| ARS-39 | P1: Download | Tasks | Implementing |
 | ARS-40 | P1: Download | Tasks | Implementing |
 | ARS-41 | P1: Restrito | Tasks | In Tasks |
 | ARS-42 | P1: Restrito | Tasks | In Tasks |

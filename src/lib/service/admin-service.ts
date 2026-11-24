@@ -11,10 +11,10 @@ import type {
 } from "@/lib/dto/admin";
 import type { MarketInsightsStatus } from "@/lib/repository/market-insights-repo";
 import type { GeneratePdfInput } from "@/lib/service/screen-service";
-import type { AgentPayload } from "@/lib/schemas/agent-payload";
 import { agentPayloadSchema } from "@/lib/schemas/agent-payload";
 import { marketAnalysisSchema, insightsBriefSchema } from "@/lib/agents/types";
-import { describeDimension } from "@/lib/maturity/methodology";
+import { commercialArsenalSchema } from "@/lib/agents/commercial-types";
+import { buildPdfInput } from "@/lib/report/build-pdf-input";
 
 export class AdminServiceError extends Error {
   constructor(
@@ -34,33 +34,6 @@ const ENQUEUEABLE_STATUSES = new Set([
 ]);
 
 type PdfLocation = NonNullable<GeneratePdfInput["location"]>;
-
-function buildPdfInput(
-  payload: AgentPayload,
-  extras: { analysis?: GeneratePdfInput["analysis"]; insights?: GeneratePdfInput["insights"] },
-  location?: PdfLocation,
-): GeneratePdfInput {
-  const dimensionScores = payload.respostas.map((r) => ({
-    name: r.dimensao,
-    nivel: r.nivel,
-    peso: r.peso,
-    ...describeDimension(r.dimensao_id, r.peso),
-  }));
-  const riskDim = payload.respostas.find(
-    (r) => r.dimensao_id === payload.risco.dimensao_id,
-  );
-  return {
-    respondentName: payload.solicitante.nome,
-    band: { rotulo: payload.score.faixa, descricao: payload.score.descricao },
-    dimensionScores,
-    riskDimension: { name: riskDim?.dimensao ?? "Dimensão", nivel: payload.risco.nivel },
-    imbalance: payload.desequilibrio,
-    commercialAnswer: payload.resposta_comercial.resposta,
-    ...(location ? { location } : {}),
-    ...(extras.analysis ? { analysis: extras.analysis } : {}),
-    ...(extras.insights ? { insights: extras.insights } : {}),
-  };
-}
 
 export function createAdminService(deps: {
   leadRepo: LeadRepository;
@@ -190,6 +163,7 @@ export function createAdminService(deps: {
 
       const analysisParsed = marketAnalysisSchema.safeParse(insights.analysis);
       const briefParsed = insightsBriefSchema.safeParse(insights.insights);
+      const arsenalParsed = commercialArsenalSchema.safeParse(insights.arsenal);
 
       if (!generatePdf) {
         throw new AdminServiceError("Geração de PDF indisponível", 500);
@@ -205,6 +179,7 @@ export function createAdminService(deps: {
           {
             analysis: analysisParsed.success ? analysisParsed.data : undefined,
             insights: briefParsed.success ? briefParsed.data : undefined,
+            arsenal: arsenalParsed.success ? arsenalParsed.data : undefined,
           },
           location,
         ),

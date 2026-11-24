@@ -442,12 +442,12 @@ Apply ONLY to the local container (never `npm run db:reset`, never a remote): ru
 
 **Done when**:
 
-- [ ] `insights.arsenal = makeArsenal()` on the repo row: the object passed to the injected `generatePdf` has `arsenal` deep equal to `makeArsenal()` (ARS-38)
-- [ ] `insights.arsenal = null`, `undefined`, and an object with an unknown `servico_id` each produce a `generatePdf` input WITHOUT the key `arsenal` and `getReportPdf` resolves (ARS-39)
-- [ ] The `generatePdf` input equals `buildPdfInput(payload, { analysis, insights, arsenal }, location)` for the same fixtures (ARS-40)
-- [ ] All pre-existing `getReportPdf` tests pass unchanged
-- [ ] Gate check passes: `npx vitest run src/lib/service/admin-service.test.ts`
-- [ ] Test count: at least 4 new tests, none removed
+- [x] `insights.arsenal = makeArsenal()` on the repo row: the object passed to the injected `generatePdf` has `arsenal` deep equal to `makeArsenal()` (ARS-38)
+- [x] `insights.arsenal = null`, `undefined`, and an object with an unknown `servico_id` each produce a `generatePdf` input WITHOUT the key `arsenal` and `getReportPdf` resolves (ARS-39)
+- [x] The `generatePdf` input equals `buildPdfInput(payload, { analysis, insights, arsenal }, location)` for the same fixtures (ARS-40)
+- [x] All pre-existing `getReportPdf` tests pass unchanged
+- [x] Gate check passes: `npx vitest run src/lib/service/admin-service.test.ts`
+- [x] Test count: at least 4 new tests, none removed
 
 **Tests**: unit
 **Gate**: quick
