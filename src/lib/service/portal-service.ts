@@ -16,6 +16,7 @@ import { stripPii } from "@/lib/dto/portal";
 import { marketAnalysisSchema, insightsBriefSchema } from "@/lib/agents/types";
 import { normalizeInsights } from "@/lib/agents/normalize-insights";
 import { getStageByFaixa } from "@/lib/cmmi/stages";
+import { describeDimension } from "@/lib/maturity/methodology";
 
 export class PortalServiceError extends Error {
   constructor(
@@ -184,6 +185,7 @@ async function loadAndBuild(
       name: r.dimensao,
       nivel: r.nivel,
       peso: r.peso,
+      ...describeDimension(r.dimensao_id, r.peso),
       score: r.nivel * r.peso,
       pergunta: r.pergunta,
       resposta: r.resposta,

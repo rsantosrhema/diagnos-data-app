@@ -28,6 +28,8 @@ const DIMS = Array.from({ length: 10 }, (_, i) => ({
   name: `Dimensão ${i + 1}`,
   nivel: (i % 5) + 1,
   peso: 10,
+  pesoPadrao: 10,
+  areaDmbok: "Data Governance",
   score: ((i % 5) + 1) * 10,
   pergunta: `Pergunta dimensão ${i + 1}?`,
   resposta: "Pontual: isolado",

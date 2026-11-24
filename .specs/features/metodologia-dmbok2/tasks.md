@@ -286,10 +286,10 @@ T13 → T14
 
 **Done when**:
 
-- [ ] `portal-service.test.ts` asserts both fields for a known id and the fallback
-- [ ] Existing portal component test fixtures updated with the two new fields where the schema requires them
-- [ ] Gate check passes: `npm run test`
-- [ ] Test count ≥ previous
+- [x] `portal-service.test.ts` asserts both fields for a known id and the fallback
+- [x] Existing portal component test fixtures updated with the two new fields where the schema requires them
+- [x] Gate check passes: `npm run test`
+- [x] Test count ≥ previous
 
 **Tests**: unit
 **Gate**: full

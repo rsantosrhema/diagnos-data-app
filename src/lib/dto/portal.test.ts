@@ -24,6 +24,8 @@ const FULL_DTO = {
       name: "Governança e Responsabilidade",
       nivel: 3,
       peso: 12,
+      pesoPadrao: 12,
+      areaDmbok: "Data Governance",
       score: 36,
       pergunta: "Como a área de negócio participa da definição de políticas de dados?",
       resposta: "Ritos formais aplicados nas decisões críticas.",
@@ -191,6 +193,29 @@ describe("portalDTOSchema", () => {
       lead: { ...FULL_DTO.lead, city: 123 },
     };
     expect(portalDTOSchema.safeParse(bad).success).toBe(false);
+  });
+
+  it("expõe pesoPadrao e areaDmbok por dimensão (MET-27)", () => {
+    const result = portalDTOSchema.safeParse(FULL_DTO);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.dimensions[0]?.pesoPadrao).toBe(12);
+      expect(result.data.dimensions[0]?.areaDmbok).toBe("Data Governance");
+    }
+  });
+
+  it("rejeita dimensão sem pesoPadrao ou sem areaDmbok (MET-27)", () => {
+    const withoutPesoPadrao: Record<string, unknown> = { ...FULL_DTO.dimensions[0] };
+    delete withoutPesoPadrao.pesoPadrao;
+    const withoutArea: Record<string, unknown> = { ...FULL_DTO.dimensions[0] };
+    delete withoutArea.areaDmbok;
+
+    expect(
+      portalDTOSchema.safeParse({ ...FULL_DTO, dimensions: [withoutPesoPadrao] }).success,
+    ).toBe(false);
+    expect(
+      portalDTOSchema.safeParse({ ...FULL_DTO, dimensions: [withoutArea] }).success,
+    ).toBe(false);
   });
 });
 
