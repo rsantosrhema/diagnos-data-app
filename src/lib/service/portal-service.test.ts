@@ -6,6 +6,7 @@ import type { MarketInsightsRepository } from "@/lib/repository/market-insights-
 import type { ShareTokenRepository } from "@/lib/repository/share-token-repo";
 import { SCREENER_CONTRACT } from "@/lib/screener/contract";
 import { createHash } from "node:crypto";
+import { makeArsenal } from "@/lib/agents/commercial-fixture";
 
 const LEAD_1_EMAIL = "joao@corp.com";
 const LEAD_1_PHONE = "11999999999";
@@ -700,5 +701,68 @@ describe("PortalService.revokeShareToken", () => {
     await expect(service.getByToken("qualquer-token")).rejects.toMatchObject({
       status: 404,
     });
+  });
+});
+
+describe("PortalService - Arsenal confidencial (ARS-41)", () => {
+  const arsenal = makeArsenal();
+
+  function expectNoArsenal(dto: unknown): void {
+    expect(Object.keys(dto as object)).not.toContain("arsenal");
+    const json = JSON.stringify(dto);
+    expect(json).not.toContain(arsenal.servico_recomendado.justificativa);
+    expect(json).not.toContain(arsenal.objecoes[0]?.contorno);
+    expect(json).not.toContain(arsenal.perguntas[0]?.texto);
+    expect(json).not.toContain("ARSENAL");
+  }
+
+  it("não expõe o arsenal no DTO do gerente", async () => {
+    const service = buildService({
+      insightsRepo: {
+        findByLeadId: vi.fn().mockResolvedValue({
+          ...INSIGHTS_ROW_ANALISADO,
+          arsenal,
+        }),
+      },
+    });
+
+    const dto = await service.getForManager("lead-1");
+
+    expectNoArsenal(dto);
+  });
+
+  it("não expõe o arsenal no DTO público do token", async () => {
+    const service = buildService({
+      insightsRepo: {
+        findByLeadId: vi.fn().mockResolvedValue({
+          ...INSIGHTS_ROW_ANALISADO,
+          arsenal,
+        }),
+      },
+      shareTokenRepo: {
+        findByHash: vi.fn().mockResolvedValue(ACTIVE_TOKEN_ROW),
+      },
+    });
+
+    const dto = await service.getByToken(RAW_TEST_TOKEN);
+
+    expectNoArsenal(dto);
+  });
+
+  it("também não expõe nada quando o arsenal persistido é null", async () => {
+    const service = buildService({
+      insightsRepo: {
+        findByLeadId: vi.fn().mockResolvedValue({
+          ...INSIGHTS_ROW_ANALISADO,
+          arsenal: null,
+        }),
+      },
+      shareTokenRepo: {
+        findByHash: vi.fn().mockResolvedValue(ACTIVE_TOKEN_ROW),
+      },
+    });
+
+    expectNoArsenal(await service.getForManager("lead-1"));
+    expectNoArsenal(await service.getByToken(RAW_TEST_TOKEN));
   });
 });

@@ -774,10 +774,10 @@ Page one: `h(Page, { key: "arsenal-1", size: "A4", style: styles.page }, ...chil
 
 **Done when**:
 
-- [ ] For `getForManager` and `getByToken`: `Object.keys(dto)` does not contain `arsenal`, and `JSON.stringify(dto)` contains none of: the fixture service `justificativa`, the first `contorno`, the first pergunta `texto`, the string `ARSENAL`
-- [ ] The same tests pass when the row has `arsenal: null`
-- [ ] Gate check passes: `npx vitest run src/lib/service/portal-service.test.ts`
-- [ ] Test count: at least 3 new tests, none removed
+- [x] For `getForManager` and `getByToken`: `Object.keys(dto)` does not contain `arsenal`, and `JSON.stringify(dto)` contains none of: the fixture service `justificativa`, the first `contorno`, the first pergunta `texto`, the string `ARSENAL`
+- [x] The same tests pass when the row has `arsenal: null`
+- [x] Gate check passes: `npx vitest run src/lib/service/portal-service.test.ts`
+- [x] Test count: at least 3 new tests, none removed
 
 **Tests**: unit
 **Gate**: quick
