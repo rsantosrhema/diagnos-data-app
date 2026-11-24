@@ -186,13 +186,13 @@ Field rules: `pontos_chave` array 3..5 of `{ titulo: clampedString(70), texto: c
 
 **Done when**:
 
-- [ ] `makeArsenal()` passes `commercialArsenalSchema.safeParse`
-- [ ] Boundaries: 2 pontos-chave rejected, 3 and 5 accepted, 6 rejected; 2 objeções rejected, 3 and 6 accepted, 7 rejected; 9 and 11 perguntas rejected; 3 complementares rejected
-- [ ] Two objeções with the same `grupo` rejected with issue `grupo repetido: preco`; a `servico_id` `"inexistente"` rejected; `complementares` containing the principal id rejected; `dimensao_ids: []` rejected; `dimensao_ids: ["d99"]` rejected; an extra key rejected
-- [ ] Each perguntas rule rejects with its exact message and received count (e.g. 3 abertas gives `mínimo de 4 perguntas abertas (recebido 3)`; two `situacao` gives `no máximo 1 pergunta de 'situacao' (recebido 2)`)
-- [ ] A `pontos_chave[0].texto` of 400 words-with-spaces is accepted and comes out with length ≤ 300 ending in `…`; a `titulo` of exactly 70 characters is unchanged
-- [ ] Gate check passes: `npx vitest run src/lib/agents/commercial-types.test.ts`
-- [ ] Test count: at least 18 new tests, none removed
+- [x] `makeArsenal()` passes `commercialArsenalSchema.safeParse`
+- [x] Boundaries: 2 pontos-chave rejected, 3 and 5 accepted, 6 rejected; 2 objeções rejected, 3 and 6 accepted, 7 rejected; 9 and 11 perguntas rejected; 3 complementares rejected
+- [x] Two objeções with the same `grupo` rejected with issue `grupo repetido: preco`; a `servico_id` `"inexistente"` rejected; `complementares` containing the principal id rejected; `dimensao_ids: []` rejected; `dimensao_ids: ["d99"]` rejected; an extra key rejected
+- [x] Each perguntas rule rejects with its exact message and received count (e.g. 3 abertas gives `mínimo de 4 perguntas abertas (recebido 3)`; two `situacao` gives `no máximo 1 pergunta de 'situacao' (recebido 2)`)
+- [x] A `pontos_chave[0].texto` of 400 words-with-spaces is accepted and comes out with length ≤ 300 ending in `…`; a `titulo` of exactly 70 characters is unchanged
+- [x] Gate check passes: `npx vitest run src/lib/agents/commercial-types.test.ts`
+- [x] Test count: at least 18 new tests, none removed
 
 **Tests**: unit
 **Gate**: quick

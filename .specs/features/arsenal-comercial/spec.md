@@ -199,12 +199,12 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 | ARS-03 | P1: Catálogo | Tasks | Implementing |
 | ARS-04 | P1: Catálogo | Tasks | Implementing |
 | ARS-05 | P1: Catálogo | Tasks | Implementing |
-| ARS-06 | P1: Agente | Tasks | In Tasks |
-| ARS-07 | P1: Agente | Tasks | In Tasks |
-| ARS-08 | P1: Agente | Tasks | In Tasks |
-| ARS-09 | P1: Agente | Tasks | In Tasks |
-| ARS-10 | P1: Agente | Tasks | In Tasks |
-| ARS-11 | P1: Agente | Tasks | In Tasks |
+| ARS-06 | P1: Agente | Tasks | Implementing |
+| ARS-07 | P1: Agente | Tasks | Implementing |
+| ARS-08 | P1: Agente | Tasks | Implementing |
+| ARS-09 | P1: Agente | Tasks | Implementing |
+| ARS-10 | P1: Agente | Tasks | Implementing |
+| ARS-11 | P1: Agente | Tasks | Implementing |
 | ARS-12 | P1: Agente | Tasks | In Tasks |
 | ARS-13 | P1: Agente | Tasks | In Tasks |
 | ARS-14 | P1: Agente | Tasks | In Tasks |
