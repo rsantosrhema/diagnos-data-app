@@ -573,12 +573,12 @@ Apply ONLY to the local container (never `npm run db:reset`, never a remote): ru
 
 **Done when**:
 
-- [ ] Rendering `<LogStepLabel step="arsenal" />` shows the text `Arsenal comercial (LLM)` and its element does NOT have the class `text-[#b23a34]`
-- [ ] Rendering `<LogStepLabel step="arsenal_failed" />` shows `Falha no Arsenal comercial` and has the classes `text-[#b23a34]` and `font-medium`
-- [ ] Rendering `step="pdf_failed"` still shows `Falha ao gerar PDF` (regression)
-- [ ] Gate check passes: `npx vitest run src/app/admin/components.test.tsx`
-- [ ] Phase 3 build gate passes: `npm run typecheck && npm run lint && npm run test && npm run build`
-- [ ] Test count: at least 3 new tests, none removed
+- [x] Rendering `<LogStepLabel step="arsenal" />` shows the text `Arsenal comercial (LLM)` and its element does NOT have the class `text-[#b23a34]`
+- [x] Rendering `<LogStepLabel step="arsenal_failed" />` shows `Falha no Arsenal comercial` and has the classes `text-[#b23a34]` and `font-medium`
+- [x] Rendering `step="pdf_failed"` still shows `Falha ao gerar PDF` (regression)
+- [x] Gate check passes: `npx vitest run src/app/admin/components.test.tsx`
+- [x] Phase 3 build gate passes: `npm run typecheck && npm run lint && npm run test && npm run build`
+- [x] Test count: at least 3 new tests, none removed
 
 **Tests**: component
 **Gate**: build

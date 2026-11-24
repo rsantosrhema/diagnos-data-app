@@ -75,6 +75,8 @@ const LOG_STEP_LABELS: Record<string, string> = {
   researcher: "Pesquisa de mercado (Exa)",
   analyst: "Análise (LLM)",
   writer: "Geração de insights (LLM)",
+  arsenal: "Arsenal comercial (LLM)",
+  arsenal_failed: "Falha no Arsenal comercial",
   pdf: "PDF gerado",
   email: "E-mail enviado",
   completed: "Concluído",
@@ -84,7 +86,12 @@ const LOG_STEP_LABELS: Record<string, string> = {
   requeue: "Devolvido à fila (retry)",
 };
 
-const LOG_ERROR_STEPS = new Set(["failed", "pdf_failed", "email_failed"]);
+const LOG_ERROR_STEPS = new Set([
+  "failed",
+  "pdf_failed",
+  "email_failed",
+  "arsenal_failed",
+]);
 
 export function LogStepLabel({ step }: { step: string }) {
   const label = LOG_STEP_LABELS[step] ?? step;

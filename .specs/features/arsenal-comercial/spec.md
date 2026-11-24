@@ -219,7 +219,7 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 | ARS-23 | P1: Pipeline | Tasks | Implementing |
 | ARS-24 | P1: Pipeline | Tasks | Implementing |
 | ARS-25 | P1: Pipeline | Tasks | Implementing |
-| ARS-26 | P1: Pipeline | Tasks | In Tasks |
+| ARS-26 | P1: Pipeline | Tasks | Implementing |
 | ARS-27 | P1: PDF | Tasks | In Tasks |
 | ARS-28 | P1: PDF | Tasks | In Tasks |
 | ARS-29 | P1: PDF | Tasks | In Tasks |
