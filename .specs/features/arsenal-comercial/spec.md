@@ -238,7 +238,7 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 | ARS-42 | P1: Restrito | Tasks | Implementing |
 | ARS-43 | P2: Verificação | Tasks | Implementing |
 | ARS-44 | P2: Verificação | Tasks | Implementing |
-| ARS-45 | P2: Verificação | Tasks | In Tasks |
+| ARS-45 | P2: Verificação | Tasks | Implementing |
 | ARS-46 | P2: Verificação | Tasks | In Tasks |
 
 **Coverage:** 46 total, 46 mapped to tasks, 0 unmapped (matriz em `tasks.md`, seção Requirement → Task Coverage)

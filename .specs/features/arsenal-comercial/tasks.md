@@ -932,11 +932,11 @@ Scenario 1 `real` (timeout 300 000 ms): `commercial = (input) => createCommercia
 
 **Done when**:
 
-- [ ] Default `npm run test` shows this file as skipped
-- [ ] With `RUN_ARSENAL_E2E` set but a non-local Supabase URL the suite throws the guard error before any write
-- [ ] `npm run typecheck && npm run lint` pass
-- [ ] The real scenario is NOT run in this task (it runs in T26); only the skip, the guard and the type/lint gates are checked here
-- [ ] Gate check passes: `npm run typecheck && npm run lint && npm run test`
+- [x] Default `npm run test` shows this file as skipped
+- [x] With `RUN_ARSENAL_E2E` set but a non-local Supabase URL the suite throws the guard error before any write
+- [x] `npm run typecheck && npm run lint` pass
+- [x] The real scenario is NOT run in this task (it runs in T26); only the skip, the guard and the type/lint gates are checked here
+- [x] Gate check passes: `npm run typecheck && npm run lint && npm run test`
 
 **Tests**: integration (gated)
 **Gate**: full
