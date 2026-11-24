@@ -2,10 +2,10 @@
 
 **Date**: 2026-11-24
 **Spec**: `.specs/features/metodologia-dmbok2/spec.md`
-**Diff range**: `01d16e3..47faa0d` (spec commit → HEAD, branch `feat/metodologia-dmbok2`). First pass covered `01d16e3..3459616` (MET-01..34); re-verification covered `3459616..47faa0d` (MET-35, T15)
+**Diff range**: `01d16e3..25ab060` (spec commit → HEAD, branch `feat/metodologia-dmbok2`). First pass covered `01d16e3..3459616` (MET-01..34); re-verification covered `3459616..47faa0d` (MET-35, T15); second re-verification covered `47faa0d..25ab060` (T16, test only)
 **Verifier**: independent sub-agent (author ≠ verifier); read-only on the real tree, all gate and sensor runs in a scratch `git worktree` of HEAD under `/private/tmp/claude-501/`
 
-**Result**: PASS ✅ — 35/35 ACs matched the spec outcome with `file:line` evidence, 3/3 edge cases covered, gate exit 0 on `47faa0d`, sensor 33/34 mutants killed (the one survivor is pre-existing wiring outside the feature diff, logged as a coverage gap below).
+**Result**: PASS ✅ — 35/35 ACs matched the spec outcome with `file:line` evidence, 3/3 edge cases covered, gate exit 0 on `25ab060`, sensor 35/35 mutants killed on the final code (the S7 survivor of the T15 pass is closed by T16).
 
 ---
 
@@ -110,7 +110,7 @@ The submission path hands the contextual result to the builder (`src/lib/service
 | 2 | MET-07 lists the five band limits but the only boundary values asserted through `computeContextualScores` are 2.6 and 5.0 (the listed edge case). 1.8, 3.4 and 4.2 are covered through the it.each uniform-level cases (1..5) and the contract limits, not as exact-boundary scores. | MET-07, Edge Cases | Boundary rule is one `>=`/`<` comparison already exercised at 2.6, shared by all bands. |
 | 3 | MET-08 range [1.8, 2.0): one in-range sample (1.93) asserted. | MET-08 | Spec outcome is a single band; sample is inside the range, and the "before" value (Inicial) is not asserted. |
 | 4 | MET-33/MET-34 have no automated test, as the spec states ("Independent Test: grep"). Evidence is grep plus the build gate. | MET-33, MET-34 | Spec-mandated verification method. |
-| 5 | MET-35 is worded at submission level ("WHEN a screener submission is persisted"), but its tests exercise `buildAgentPayload` only, with a hand-edited `result`. `screen-service.test.ts` mocks `loadActiveCalibration` to reject (`screen-service.test.ts:80`), so the service falls back to `computeScores` and never asserts an adjusted weight in the persisted payload. Sensor S7 (bypassing `computeContextualScores` in `screen-service.ts`) survives. | MET-35, MET-07 | The spec names `agent-payload.test.ts` as the independent test; the mutated wiring predates this feature and is not in the T15 diff. Recommended follow-up (not a blocker): one `screen-service.test.ts` case with a resolved calibration for Saúde asserting `respostas[d07].peso` = 13. |
+| 5 | ~~MET-35 is worded at submission level, but its tests exercised `buildAgentPayload` only; sensor S7 survived.~~ **Closed by T16 (`25ab060`)**: `src/lib/service/screen-service.test.ts:414` drives `submitScreener` with a resolved `SCORING_CALIBRATION` for Saúde and asserts `expect(d07?.peso).toBe(13)` (`:430`), `expect(d07?.peso).not.toBe(10)` (`:431`) and `expect(resposta.peso).toBe(expectedPesos.get(resposta.dimensao_id))` for every dimension (`:433`). S7 and S8 are now killed. | MET-35, MET-07 | Resolved; no follow-up needed. |
 
 ---
 
@@ -165,9 +165,10 @@ Scratch: `git worktree add --detach /private/tmp/claude-501/verifier-scratch HEA
 | S4 | `agent-payload.ts:74` | Lookup key never matches (always fallback) | ✅ Killed — adjusted-weight test |
 | S5 | `agent-payload.ts:64` | Map stores `nivel` instead of `peso` | ✅ Killed — adjusted-weight test |
 | S6 | `agent-payload.ts:74` | Adjusted weight floored to multiples of 10 | ✅ Killed — 4 tests (`agent-payload.test.ts` ×3, `screener.test.ts` schema) |
-| S7 | `src/lib/service/screen-service.ts:103` | `computeContextualScores` bypassed (`computeScores` only) | ❌ Survived — coverage gap logged as spec-precision note 5; code is pre-existing, outside the feature diff |
+| S7 | `src/lib/service/screen-service.ts:103` | `computeContextualScores` bypassed (`computeScores` only) | ✅ Killed after T16 (`25ab060`) — `screen-service.test.ts` "agent_payload persistido grava o peso ajustado ao setor de Saúde (MET-35)". On the `47faa0d` pass it survived; that gap is closed. |
+| S8 | `screen-service.ts:103-110` | `computeContextualScores` receives an empty profile (`profile: {}`), so no sector weights apply | ✅ Killed — same T16 test |
 
-**Re-verification result**: S1–S6 killed (6/6 on the T15 code); S7 survived on pre-existing wiring.
+**Re-verification result**: S1–S6 killed on the T15 code at `47faa0d`; S7 survived there and was killed after T16 along with S8 (8/8 killed on `25ab060`).
 
 **Sensor depth**: expanded (≥5 behavior-level mutations; 26 injected in the first pass, covering all 5 phases and every suggested target).
 **Result**: 26/26 killed on the first pass — PASS ✅
@@ -194,7 +195,7 @@ Method note: a first attempt at M15/M16 wrapped the JSX in a regex-built conditi
 
 ## Gate Check
 
-**Re-run on `47faa0d` (scratch worktree, final state)**: `npm run typecheck && npm run lint && npm run test && npm run build` → chain exit 0; 767 passed, 0 failed, 1 skipped (768 tests); 67 files passed, 1 skipped; build `✓ Compiled successfully`. Delta vs the first pass: +2 tests (the two MET-35 tests). Baseline before the feature remains 708 passed.
+**Re-run on `25ab060` (scratch worktree `verifier-scratch3`, final state)**: `npm run typecheck && npm run lint && npm run test && npm run build` → chain exit 0; 768 passed, 0 failed, 1 skipped (769 tests); 67 files passed, 1 skipped; build `✓ Compiled successfully`. Delta vs the `47faa0d` run: +1 test (the T16 end-to-end case). The `47faa0d` run had 767 passed; baseline before the feature remains 708 passed.
 
 **First pass on `3459616`:**
 
@@ -224,12 +225,12 @@ Method note: a first attempt at M15/M16 wrapped the JSX in a regex-built conditi
 
 **Overall**: ✅ Ready
 
-**Spec-anchored check**: 35/35 ACs matched spec outcome | 5 non-blocking spec-precision notes
-**Sensor**: 32/33 mutations killed on feature code (26 first pass + 6 on T15); 1 survivor on pre-existing wiring, logged as note 5
-**Gate**: 767 passed, 0 failed, 1 skipped on `47faa0d`; typecheck/lint/test/build all exit 0
+**Spec-anchored check**: 35/35 ACs matched spec outcome | 4 non-blocking spec-precision notes (note 5 closed by T16)
+**Sensor**: 35/35 mutations killed on the final code (26 first pass + S1–S6 on T15 + S7, S8 after T16); the S7 survivor at `47faa0d` is closed
+**Gate**: 768 passed, 0 failed, 1 skipped on `25ab060`; typecheck/lint/test/build all exit 0
 
 **What works**: Contract v1.2 with the exact spec strings; one stage ruler for every segment with the sector text kept as `descricao`; a single methodology module feeding PDF and portal; PDF table with sector and default weights; portal with index label, formatted score, weights, legend and the note in both modes; AGENTS.md and ADR 011 aligned.
 
 **Issues found**: none blocking.
 
-**Next steps**: optionally add the `screen-service.test.ts` case from note 5; re-run the smoke of the 3 leads and the `/admin` login as listed in the spec Success Criteria; no push or PR was performed.
+**Next steps**: re-run the smoke of the 3 leads and the `/admin` login as listed in the spec Success Criteria; no push or PR was performed.
