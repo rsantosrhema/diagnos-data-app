@@ -898,10 +898,13 @@ In `package.json` `scripts` add: `"pdf:png": "swift scripts/pdf-to-png.swift"`, 
 
 **Done when**:
 
-- [ ] Default `npm run test` shows this file as skipped (no failure, no file written)
-- [ ] `ARSENAL_OUT_DIR=/tmp/arsenal-evidence npm run pdf:arsenal-sample` passes and both PDFs exist
-- [ ] Default suite test count is unchanged or higher (a skipped test counts as the existing skipped pattern)
-- [ ] Gate check passes: `npm run typecheck && npm run lint && npm run test`
+- [x] Default `npm run test` shows this file as skipped (no failure, no file written)
+- [x] `ARSENAL_OUT_DIR=/tmp/arsenal-evidence npm run pdf:arsenal-sample` passes and both PDFs exist
+- [x] Default suite test count is unchanged or higher (a skipped test counts as the existing skipped pattern)
+- [x] Gate check passes: `npm run typecheck && npm run lint && npm run test`
+
+**SPEC_DEVIATION**: o fixture pedido aqui (3 dores, 2 concorrentes, 4 bullets, `location`) faz o `pageThree` do diagnóstico transbordar, então a base sai com 4 páginas e o PDF com Arsenal com 7, não 3 e 6. O teste asserção a invariante da spec ARS-37 (`páginas do Arsenal = páginas da base + 3`), não um total fixo; T25 registra a contagem real.
+**Reason**: a contagem absoluta do plano supõe o fixture mínimo de T18; a spec define a soma, e reduzir o fixture para caber seria esconder conteúdo que o usuário pediu.
 
 **Tests**: integration (gated)
 **Gate**: full
