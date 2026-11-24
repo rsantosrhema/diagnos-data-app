@@ -557,4 +557,70 @@ describe("generateScreenerPdf", () => {
     expect(withArsenal.pdf.subarray(0, 4).toString("latin1")).toBe("%PDF");
     expect(countPdfPages(withArsenal.pdf)).toBe(6);
   });
+
+  it("6 objeções com texto típico não estouram a página de contornos (ARS-27)", async () => {
+    const objections = [
+      {
+        grupo: "ja-temos" as const,
+        objecao_provavel:
+          "Já temos time de dados e ferramenta de BI; o que falta é execução, não método.",
+        contorno:
+          "Peça o critério por trás dessa conclusão. Devolva o que o próprio diagnóstico aponta: erros só aparecem quando alguém reclama e uma ou duas pessoas fazem tudo. Proponha um recorte pequeno em um único domínio de cadastro crítico, com dono e regra de qualidade definidos antes de ampliar indicadores.",
+        apoio:
+          "Time e ferramenta existem, mas qualidade e capacidade seguem em nível baixo no diagnóstico.",
+      },
+      {
+        grupo: "preco" as const,
+        objecao_provavel: "Um projeto desse porte não cabe no orçamento deste ano.",
+        contorno:
+          "Separe o custo de adiar do custo do projeto: pergunte quanto esforço as áreas já gastam conciliando manualmente os indicadores e o que deixa de ser decidido quando os números divergem. Depois proponha um primeiro recorte ligado à dor que a diretoria já reconhece, não a iniciativa inteira.",
+        apoio:
+          "O diagnóstico registra conciliação manual e decisões informais de priorização como rotina atual.",
+      },
+      {
+        grupo: "timing" as const,
+        objecao_provavel:
+          "Só vamos tratar qualidade de dados depois de concluir os projetos que já estão na fila.",
+        contorno:
+          "Pergunte o que muda nesses projetos se os cadastros continuarem divergentes e qual evidência faria o tema entrar na pauta antes. Use o desequilíbrio entre a dimensão mais madura e a menos madura como ponto de partida da conversa, sem prometer resultado de outra iniciativa.",
+        apoio:
+          "Projetos analíticos construídos sobre cadastro não sincronizado tendem a reproduzir a divergência.",
+      },
+      {
+        grupo: "risco-dados" as const,
+        objecao_provavel:
+          "Mexer em cadastros e dados de clientes aumenta o risco de exposição e de descumprimento da LGPD.",
+        contorno:
+          "Reconheça o risco e não prometa o que não está sob seu controle. Traga segurança e jurídico para a conversa, mapeando base legal, classificação e controle de acesso antes de qualquer tratamento. O diagnóstico mostra justamente que hoje esse mapeamento não existe e o acesso é informal.",
+        apoio:
+          "Segurança e Conformidade está em nível 1: sem mapeamento, assume-se que tudo está nos sistemas.",
+      },
+      {
+        grupo: "decisao" as const,
+        objecao_provavel:
+          "Essa decisão não é minha; precisa passar por outras áreas e pelo conselho.",
+        contorno:
+          "Pergunte quem precisa estar na mesa e qual evidência cada área pede para aprovar. Proponha levar o próprio resultado do diagnóstico como material comum, para que a discussão seja sobre a mesma linha de base e não sobre percepções diferentes entre as áreas envolvidas.",
+        apoio:
+          "Patrocínio Executivo e Business Case está em nível baixo, com aprovação reativa caso a caso.",
+      },
+      {
+        grupo: "confianca" as const,
+        objecao_provavel:
+          "Como sei que essa abordagem funciona no nosso contexto industrial e no nosso volume de dados?",
+        contorno:
+          "Não traga case inventado. Pergunte quais critérios tornariam o piloto verificável para vocês e proponha um recorte mensurável, com linha de base definida pelo próprio cliente a partir dos indicadores que hoje divergem entre as áreas.",
+        apoio:
+          "O diagnóstico fornece a linha de base: níveis por dimensão e as dores já reconhecidas pela própria empresa.",
+      },
+    ];
+    const withoutArsenal = await generateScreenerPdf(makeInput());
+    const basePages = countPdfPages(withoutArsenal.pdf);
+    const withArsenal = await generateScreenerPdf(
+      makeInput({ arsenal: makeArsenal({ objecoes: objections }) }),
+    );
+
+    expect(objections).toHaveLength(6);
+    expect(countPdfPages(withArsenal.pdf)).toBe(basePages + 3);
+  });
 });

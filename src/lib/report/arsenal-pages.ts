@@ -35,7 +35,30 @@ const arsenalStyles = StyleSheet.create({
   objectionCard: {
     borderBottomWidth: 1,
     borderBottomColor: COLORS.hairline,
-    padding: p(10),
+    paddingVertical: p(6),
+    paddingHorizontal: p(8),
+  },
+  objectionGroup: {
+    fontFamily: "Poppins",
+    fontSize: p(12),
+    fontWeight: 600,
+    letterSpacing: p(-0.2),
+    color: COLORS.ink,
+    marginBottom: p(3),
+  },
+  objectionLabel: {
+    fontFamily: "Inter",
+    fontSize: p(8.5),
+    fontWeight: 600,
+    letterSpacing: p(1.1),
+    color: COLORS.ink3,
+    marginBottom: p(1),
+  },
+  objectionText: {
+    fontFamily: "Inter",
+    fontSize: p(10.5),
+    lineHeight: 1.45,
+    color: COLORS.ink2,
   },
   questionRow: {
     flexDirection: "row",
@@ -147,14 +170,14 @@ function objectionCard(
     objection.grupo;
 
   const block = (label: string, text: string, key: string) => [
-    h(Text, { key: `${key}-label`, style: styles.readingLabel }, label),
-    h(Text, { key: `${key}-text`, style: styles.painText }, text),
+    h(Text, { key: `${key}-label`, style: arsenalStyles.objectionLabel }, label),
+    h(Text, { key: `${key}-text`, style: arsenalStyles.objectionText }, text),
   ];
 
   return h(
     View,
     { key: `arsenal-objection-${index}`, style: arsenalStyles.objectionCard, wrap: false },
-    h(Text, { style: styles.competitorName }, groupName),
+    h(Text, { style: arsenalStyles.objectionGroup }, groupName),
     ...block("OBJEÇÃO PROVÁVEL", objection.objecao_provavel, "objection"),
     ...block("CONTORNO", objection.contorno, "objection-handling"),
     ...block("APOIO NO DIAGNÓSTICO", objection.apoio, "objection-support"),
