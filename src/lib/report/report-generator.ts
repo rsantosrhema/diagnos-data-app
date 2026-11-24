@@ -9,6 +9,7 @@ import {
 } from "@react-pdf/renderer";
 import type { GeneratePdfInput } from "@/lib/service/screen-service";
 import { normalizeInsights } from "@/lib/agents/normalize-insights";
+import { INDEX_LABEL, METHOD_NOTE, SCALE_LEGEND } from "@/lib/maturity/methodology";
 import { RadarChart } from "./radar-chart";
 import { shortDimensionLabel } from "./dimension-label";
 import { registerReportFonts } from "./fonts";
@@ -355,12 +356,20 @@ const styles = StyleSheet.create({
     color: COLORS.ink3,
   },
   colName: {
-    width: p(321),
     fontFamily: "Inter",
     fontSize: p(12),
     fontWeight: 500,
     lineHeight: 1.4,
     color: COLORS.ink,
+  },
+  nameCell: {
+    gap: p(2),
+  },
+  colArea: {
+    fontFamily: "Inter",
+    fontSize: p(9.5),
+    lineHeight: 1.35,
+    color: COLORS.ink3,
   },
   widthName: {
     width: p(321),
@@ -376,7 +385,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: COLORS.ink2,
   },
-  colScore: {
+  colPesoSetor: {
     width: p(115),
     fontFamily: "Inter",
     fontSize: p(12),
@@ -576,9 +585,6 @@ const styles = StyleSheet.create({
     color: COLORS.ink2,
   },
 });
-
-const METHOD_NOTE =
-  "Pesos ajustados com base no perfil da empresa (segmento, porte e faturamento). Instrumento de triagem baseado em autoavaliação. Não substitui diagnóstico com evidência documental. Resultado reportado como faixa, não como número exato.";
 
 const h = React.createElement;
 
@@ -791,7 +797,7 @@ function stageCard(input: GeneratePdfInput, stage: number) {
     h(
       View,
       { style: styles.stageTop },
-      h(Text, { style: styles.stageEyebrow }, "ESTÁGIO ATUAL"),
+      h(Text, { style: styles.stageEyebrow }, INDEX_LABEL),
       h(Text, { style: styles.stageEyebrow }, `FAIXA ${stage} DE 5`),
     ),
     h(Text, { style: styles.stageName }, input.band.rotulo),
@@ -815,7 +821,7 @@ function radarReading(input: GeneratePdfInput) {
     h(
       Text,
       { style: styles.readingScale },
-      "Escala de níveis: 1 Inicial · 2 Emergente · 3 Definido · 4 Gerenciado · 5 Otimizado",
+      SCALE_LEGEND,
     ),
   );
 }
@@ -886,7 +892,14 @@ function dimensionTable(input: GeneratePdfInput) {
     h(
       View,
       { key: `row-${index}`, style: styles.tableRow, wrap: false },
-      h(Text, { style: styles.colName }, dimension.name),
+      h(
+        View,
+        { style: [styles.widthName, styles.nameCell] },
+        h(Text, { style: styles.colName }, dimension.name),
+        dimension.areaDmbok
+          ? h(Text, { style: styles.colArea }, dimension.areaDmbok)
+          : null,
+      ),
       h(
         View,
         { style: styles.levelCell },
@@ -896,8 +909,8 @@ function dimensionTable(input: GeneratePdfInput) {
           h(Text, { style: styles.levelBadgeText }, String(dimension.nivel)),
         ),
       ),
-      h(Text, { style: styles.colPeso }, String(dimension.peso)),
-      h(Text, { style: styles.colScore }, String(dimension.nivel * dimension.peso)),
+      h(Text, { style: styles.colPesoSetor }, `${dimension.peso}%`),
+      h(Text, { style: styles.colPeso }, `${dimension.pesoPadrao}%`),
     ),
   );
 
@@ -909,8 +922,8 @@ function dimensionTable(input: GeneratePdfInput) {
       { style: styles.tableHeader, wrap: false },
       h(Text, { style: [styles.th, styles.widthName] }, "DIMENSÃO"),
       h(Text, { style: [styles.th, styles.widthCenter] }, "NÍVEL"),
-      h(Text, { style: [styles.th, styles.widthCenter] }, "PESO"),
-      h(Text, { style: [styles.th, styles.widthCenter] }, "SCORE"),
+      h(Text, { style: [styles.th, styles.widthCenter] }, "PESO NO SETOR"),
+      h(Text, { style: [styles.th, styles.widthCenter] }, "PESO PADRÃO"),
     ),
     ...rows,
   );

@@ -208,9 +208,9 @@ T13 → T14
 
 **Done when**:
 
-- [ ] `analysis-service.test.ts` and `admin-service.test.ts` assert `pesoPadrao` and `areaDmbok` values for a known id (e.g. d07 → 10 / "Data Security") and the fallback for an unknown id
-- [ ] Gate check passes: `npx vitest run src/lib/service`
-- [ ] Test count ≥ previous
+- [x] `analysis-service.test.ts` and `admin-service.test.ts` assert `pesoPadrao` and `areaDmbok` values for a known id (e.g. d07 → 10 / "Data Security") and the fallback for an unknown id
+- [x] Gate check passes: `npx vitest run src/lib/service`
+- [x] Test count ≥ previous
 
 **Tests**: unit
 **Gate**: quick
@@ -234,9 +234,9 @@ T13 → T14
 
 **Done when**:
 
-- [ ] Tests assert the three exact strings are rendered and that "1 Inicial · 2 Emergente", "CMMI", "DCAM", "DMM" are absent from the rendered tree
-- [ ] Gate check passes: `npx vitest run src/lib/report`
-- [ ] Test count ≥ previous
+- [x] Tests assert the three exact strings are rendered and that "1 Inicial · 2 Emergente", "CMMI", "DCAM", "DMM" are absent from the rendered tree
+- [x] Gate check passes: `npx vitest run src/lib/report`
+- [x] Test count ≥ previous
 
 **Tests**: unit
 **Gate**: quick
@@ -260,9 +260,9 @@ T13 → T14
 
 **Done when**:
 
-- [ ] Tests assert headers `DIMENSÃO`, `NÍVEL`, `PESO NO SETOR`, `PESO PADRÃO`, absence of `SCORE`, and for one row the area text plus `"13%"` / `"10%"` cells
-- [ ] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build` (last task of Phase 2)
-- [ ] Test count ≥ previous
+- [x] Tests assert headers `DIMENSÃO`, `NÍVEL`, `PESO NO SETOR`, `PESO PADRÃO`, absence of `SCORE`, and for one row the area text plus `"13%"` / `"10%"` cells
+- [x] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build` (last task of Phase 2)
+- [x] Test count ≥ previous
 
 **Tests**: unit
 **Gate**: build

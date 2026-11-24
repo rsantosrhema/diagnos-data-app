@@ -20,7 +20,13 @@ export class ScreenServiceError extends Error {
 export interface GeneratePdfInput {
   respondentName: string;
   band: { rotulo: string; descricao: string };
-  dimensionScores: { name: string; nivel: number; peso: number }[];
+  dimensionScores: {
+    name: string;
+    nivel: number;
+    peso: number;
+    pesoPadrao: number;
+    areaDmbok: string;
+  }[];
   riskDimension: { name: string; nivel: number };
   imbalance: boolean;
   commercialAnswer: string;

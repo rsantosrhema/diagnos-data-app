@@ -445,10 +445,69 @@ describe("AdminService", () => {
       expect(generatePdf).toHaveBeenCalledTimes(1);
       const input = generatePdf.mock.calls[0][0] as GeneratePdfInput;
       expect(input.respondentName).toBe("Alice");
-      expect(input.dimensionScores).toEqual([{ name: "Governança", nivel: 3, peso: 10 }]);
+      // MET-26: id fora do contrato cai para o peso informado e área vazia.
+      expect(input.dimensionScores).toEqual([
+        { name: "Governança", nivel: 3, peso: 10, pesoPadrao: 10, areaDmbok: "" },
+      ]);
       expect(input.band.rotulo).toBe("Estruturado");
       expect(input.analysis?.resumo).toBe("resumo");
       expect(input.insights?.bullets).toHaveLength(1);
+    });
+
+    it("dimensionScores carregam peso padrão e área DMBOK2, com fallback para id desconhecido (MET-26)", async () => {
+      const generatePdf = vi.fn().mockResolvedValue({ pdf: Buffer.from("pdf"), filename: "diagnostico-alice.pdf" });
+      const payloadComDuasDimensoes: AgentPayload = {
+        ...agentPayload,
+        respostas: [
+          {
+            dimensao_id: "d07",
+            dimensao: "Segurança e Conformidade (LGPD)",
+            pergunta: "p",
+            nivel: 3,
+            peso: 13,
+            resposta: "r",
+          },
+          {
+            dimensao_id: "x99",
+            dimensao: "Dimensão Legada",
+            pergunta: "p",
+            nivel: 2,
+            peso: 7,
+            resposta: "r",
+          },
+        ],
+      };
+      const service = createAdminServiceForTest({
+        leadRepo: mockLeadRepo({ findById: vi.fn().mockResolvedValue(lead) }),
+        assessmentRepo: mockAssessmentRepo({
+          findByLeadId: vi.fn().mockResolvedValue({
+            ...assessment,
+            agent_payload: payloadComDuasDimensoes,
+          }),
+        }),
+        marketInsightsRepo: mockMarketInsightsRepo({ findByLeadId: vi.fn().mockResolvedValue(analyzedInsights) }),
+        generatePdf,
+      });
+
+      await service.getReportPdf("l1");
+
+      const input = generatePdf.mock.calls[0][0] as GeneratePdfInput;
+      expect(input.dimensionScores).toEqual([
+        {
+          name: "Segurança e Conformidade (LGPD)",
+          nivel: 3,
+          peso: 13,
+          pesoPadrao: 10,
+          areaDmbok: "Data Security",
+        },
+        {
+          name: "Dimensão Legada",
+          nivel: 2,
+          peso: 7,
+          pesoPadrao: 7,
+          areaDmbok: "",
+        },
+      ]);
     });
 
     function serviceWithLead(leadOverride: Partial<LeadRow>) {
@@ -558,7 +617,9 @@ describe("AdminService", () => {
       ]);
       expect(input.respondentName).toBe("Alice");
       expect(input.band).toEqual({ rotulo: "Estruturado", descricao: "desc" });
-      expect(input.dimensionScores).toEqual([{ name: "Governança", nivel: 3, peso: 10 }]);
+      expect(input.dimensionScores).toEqual([
+        { name: "Governança", nivel: 3, peso: 10, pesoPadrao: 10, areaDmbok: "" },
+      ]);
       expect(input.riskDimension).toEqual({ name: "Governança", nivel: 3 });
       expect(input.imbalance).toBe(false);
       expect(input.commercialAnswer).toBe("a");
