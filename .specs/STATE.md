@@ -18,13 +18,16 @@
 | AD-010 | Links públicos compartilháveis usam token opaco 256-bit com somente hash SHA-256 persistido, TTL 90 dias, um ativo por lead (novo invalida anterior), comparação com timingSafeEqual e 404 genérico idêntico para inválido/expirado/revogado | active | 2026-10-08 | Portal-analise: link do cliente /r/[token]; não distinguir motivo evita enumeração; revogação é delete lógico |
 | AD-011 | Portal do diagnóstico renderizado por um único componente (`DiagnosticPortal`) com `mode: public \| manager`; as rotas mantêm só fetch, estados e ações do gerente | active | 2026-11-13 | As duas telas já compartilhavam DTO e componentes, mas duplicavam ~200 linhas de layout; unificar evita divergência visual e correção em dobro |
 | AD-012 | DAMA-DMBOK2 (cap. 15) como base metodológica única; faixas de estágio sempre as do contrato (1.8 / 2.6 / 3.4 / 4.2) para todo segmento, com diferenciação setorial só pelos pesos da calibração | active | 2026-11-24 | Híbrido DMBOK + DCAM + "CMMI-like" e faixas por segmento contradiziam o score no portal; decisão detalhada no ADR-011 |
+| AD-013 | O Arsenal Comercial é material interno do gerente: aparece só no PDF (download do admin e e-mail ao comercial); nunca no portal `/r`, em `portal-service` nem em rota pública | active | 2026-11-24 | Contém estratégia de venda e objeções prováveis; versão cliente do PDF e worker em outro container ficam fora de escopo (feature arsenal-comercial) |
+| AD-014 | O Arsenal é gerado por uma etapa do worker depois do writer e persistido em `market_insights.arsenal` (jsonb); falha do agente comercial é isolada (log `arsenal_failed`, `arsenal = null`, PDF sai sem Arsenal, sem retry de job); o `GeneratePdfInput` nasce de um único `buildPdfInput` | active | 2026-11-24 | PDF é gerado em dois pontos (worker e download); persistir garante o mesmo conteúdo e evita LLM a cada "Exportar PDF"; o Arsenal é extra e não pode derrubar o relatório |
 
 ## Handoff
 
-- **Feature**: metodologia-dmbok2 (.specs/features/metodologia-dmbok2) — **DONE (local)**
-- **Phase / Task**: Execute complete — T1–T16 commitados no branch `feat/metodologia-dmbok2` (01d16e3..c114e9c); Verifier PASS 35/35 ACs, sensor 35/35 mutantes mortos; smoke local PASS (3 leads + relatório real Saúde)
-- **Completed**: contrato v1.2 DMBOK2, régua única de estágios, módulo `src/lib/maturity/methodology.ts`, PDF e portal com índice/escala/nota/pesos setoriais, payload com peso ajustado (T15/T16), AGENTS.md §5 + ADR 011
-- **Next step**: validação manual do dono em http://localhost:3000/admin; depois push + PR para main (exige autorização)
-- **Blockers**: none
-- **Uncommitted files**: none
-- **Branch**: feat/metodologia-dmbok2
+- **Feature**: arsenal-comercial (.specs/features/arsenal-comercial) — **T1–T27 e F1–F8 concluídos; Verifier independente, iteração 3 (2026-11-24): PASS ✅**
+- **Phase / Task**: validação concluída (fix→re-verify encerrou na iteração 3 de 3)
+- **Completed**: gates verdes (lint, typecheck, 890 testes passed / 5 skipped); sensor 26/26 mortos (N4a, N4b, N4c, N4f, N4h, N4i, N5, M15, M20 e amostra antiga); teto do schema medido em 3 páginas de Arsenal; 46/46 ACs Verified; validate_state.py exit 0; lessons L-002..L-007 candidatas (uma feature só, sem promoção)
+- **In-progress** (file:line): none
+- **Next step**: aguardar o dono para abrir o PR `feat/arsenal-comercial` → `dev` (nada foi enviado); opcional: uma execução real do LLM sob os limites da F6
+- **Blockers**: nenhum bloqueante; informativos: catálogo real de serviços e objeções ainda em rascunho (seed); saída real do LLM não regerada com os limites da F6
+- **Uncommitted files**: none (após o commit da validação)
+- **Branch**: feat/arsenal-comercial (commits locais; sem push)

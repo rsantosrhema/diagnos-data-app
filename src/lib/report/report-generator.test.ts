@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { generateScreenerPdf, ScreenerReport, buildReportChildren } from "./report-generator";
 import type { GeneratePdfInput } from "@/lib/service/screen-service";
+import { makeArsenal, makeMaxArsenal } from "@/lib/agents/commercial-fixture";
 function makeInput(overrides: Partial<GeneratePdfInput> = {}): GeneratePdfInput {
   return {
     respondentName: "João Silva",
@@ -170,6 +171,11 @@ function countMetaDots(node: unknown): number {
 
 function hasLocationText(node: unknown): boolean {
   return collectTexts(node).some((text) => /\/[A-Z]{2}$/.test(text));
+}
+
+function countPdfPages(pdf: Buffer): number {
+  const content = pdf.toString("latin1");
+  return (content.match(/\/Type\s*\/Page(?!s)/g) ?? []).length;
 }
 
 describe("generateScreenerPdf", () => {
@@ -473,5 +479,193 @@ describe("generateScreenerPdf", () => {
       makeInput({ location: { city: "São Paulo", state: "SP" } }),
     );
     expect(result.pdf.length).toBeGreaterThan(0);
+  });
+
+  it("sem arsenal mantém 2 páginas, ou 3 com analysis e insights (ARS-28)", () => {
+    expect(buildReportChildren(makeInput())).toHaveLength(2);
+    expect(
+      buildReportChildren(
+        makeInput({
+          analysis: { resumo: "r", dores: [], contexto_concorrentes: [] },
+          insights: { bullets: [{ texto: "I", prioridade: "alta" }] },
+        }),
+      ),
+    ).toHaveLength(3);
+  });
+
+  it("com arsenal acrescenta 3 páginas depois das do diagnóstico (ARS-27)", () => {
+    const base = buildReportChildren(makeInput());
+    const withArsenal = buildReportChildren(makeInput({ arsenal: makeArsenal() }));
+
+    expect(withArsenal).toHaveLength(5);
+    expect(withArsenal.slice(0, base.length).map((child) => child.key)).toEqual(
+      base.map((child) => child.key),
+    );
+    expect(withArsenal.slice(0, base.length).map(collectTexts)).toEqual(
+      base.map(collectTexts),
+    );
+    expect(withArsenal.slice(-3).map((child) => child.key)).toEqual([
+      "arsenal-1",
+      "arsenal-2",
+      "arsenal-3",
+    ]);
+  });
+
+  it("com arsenal e analysis + insights mantém as páginas do diagnóstico e chega a 6 (ARS-27, ARS-28)", () => {
+    const base = buildReportChildren(
+      makeInput({
+        analysis: { resumo: "r", dores: [], contexto_concorrentes: [] },
+        insights: { bullets: [{ texto: "I", prioridade: "alta" }] },
+      }),
+    );
+    const withArsenal = buildReportChildren(
+      makeInput({
+        analysis: { resumo: "r", dores: [], contexto_concorrentes: [] },
+        insights: { bullets: [{ texto: "I", prioridade: "alta" }] },
+        arsenal: makeArsenal(),
+      }),
+    );
+
+    expect(base).toHaveLength(3);
+    expect(withArsenal).toHaveLength(6);
+    expect(withArsenal.slice(0, 3).map((child) => child.key)).toEqual(
+      base.map((child) => child.key),
+    );
+    expect(withArsenal.slice(-3).map((child) => child.key)).toEqual([
+      "arsenal-1",
+      "arsenal-2",
+      "arsenal-3",
+    ]);
+  });
+
+  it("gera PDF com arsenal: buffer %PDF e contagem de páginas calibrada (ARS-37)", async () => {
+    const withoutArsenal = await generateScreenerPdf(makeInput());
+    const basePages = countPdfPages(withoutArsenal.pdf);
+    expect(basePages).toBe(3);
+
+    const withArsenal = await generateScreenerPdf(makeInput({ arsenal: makeArsenal() }));
+    expect(withArsenal.pdf.subarray(0, 4).toString("latin1")).toBe("%PDF");
+    expect(countPdfPages(withArsenal.pdf)).toBe(basePages + 3);
+  });
+
+  it("gera PDF com arsenal e analysis + insights com as páginas do diagnóstico + 3 (ARS-37)", async () => {
+    const input = makeInput({
+      analysis: { resumo: "r", dores: [], contexto_concorrentes: [] },
+      insights: { bullets: [{ texto: "I", prioridade: "alta" }] },
+    });
+    const withoutArsenal = await generateScreenerPdf(input);
+    expect(countPdfPages(withoutArsenal.pdf)).toBe(3);
+
+    const withArsenal = await generateScreenerPdf({ ...input, arsenal: makeArsenal() });
+    expect(withArsenal.pdf.subarray(0, 4).toString("latin1")).toBe("%PDF");
+    expect(countPdfPages(withArsenal.pdf)).toBe(6);
+  });
+
+  it("teto do schema (5 pontos, 6 objeções, 10 perguntas) cabe em exatamente 3 páginas de Arsenal (ARS-27, ARS-37)", async () => {
+    const input = makeInput({
+      analysis: {
+        resumo:
+          "Indústria de médio porte investe em plataforma de dados, mas mantém decisões de priorização informais e depende de poucas pessoas para conciliar números entre áreas.",
+        dores: [
+          {
+            dimensao_id: "d04",
+            dimensao: "Qualidade de Dados",
+            dor: "Cadastros e indicadores divergem entre sistemas e a conciliação é manual.",
+            evidencia_mercado: true,
+            confianca: 0.8,
+          },
+        ],
+        contexto_concorrentes: [
+          {
+            nome: "Concorrente A",
+            contexto: "Estruturou governança de dados e comitê de priorização.",
+          },
+        ],
+      },
+      insights: {
+        bullets: [
+          {
+            texto: "Definir dono formal por domínio de dados.",
+            prioridade: "alta",
+            titulo: "Governança com dono",
+          },
+        ],
+      },
+    });
+    const withoutArsenal = await generateScreenerPdf(input);
+    const basePages = countPdfPages(withoutArsenal.pdf);
+    const withMaxArsenal = await generateScreenerPdf({
+      ...input,
+      arsenal: makeMaxArsenal(),
+    });
+
+    expect(withMaxArsenal.pdf.subarray(0, 4).toString("latin1")).toBe("%PDF");
+    expect(countPdfPages(withMaxArsenal.pdf)).toBe(basePages + 3);
+  });
+
+  it("6 objeções com texto típico não estouram a página de contornos (ARS-27)", async () => {
+    const objections = [
+      {
+        grupo: "ja-temos" as const,
+        objecao_provavel:
+          "Já temos time de dados e ferramenta de BI; o que falta é execução, não método.",
+        contorno:
+          "Peça o critério por trás dessa conclusão. Devolva o que o próprio diagnóstico aponta: erros só aparecem quando alguém reclama e uma ou duas pessoas fazem tudo. Proponha um recorte pequeno em um único domínio de cadastro crítico, com dono e regra de qualidade definidos antes de ampliar indicadores.",
+        apoio:
+          "Time e ferramenta existem, mas qualidade e capacidade seguem em nível baixo no diagnóstico.",
+      },
+      {
+        grupo: "preco" as const,
+        objecao_provavel: "Um projeto desse porte não cabe no orçamento deste ano.",
+        contorno:
+          "Separe o custo de adiar do custo do projeto: pergunte quanto esforço as áreas já gastam conciliando manualmente os indicadores e o que deixa de ser decidido quando os números divergem. Depois proponha um primeiro recorte ligado à dor que a diretoria já reconhece, não a iniciativa inteira.",
+        apoio:
+          "O diagnóstico registra conciliação manual e decisões informais de priorização como rotina atual.",
+      },
+      {
+        grupo: "timing" as const,
+        objecao_provavel:
+          "Só vamos tratar qualidade de dados depois de concluir os projetos que já estão na fila.",
+        contorno:
+          "Pergunte o que muda nesses projetos se os cadastros continuarem divergentes e qual evidência faria o tema entrar na pauta antes. Use o desequilíbrio entre a dimensão mais madura e a menos madura como ponto de partida da conversa, sem prometer resultado de outra iniciativa.",
+        apoio:
+          "Projetos analíticos construídos sobre cadastro não sincronizado tendem a reproduzir a divergência.",
+      },
+      {
+        grupo: "risco-dados" as const,
+        objecao_provavel:
+          "Mexer em cadastros e dados de clientes aumenta o risco de exposição e de descumprimento da LGPD.",
+        contorno:
+          "Reconheça o risco e não prometa o que não está sob seu controle. Traga segurança e jurídico para a conversa, mapeando base legal, classificação e controle de acesso antes de qualquer tratamento. O diagnóstico mostra justamente que hoje esse mapeamento não existe e o acesso é informal.",
+        apoio:
+          "Segurança e Conformidade está em nível 1: sem mapeamento, assume-se que tudo está nos sistemas.",
+      },
+      {
+        grupo: "decisao" as const,
+        objecao_provavel:
+          "Essa decisão não é minha; precisa passar por outras áreas e pelo conselho.",
+        contorno:
+          "Pergunte quem precisa estar na mesa e qual evidência cada área pede para aprovar. Proponha levar o próprio resultado do diagnóstico como material comum, para que a discussão seja sobre a mesma linha de base e não sobre percepções diferentes entre as áreas envolvidas.",
+        apoio:
+          "Patrocínio Executivo e Business Case está em nível baixo, com aprovação reativa caso a caso.",
+      },
+      {
+        grupo: "confianca" as const,
+        objecao_provavel:
+          "Como sei que essa abordagem funciona no nosso contexto industrial e no nosso volume de dados?",
+        contorno:
+          "Não traga case inventado. Pergunte quais critérios tornariam o piloto verificável para vocês e proponha um recorte mensurável, com linha de base definida pelo próprio cliente a partir dos indicadores que hoje divergem entre as áreas.",
+        apoio:
+          "O diagnóstico fornece a linha de base: níveis por dimensão e as dores já reconhecidas pela própria empresa.",
+      },
+    ];
+    const withoutArsenal = await generateScreenerPdf(makeInput());
+    const basePages = countPdfPages(withoutArsenal.pdf);
+    const withArsenal = await generateScreenerPdf(
+      makeInput({ arsenal: makeArsenal({ objecoes: objections }) }),
+    );
+
+    expect(objections).toHaveLength(6);
+    expect(countPdfPages(withArsenal.pdf)).toBe(basePages + 3);
   });
 });

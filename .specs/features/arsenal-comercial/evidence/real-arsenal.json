@@ -1,0 +1,155 @@
+{
+  "objecoes": [
+    {
+      "apoio": "Diagnóstico: d04 e d07 em nível 1, com conciliação manual e acesso informal já em curso.",
+      "grupo": "preco",
+      "contorno": "Pergunte qual critério define o que entra no orçamento e devolva o dado que o próprio diagnóstico trouxe: qualidade e conformidade são as dimensões de menor nível, e o retrabalho de conciliação e a exposição de acesso já acontecem hoje. Proponha um recorte inicial pequeno, ligado à dor que o cliente reconheceu primeiro.",
+      "objecao_provavel": "O orçamento já está comprometido neste ciclo; um projeto desse porte não cabe agora."
+    },
+    {
+      "apoio": "Insight de prioridade alta: tratar cadastros duplicados antes de criar novos indicadores.",
+      "grupo": "timing",
+      "contorno": "Pergunte o que precisa acontecer para o tema entrar na pauta e o que muda no negócio até lá. Enquanto a decisão espera, cadastros duplicados seguem exigindo conciliação manual, o acesso a dados pessoais continua informal e as iniciativas de IA avançam sobre base não confiável, aumentando o esforço de correção depois.",
+      "objecao_provavel": "Reconheço o problema, mas vamos tratar isso no próximo ciclo de planejamento."
+    },
+    {
+      "apoio": "Desequilíbrio de quatro níveis entre arquitetura (d03, nível 5) e qualidade (d04, nível 1).",
+      "grupo": "ja-temos",
+      "contorno": "Reconheça o que existe — a arquitetura aparece em nível 5, com dados tratados como produto — e pergunte como qualidade e controle de acesso são tratados na rotina, já que essas dimensões ficaram em nível 1 mesmo com a plataforma em uso. O ponto não é a ferramenta, é a regra e a rotina de correção.",
+      "objecao_provavel": "Já temos plataforma de dados e times cuidando disso."
+    },
+    {
+      "apoio": "Diagnóstico indica autoavaliação otimista de C-level; validar com o time operacional.",
+      "grupo": "confianca",
+      "contorno": "Não prometa resultado: proponha começar pelo fluxo real de cadastro e pelo mapeamento de acesso, com critério de sucesso definido junto do time operacional. O nível declarado por C-level costuma ser otimista, então a validação precisa vir da prática diária das áreas antes de qualquer escala.",
+      "objecao_provavel": "Como sei que essa abordagem funciona no nosso contexto específico?"
+    },
+    {
+      "apoio": "d07 em nível 1: sem mapeamento de dados pessoais e sem controle formal de acesso.",
+      "grupo": "risco-dados",
+      "contorno": "Chame segurança e jurídico para a conversa em vez de prometer conformidade. Pergunte como os dados pessoais circulam hoje e quem acessa o quê — o mapeamento e o controle formal de acesso são o primeiro passo para reduzir exposição, não para ampliá-la.",
+      "objecao_provavel": "Mexer em dados e LGPD me preocupa; não quero aumentar a exposição da empresa."
+    },
+    {
+      "apoio": "Dores de qualidade, LGPD e IA atravessam áreas distintas da empresa.",
+      "grupo": "decisao",
+      "contorno": "Pergunte quem precisa concordar e qual evidência cada área pediria. Use o diagnóstico como base comum da conversa: qualidade, conformidade e IA aparecem no nível mais baixo e afetam todas as áreas, não apenas uma, o que ajuda a construir pauta conjunta em vez de projeto isolado.",
+      "objecao_provavel": "A decisão não é só minha; preciso envolver outras áreas para aprovar."
+    }
+  ],
+  "perguntas": [
+    {
+      "spin": "situacao",
+      "texto": "Quem, no dia a dia, responde pela correção quando um cadastro aparece divergente entre dois sistemas?",
+      "formato": "aberta",
+      "objetivo": "Confirmar quem realmente opera a correção hoje, antes de assumir o dono declarado."
+    },
+    {
+      "spin": "problema",
+      "texto": "Onde a conciliação manual dos indicadores mais consome tempo das áreas hoje?",
+      "formato": "aberta",
+      "objetivo": "Fazer o cliente nomear a dor de qualidade com exemplos concretos."
+    },
+    {
+      "spin": "problema",
+      "texto": "Como os donos de domínio agem quando um dado crítico está errado e ninguém responde pela correção?",
+      "formato": "aberta",
+      "objetivo": "Testar a prática real por trás do nível declarado de governança."
+    },
+    {
+      "spin": "problema",
+      "texto": "Existe hoje mapeamento do fluxo de dados pessoais e controle formal de quem acessa o quê?",
+      "formato": "fechada",
+      "objetivo": "Confirmar a lacuna de conformidade e controle de acesso."
+    },
+    {
+      "spin": "implicacao",
+      "texto": "O que deixa de ser decidido quando duas áreas levam números diferentes para a mesma reunião?",
+      "formato": "aberta",
+      "objetivo": "Levar a divergência de dados ao custo de decisão adiada."
+    },
+    {
+      "spin": "implicacao",
+      "texto": "Se a LGPD fosse questionada amanhã, quanto esforço a empresa levaria para mostrar quem acessou dados sensíveis?",
+      "formato": "aberta",
+      "objetivo": "Expor o risco e o custo de resposta sem mapeamento nem controle."
+    },
+    {
+      "spin": "implicacao",
+      "texto": "A dependência de uma ou duas pessoas para fechar os números já atrasou alguma entrega ou decisão?",
+      "formato": "fechada",
+      "objetivo": "Confirmar o impacto da concentração de capacidade analítica."
+    },
+    {
+      "spin": "necessidade",
+      "texto": "Como seria o dia a dia das áreas se o cadastro fosse único e os números fechassem sem conciliação manual?",
+      "formato": "aberta",
+      "objetivo": "Fazer o cliente descrever o ganho com as próprias palavras."
+    },
+    {
+      "spin": "necessidade",
+      "texto": "Faria sentido tratar qualidade e cadastro mestre antes de retomar as iniciativas de IA?",
+      "formato": "fechada",
+      "objetivo": "Alinhar a sequência de prioridades com a dor de base não confiável."
+    },
+    {
+      "spin": "necessidade",
+      "texto": "Se o mapeamento de dados pessoais e o controle de acesso estivessem formalizados, isso ajudaria a destravar a conversa de IA com segurança e jurídico?",
+      "formato": "fechada",
+      "objetivo": "Confirmar o valor percebido da conformidade como habilitador."
+    }
+  ],
+  "pontos_chave": [
+    {
+      "texto": "Erros só aparecem quando alguém reclama e cadastros se repetem entre sistemas. A conciliação dos indicadores é manual, e o próprio time reconhece o retrabalho recorrente.",
+      "titulo": "Qualidade de dados é o ponto mais fraco do diagnóstico",
+      "dimensao_ids": [
+        "d04",
+        "d06"
+      ]
+    },
+    {
+      "texto": "Não há mapeamento do fluxo de dados pessoais nem controle formal de quem acessa o quê. A conformidade é assumida, não verificada, e o risco cresce com o volume de dados e com as iniciativas de IA.",
+      "titulo": "LGPD no papel e acesso informal a dados pessoais",
+      "dimensao_ids": [
+        "d07"
+      ]
+    },
+    {
+      "texto": "As iniciativas de IA partem de dados não confiáveis e sem responsável claro, então cada projeto vira esforço pontual, sem critério de priorização nem avaliação de risco e retorno.",
+      "titulo": "IA sem base confiável e sem dono definido",
+      "dimensao_ids": [
+        "d09",
+        "d02"
+      ]
+    },
+    {
+      "texto": "Arquitetura está em nível 5, com dados tratados como produto, enquanto qualidade e conformidade estão em nível 1. O investimento foi para a plataforma, não para o dado que circula nela.",
+      "titulo": "Plataforma madura convivendo com dado não confiável",
+      "dimensao_ids": [
+        "d03",
+        "d04"
+      ]
+    },
+    {
+      "texto": "Uma ou duas pessoas fazem a maior parte do trabalho de dados e cada área monta a própria planilha, o que limita a capacidade de responder perguntas simples sem fila.",
+      "titulo": "Poucas pessoas sustentam os números da empresa",
+      "dimensao_ids": [
+        "d10",
+        "d08"
+      ]
+    }
+  ],
+  "servico_recomendado": {
+    "servico_id": "qualidade-mestres",
+    "justificativa": "A dimensão de menor nível e de maior peso é Qualidade de Dados (d04, nível 1), com cadastros duplicados entre sistemas e conciliação manual dos indicadores, dor classificada como prioridade alta no diagnóstico. Tratar qualidade e cadastro mestre antes de novos indicadores e de IA cria a base que hoje falta para as demais iniciativas.",
+    "complementares": [
+      "seguranca-lgpd",
+      "governanca"
+    ],
+    "dimensoes_atacadas": [
+      "d04",
+      "d06"
+    ]
+  }
+}

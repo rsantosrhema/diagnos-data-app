@@ -60,6 +60,7 @@ erDiagram
         timestamptz processing_started_at
         timestamptz completed_at
         integer attempts
+        jsonb arsenal "nullable, Arsenal Comercial"
     }
     leads ||--o| analysis_job_logs : "registra"
     analysis_job_logs {
@@ -174,8 +175,11 @@ Todas as tabelas têm **RLS habilitado sem policies** para `anon`/`authenticated
 | `processing_started_at` | `timestamptz` | nullable (preenchido no `read` da fila) |
 | `completed_at` | `timestamptz` | nullable (preenchido no ack de sucesso) |
 | `attempts` | `integer` | not null, default `0` (incrementado a cada `read`) |
+| `arsenal` | `jsonb` | nullable (Arsenal Comercial gerado pelo agente; `null` quando o agente falha) |
 
 **Índices**: `market_insights_lead_id_idx`.
+
+**Arsenal Comercial**: a coluna `arsenal` guarda o material interno da reunião de venda gerado pelo agente comercial no worker (pontos-chave, serviço ideal, objeções e perguntas SPIN). É sempre sobrescrita no `upsert` (valor novo ou `null`); `null` significa que o agente falhou e o PDF saiu sem o Arsenal. Nunca é exposta no portal. Migration: `0019_market_insights_arsenal`.
 
 **RLS**: habilitado, sem policies (service-role only).
 
@@ -187,7 +191,7 @@ Todas as tabelas têm **RLS habilitado sem policies** para `anon`/`authenticated
 | --- | --- | --- |
 | `id` | `uuid` | PK, default `gen_random_uuid()` |
 | `lead_id` | `uuid` | not null, **FK** → `leads(id)` `on delete cascade` |
-| `step` | `text` | not null, **check** in (`enqueued`,`started`,`researcher`,`analyst`,`writer`,`pdf`,`email`,`completed`,`failed`) |
+| `step` | `text` | not null, **check** in (`enqueued`,`started`,`researcher`,`analyst`,`writer`,`arsenal`,`arsenal_failed`,`pdf`,`email`,`completed`,`failed`,`pdf_failed`,`email_failed`,`requeue`) |
 | `message` | `text` | nullable (ex.: mensagem de erro no `failed`) |
 | `duration_ms` | `integer` | nullable (duração da etapa, quando aplicável) |
 | `created_at` | `timestamptz` | not null, default `now()` |
@@ -196,7 +200,7 @@ Todas as tabelas têm **RLS habilitado sem policies** para `anon`/`authenticated
 
 **RLS**: habilitado, sem policies (service-role only).
 
-**Ciclo de eventos**: `enqueued` (no enqueue) → `started`/`researcher`/`analyst`/`writer`/`pdf`/`email` (durante o processamento) → `completed` (sucesso) ou `failed` (falha, com a mensagem de erro).
+**Ciclo de eventos**: `enqueued` (no enqueue) → `started`/`researcher`/`analyst`/`writer`/`arsenal`/`pdf`/`email` (durante o processamento) → `completed` (sucesso) ou `failed` (falha, com a mensagem de erro). Uma falha do agente comercial não interrompe o job: registra `arsenal_failed` com a mensagem e o fluxo segue para `pdf`/`email`.
 
 ### `share_tokens`
 

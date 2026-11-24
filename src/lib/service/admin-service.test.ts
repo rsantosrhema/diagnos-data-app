@@ -7,6 +7,8 @@ import type { AnalysisQueueRepository } from "@/lib/repository/analysis-queue-re
 import type { AdminLogEntryDTO } from "@/lib/dto/admin";
 import type { AgentPayload } from "@/lib/schemas/agent-payload";
 import type { GeneratePdfInput } from "@/lib/service/screen-service";
+import { buildPdfInput } from "@/lib/report/build-pdf-input";
+import { makeArsenal } from "@/lib/agents/commercial-fixture";
 
 function mockLeadRepo(overrides: Partial<LeadRepository> = {}): LeadRepository {
   return {
@@ -625,6 +627,124 @@ describe("AdminService", () => {
       expect(input.commercialAnswer).toBe("a");
       expect(input.analysis?.resumo).toBe("resumo");
       expect(input.insights?.bullets).toHaveLength(1);
+    });
+
+    it("passa o Arsenal persistido ao PDF quando ele valida no schema (ARS-38)", async () => {
+      const arsenal = makeArsenal();
+      const generatePdf = vi
+        .fn()
+        .mockResolvedValue({ pdf: Buffer.from("pdf"), filename: "diagnostico-alice.pdf" });
+      const service = createAdminServiceForTest({
+        leadRepo: mockLeadRepo({ findById: vi.fn().mockResolvedValue(lead) }),
+        assessmentRepo: mockAssessmentRepo({ findByLeadId: vi.fn().mockResolvedValue(assessment) }),
+        marketInsightsRepo: mockMarketInsightsRepo({
+          findByLeadId: vi.fn().mockResolvedValue({ ...analyzedInsights, arsenal }),
+        }),
+        generatePdf,
+      });
+
+      await service.getReportPdf("l1");
+
+      const input = generatePdf.mock.calls[0][0] as GeneratePdfInput;
+      expect(input.arsenal).toEqual(arsenal);
+    });
+
+    it("arsenal nulo gera o PDF sem a chave arsenal e resolve (ARS-39)", async () => {
+      const generatePdf = vi
+        .fn()
+        .mockResolvedValue({ pdf: Buffer.from("pdf"), filename: "diagnostico-alice.pdf" });
+      const service = createAdminServiceForTest({
+        leadRepo: mockLeadRepo({ findById: vi.fn().mockResolvedValue(lead) }),
+        assessmentRepo: mockAssessmentRepo({ findByLeadId: vi.fn().mockResolvedValue(assessment) }),
+        marketInsightsRepo: mockMarketInsightsRepo({
+          findByLeadId: vi.fn().mockResolvedValue({ ...analyzedInsights, arsenal: null }),
+        }),
+        generatePdf,
+      });
+
+      await expect(service.getReportPdf("l1")).resolves.toMatchObject({
+        filename: "diagnostico-alice.pdf",
+      });
+      const input = generatePdf.mock.calls[0][0] as GeneratePdfInput;
+      expect("arsenal" in input).toBe(false);
+    });
+
+    it("arsenal ausente no registro gera o PDF sem a chave arsenal (ARS-39)", async () => {
+      const generatePdf = vi
+        .fn()
+        .mockResolvedValue({ pdf: Buffer.from("pdf"), filename: "diagnostico-alice.pdf" });
+      const service = createAdminServiceForTest({
+        leadRepo: mockLeadRepo({ findById: vi.fn().mockResolvedValue(lead) }),
+        assessmentRepo: mockAssessmentRepo({ findByLeadId: vi.fn().mockResolvedValue(assessment) }),
+        marketInsightsRepo: mockMarketInsightsRepo({
+          findByLeadId: vi.fn().mockResolvedValue(analyzedInsights),
+        }),
+        generatePdf,
+      });
+
+      await service.getReportPdf("l1");
+
+      const input = generatePdf.mock.calls[0][0] as GeneratePdfInput;
+      expect("arsenal" in input).toBe(false);
+    });
+
+    it("arsenal com serviço fora do catálogo é ignorado sem lançar (ARS-39)", async () => {
+      const invalido = {
+        ...makeArsenal(),
+        servico_recomendado: {
+          ...makeArsenal().servico_recomendado,
+          servico_id: "inexistente",
+        },
+      };
+      const generatePdf = vi
+        .fn()
+        .mockResolvedValue({ pdf: Buffer.from("pdf"), filename: "diagnostico-alice.pdf" });
+      const service = createAdminServiceForTest({
+        leadRepo: mockLeadRepo({ findById: vi.fn().mockResolvedValue(lead) }),
+        assessmentRepo: mockAssessmentRepo({ findByLeadId: vi.fn().mockResolvedValue(assessment) }),
+        marketInsightsRepo: mockMarketInsightsRepo({
+          findByLeadId: vi.fn().mockResolvedValue({ ...analyzedInsights, arsenal: invalido }),
+        }),
+        generatePdf,
+      });
+
+      await expect(service.getReportPdf("l1")).resolves.toMatchObject({
+        filename: "diagnostico-alice.pdf",
+      });
+      const input = generatePdf.mock.calls[0][0] as GeneratePdfInput;
+      expect("arsenal" in input).toBe(false);
+    });
+
+    it("o input do PDF é igual ao buildPdfInput compartilhado (ARS-40)", async () => {
+      const arsenal = makeArsenal();
+      const generatePdf = vi
+        .fn()
+        .mockResolvedValue({ pdf: Buffer.from("pdf"), filename: "diagnostico-alice.pdf" });
+      const service = createAdminServiceForTest({
+        leadRepo: mockLeadRepo({
+          findById: vi.fn().mockResolvedValue({ ...lead, city: "São Paulo", state: "SP" }),
+        }),
+        assessmentRepo: mockAssessmentRepo({ findByLeadId: vi.fn().mockResolvedValue(assessment) }),
+        marketInsightsRepo: mockMarketInsightsRepo({
+          findByLeadId: vi.fn().mockResolvedValue({ ...analyzedInsights, arsenal }),
+        }),
+        generatePdf,
+      });
+
+      await service.getReportPdf("l1");
+
+      const input = generatePdf.mock.calls[0][0] as GeneratePdfInput;
+      expect(input).toEqual(
+        buildPdfInput(
+          agentPayload,
+          {
+            analysis: { resumo: "resumo", dores: [], contexto_concorrentes: [] },
+            insights: { bullets: [{ texto: "b", prioridade: "alta" }] },
+            arsenal,
+          },
+          { city: "São Paulo", state: "SP" },
+        ),
+      );
     });
 
     it("lança 404 quando o lead não existe", async () => {
