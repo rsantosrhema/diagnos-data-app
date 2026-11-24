@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { SCREENER_CONTRACT } from "./contract";
 import { computeScores } from "./scoring";
+import type { ScreenerResult } from "./scoring";
 import { buildAgentPayload } from "./agent-payload";
 import type { AgentPayloadInput } from "./agent-payload";
 import { agentPayloadSchema } from "../schemas/agent-payload";
@@ -85,6 +86,36 @@ describe("buildAgentPayload", () => {
       expect(r.peso).toBeGreaterThan(0);
       expect(r.resposta.length).toBeGreaterThan(0);
     }
+  });
+
+  describe("peso ajustado ao setor (MET-35)", () => {
+    it("grava o peso de result.dimensionScores, não o peso base do contrato", () => {
+      const base = makeInput();
+      const adjusted: ScreenerResult = {
+        ...base.result,
+        dimensionScores: base.result.dimensionScores.map((d) =>
+          d.id === "d07" ? { ...d, peso: 13 } : d,
+        ),
+      };
+
+      const payload = buildAgentPayload({ ...base, result: adjusted });
+      const d07 = payload.respostas.find((r) => r.dimensao_id === "d07");
+
+      expect(SCREENER_CONTRACT.dimensoes.find((d) => d.id === "d07")?.peso).toBe(10);
+      expect(d07?.peso).toBe(13);
+    });
+
+    it("cai para o peso do contrato quando a dimensão não está no resultado", () => {
+      const base = makeInput();
+      const withoutD07: ScreenerResult = {
+        ...base.result,
+        dimensionScores: base.result.dimensionScores.filter((d) => d.id !== "d07"),
+      };
+
+      const payload = buildAgentPayload({ ...base, result: withoutD07 });
+
+      expect(payload.respostas.find((r) => r.dimensao_id === "d07")?.peso).toBe(10);
+    });
   });
 
   it("contém resposta_comercial", () => {

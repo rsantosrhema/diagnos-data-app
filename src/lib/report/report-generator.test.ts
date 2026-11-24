@@ -6,16 +6,76 @@ function makeInput(overrides: Partial<GeneratePdfInput> = {}): GeneratePdfInput 
     respondentName: "João Silva",
     band: { rotulo: "Estruturado", descricao: "Base técnica existe." },
     dimensionScores: [
-      { name: "Governança e Responsabilidade", nivel: 3, peso: 12 },
-      { name: "Patrocínio Executivo", nivel: 2, peso: 12 },
-      { name: "Arquitetura e Integração", nivel: 4, peso: 12 },
-      { name: "Qualidade de Dados", nivel: 3, peso: 12 },
-      { name: "Metadados e Rastreabilidade", nivel: 3, peso: 10 },
-      { name: "Dados Mestres e Cadastros", nivel: 2, peso: 8 },
-      { name: "Segurança e Conformidade", nivel: 3, peso: 10 },
-      { name: "Consumo e Autonomia Analítica", nivel: 3, peso: 10 },
-      { name: "IA, Modelos e Analytics", nivel: 2, peso: 6 },
-      { name: "Time e Capacidade", nivel: 3, peso: 8 },
+      {
+        name: "Governança e Responsabilidade",
+        nivel: 3,
+        peso: 12,
+        pesoPadrao: 12,
+        areaDmbok: "Data Governance",
+      },
+      {
+        name: "Patrocínio Executivo",
+        nivel: 2,
+        peso: 12,
+        pesoPadrao: 12,
+        areaDmbok: "Data Governance (Data Strategy)",
+      },
+      {
+        name: "Arquitetura e Integração",
+        nivel: 4,
+        peso: 12,
+        pesoPadrao: 12,
+        areaDmbok: "Data Architecture / Data Integration",
+      },
+      {
+        name: "Qualidade de Dados",
+        nivel: 3,
+        peso: 12,
+        pesoPadrao: 12,
+        areaDmbok: "Data Quality",
+      },
+      {
+        name: "Metadados e Rastreabilidade",
+        nivel: 3,
+        peso: 10,
+        pesoPadrao: 10,
+        areaDmbok: "Metadata Management",
+      },
+      {
+        name: "Dados Mestres e Cadastros",
+        nivel: 2,
+        peso: 8,
+        pesoPadrao: 8,
+        areaDmbok: "Reference & Master Data",
+      },
+      {
+        name: "Segurança e Conformidade",
+        nivel: 3,
+        peso: 10,
+        pesoPadrao: 10,
+        areaDmbok: "Data Security",
+      },
+      {
+        name: "Consumo e Autonomia Analítica",
+        nivel: 3,
+        peso: 10,
+        pesoPadrao: 10,
+        areaDmbok: "Data Warehousing & BI",
+      },
+      {
+        name: "IA, Modelos e Analytics",
+        nivel: 2,
+        peso: 6,
+        pesoPadrao: 6,
+        areaDmbok: "Big Data & Data Science",
+      },
+      {
+        name: "Time e Capacidade",
+        nivel: 3,
+        peso: 8,
+        pesoPadrao: 8,
+        areaDmbok: "Data Management Organization & Role Expectations",
+      },
     ],
     riskDimension: { name: "Patrocínio Executivo", nivel: 2 },
     imbalance: false,
@@ -269,6 +329,92 @@ describe("generateScreenerPdf", () => {
     expect(hasText(children, "Radar de maturidade")).toBe(true);
     const result = await generateScreenerPdf(makeInput());
     expect(result.pdf.length).toBeGreaterThan(0);
+  });
+
+  it("card do estágio renderiza o índice DMBOK2 (MET-20)", () => {
+    const children = buildReportChildren(makeInput());
+    expect(
+      hasText(children, "Índice de Maturidade Rhema · base DAMA-DMBOK2"),
+    ).toBe(true);
+  });
+
+  it("leitura do radar renderiza a escala DMBOK2 e não a escala antiga (MET-21)", () => {
+    const children = buildReportChildren(makeInput());
+    expect(
+      hasText(
+        children,
+        "Escala de níveis (DAMA-DMBOK2): 1 Inicial · 2 Repetível · 3 Definido · 4 Gerenciado · 5 Otimizado",
+      ),
+    ).toBe(true);
+    expect(hasText(children, "1 Inicial · 2 Emergente")).toBe(false);
+  });
+
+  it("nota metodológica renderiza a referência do contrato (MET-24)", () => {
+    const children = buildReportChildren(makeInput());
+    expect(hasText(children, "NOTA METODOLÓGICA")).toBe(true);
+    expect(
+      hasText(
+        children,
+        "Índice proprietário da Rhema Data, estruturado sobre as áreas de conhecimento do DAMA-DMBOK2 e sua abordagem de avaliação de maturidade (cap. 15), com pesos ajustados ao segmento e ao porte da empresa. Instrumento de triagem por autoavaliação; não é certificação.",
+      ),
+    ).toBe(true);
+  });
+
+  it("texto renderizado não cita CMMI, DCAM nem DMM (MET-25)", () => {
+    const children = buildReportChildren(
+      makeInput({
+        analysis: {
+          resumo: "r",
+          dores: [],
+          contexto_concorrentes: [{ nome: "Concorrente X", contexto: "c" }],
+        },
+        insights: { bullets: [{ texto: "Insight", prioridade: "alta" }] },
+      }),
+    );
+    const renderedText = collectTexts(children).join("\n");
+    expect(renderedText).not.toContain("CMMI");
+    expect(renderedText).not.toContain("DCAM");
+    expect(renderedText).not.toContain("DMM");
+  });
+
+  it("tabela de dimensões tem os cabeçalhos de peso no setor e peso padrão, sem SCORE (MET-22)", () => {
+    const children = buildReportChildren(makeInput());
+    const texts = collectTexts(children);
+    const headerIndex = texts.indexOf("DIMENSÃO");
+    expect(headerIndex).toBeGreaterThanOrEqual(0);
+    expect(texts.slice(headerIndex, headerIndex + 4)).toEqual([
+      "DIMENSÃO",
+      "NÍVEL",
+      "PESO NO SETOR",
+      "PESO PADRÃO",
+    ]);
+    expect(texts).not.toContain("SCORE");
+  });
+
+  it("linha da dimensão mostra área DMBOK2 e pesos em porcentagem (MET-23)", () => {
+    const children = buildReportChildren(
+      makeInput({
+        dimensionScores: [
+          {
+            name: "Segurança e Conformidade",
+            nivel: 3,
+            peso: 13,
+            pesoPadrao: 10,
+            areaDmbok: "Data Security",
+          },
+        ],
+      }),
+    );
+    const texts = collectTexts(children);
+    const rowIndex = texts.indexOf("Segurança e Conformidade");
+    expect(rowIndex).toBeGreaterThanOrEqual(0);
+    expect(texts.slice(rowIndex, rowIndex + 5)).toEqual([
+      "Segurança e Conformidade",
+      "Data Security",
+      "3",
+      "13%",
+      "10%",
+    ]);
   });
 
   it("omite a seção Radar quando dimensionScores vazio (RADAR-01 edge)", () => {

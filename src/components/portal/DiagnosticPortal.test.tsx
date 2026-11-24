@@ -2,6 +2,7 @@
 import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { METHOD_NOTE } from "@/lib/maturity/methodology";
 
 vi.mock("@/app/components/RhemaLogo", () => ({
   RhemaLogo: () => React.createElement("div", { "data-testid": "rhema-logo" }),
@@ -28,6 +29,8 @@ const DIMS = Array.from({ length: 10 }, (_, i) => ({
   name: `Dimensão ${i + 1}`,
   nivel: (i % 5) + 1,
   peso: 10,
+  pesoPadrao: 10,
+  areaDmbok: "Data Governance",
   score: ((i % 5) + 1) * 10,
   pergunta: `Pergunta dimensão ${i + 1}?`,
   resposta: "Pontual: isolado",
@@ -352,5 +355,16 @@ describe("DiagnosticPortal", () => {
         "João Silva · 10 dimensões avaliadas · São José do Rio Preto/SP",
       ),
     ).toBeTruthy();
+  });
+
+  it("mostra a nota metodológica nos modos público e gerente (MET-32)", () => {
+    const { unmount } = render(<DiagnosticPortal data={portalData()} mode="public" />);
+    expect(screen.getByRole("heading", { name: "Nota metodológica" })).toBeTruthy();
+    expect(screen.getByText(METHOD_NOTE)).toBeTruthy();
+    unmount();
+
+    render(<DiagnosticPortal data={portalData()} mode="manager" />);
+    expect(screen.getByRole("heading", { name: "Nota metodológica" })).toBeTruthy();
+    expect(screen.getByText(METHOD_NOTE)).toBeTruthy();
   });
 });

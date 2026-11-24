@@ -300,6 +300,44 @@ describe("PortalService.getForManager", () => {
     expect(dto.lead.state).toBeNull();
   });
 
+  it("preenche pesoPadrao e areaDmbok da dimensão pelo contrato (MET-27)", async () => {
+    const service = buildService({
+      assessmentRepo: {
+        findByLeadId: vi.fn().mockResolvedValue({
+          ...ASSESSMENT_ROW,
+          agent_payload: {
+            ...AGENT_PAYLOAD,
+            respostas: [
+              {
+                dimensao_id: "d07",
+                dimensao: "Segurança e Conformidade (LGPD)",
+                pergunta: "Como a segurança e a conformidade são tratadas?",
+                nivel: 3,
+                peso: 13,
+                resposta: "Políticas formais aplicadas.",
+              },
+            ],
+          },
+        }),
+      },
+    });
+    const dto = await service.getForManager("lead-1");
+
+    expect(dto.dimensions[0]?.peso).toBe(13);
+    expect(dto.dimensions[0]?.pesoPadrao).toBe(10);
+    expect(dto.dimensions[0]?.areaDmbok).toBe("Data Security");
+  });
+
+  it("usa o peso recebido e área vazia quando a dimensão não está no contrato (MET-27)", async () => {
+    const service = buildService();
+    const dto = await service.getForManager("lead-1");
+
+    expect(dto.dimensions[0]?.id).toBe("dim_governanca");
+    expect(dto.dimensions[0]?.peso).toBe(12);
+    expect(dto.dimensions[0]?.pesoPadrao).toBe(12);
+    expect(dto.dimensions[0]?.areaDmbok).toBe("");
+  });
+
   it("inclui analysis, insights e sources quando status é analisado", async () => {
     const service = buildService();
     const dto = await service.getForManager("lead-1");

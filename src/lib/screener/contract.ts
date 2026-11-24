@@ -8,7 +8,17 @@ const metaSchema = z.object({
   versao: z.string(),
   autor: z.string(),
   tipo: z.string(),
+  nome_indice: z.string().min(1),
   escala: z.string(),
+  escala_niveis: z
+    .array(
+      z.object({
+        nivel: z.number().int().min(1).max(5),
+        rotulo: z.string().min(1),
+      }),
+    )
+    .length(5),
+  referencia: z.string().min(1),
   aviso_metodologico: z.string(),
   tempo_estimado_min: z.number(),
 });

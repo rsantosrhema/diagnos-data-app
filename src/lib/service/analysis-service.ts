@@ -14,6 +14,7 @@ import type {
 } from "@/lib/agents/types";
 import type { GeneratePdfInput } from "@/lib/service/screen-service";
 import { stripControlChars } from "@/lib/agents/sanitize";
+import { describeDimension } from "@/lib/maturity/methodology";
 
 export class AnalysisServiceError extends Error {
   constructor(message: string) {
@@ -60,6 +61,7 @@ function buildPdfInput(
     name: r.dimensao,
     nivel: r.nivel,
     peso: r.peso,
+    ...describeDimension(r.dimensao_id, r.peso),
   }));
   const riskDim = payload.respostas.find(
     (r) => r.dimensao_id === payload.risco.dimensao_id,

@@ -17,13 +17,14 @@
 | AD-009 | Relatório sob demanda (sem cron): endpoint de reprocess enfileira e dispara fire-and-forget `POST /api/analysis-worker` com `x-internal-api-key`; resposta imediata `{ok,queued}`; sem depender de agendador externo | active | 2026-08-31 | Cron Hobby da Vercel bloqueado/removido; pipeline dos agentes (~50s) roda em background no clique do gerente |
 | AD-010 | Links públicos compartilháveis usam token opaco 256-bit com somente hash SHA-256 persistido, TTL 90 dias, um ativo por lead (novo invalida anterior), comparação com timingSafeEqual e 404 genérico idêntico para inválido/expirado/revogado | active | 2026-10-08 | Portal-analise: link do cliente /r/[token]; não distinguir motivo evita enumeração; revogação é delete lógico |
 | AD-011 | Portal do diagnóstico renderizado por um único componente (`DiagnosticPortal`) com `mode: public \| manager`; as rotas mantêm só fetch, estados e ações do gerente | active | 2026-11-13 | As duas telas já compartilhavam DTO e componentes, mas duplicavam ~200 linhas de layout; unificar evita divergência visual e correção em dobro |
+| AD-012 | DAMA-DMBOK2 (cap. 15) como base metodológica única; faixas de estágio sempre as do contrato (1.8 / 2.6 / 3.4 / 4.2) para todo segmento, com diferenciação setorial só pelos pesos da calibração | active | 2026-11-24 | Híbrido DMBOK + DCAM + "CMMI-like" e faixas por segmento contradiziam o score no portal; decisão detalhada no ADR-011 |
 
 ## Handoff
 
-- **Feature**: portal-analise (.specs/features/portal-analise) — **DONE**
-- **Phase / Task**: Execute complete — T1–T18 commitados (c286ae3..41ee30e) + Fix 1 PORTAL-09 (middleware.test.ts) + Verifier PASS (14/14 ACs com evidência, sensor 4/4 mutants killed), validation.md atualizado para PASS
-- **Completed**: migration 0016 share_tokens, share-token-repo, schemas de agentes enriquecidos (aditivos), portal service/DTO, rotas admin/public + proxies + rate-limit, componentes UI (StageHero, RadarSpider, MaturityBars, AnswersAccordion, CompetitorsGrid, InsightsBoard, SourcesList, AnalysisPlaceholder), páginas /admin/leads/[leadId] e /r/[token], suite 459 testes
-- **Next step**: feature entregue — deploy Coolify concluído (commit c1da277) e migration 0016 aplicada no Supabase self-hosted (API do portal respondendo 404 genérico, tabela share_tokens ativa)
+- **Feature**: metodologia-dmbok2 (.specs/features/metodologia-dmbok2) — **DONE (local)**
+- **Phase / Task**: Execute complete — T1–T16 commitados no branch `feat/metodologia-dmbok2` (01d16e3..c114e9c); Verifier PASS 35/35 ACs, sensor 35/35 mutantes mortos; smoke local PASS (3 leads + relatório real Saúde)
+- **Completed**: contrato v1.2 DMBOK2, régua única de estágios, módulo `src/lib/maturity/methodology.ts`, PDF e portal com índice/escala/nota/pesos setoriais, payload com peso ajustado (T15/T16), AGENTS.md §5 + ADR 011
+- **Next step**: validação manual do dono em http://localhost:3000/admin; depois push + PR para main (exige autorização)
 - **Blockers**: none
-- **Uncommitted files**: none (fix + specs commitados juntos)
-- **Branch**: main
+- **Uncommitted files**: none
+- **Branch**: feat/metodologia-dmbok2

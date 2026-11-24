@@ -2,6 +2,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { SCALE_LEGEND } from "@/lib/maturity/methodology";
 import { MaturityBars } from "./MaturityBars";
 
 const DIMS = (
@@ -44,5 +45,10 @@ describe("MaturityBars", () => {
     const dimmed = screen.getByTestId("maturity-bar-4");
     expect(highlighted.getAttribute("style")).toContain("opacity: 1");
     expect(dimmed.getAttribute("style")).toContain("opacity: 0.35");
+  });
+
+  it("mostra a legenda da escala DMBOK2 (MET-31)", () => {
+    render(<MaturityBars dimensions={DIMS} riskId="d03" />);
+    expect(screen.getByText(SCALE_LEGEND)).toBeTruthy();
   });
 });
