@@ -23,11 +23,11 @@
 
 ## Handoff
 
-- **Feature**: arsenal-comercial (.specs/features/arsenal-comercial) — **Planejamento concluído (spec, context, design, tasks); Execute não iniciado**
-- **Phase / Task**: aguardando aprovação do dono (nenhum checkpoint foi respondido; o planejador adotou os defaults recomendados) e início do Execute em T1
-- **Completed**: spec.md (46 ACs, ARS-01..ARS-46, validate_spec exit 0), context.md, design.md (abordagem A), tasks.md (27 tasks em 7 fases e 4 lotes: B1 T1–T7, B2 T8–T13, B3 T14–T21, B4 T22–T27; validate_tasks exit 0), AD-013 e AD-014
+- **Feature**: arsenal-comercial (.specs/features/arsenal-comercial) — **T1–T27 e F1 concluídos; Verifier independente rodou em 2026-11-24: FAIL**
+- **Phase / Task**: validação (iteração 1 de no máximo 3 do fix→re-verify)
+- **Completed**: gates verdes (lint, typecheck, 884 testes passed / 5 skipped); 44/46 ACs Verified; sensor 22/24 mutantes mortos; `validation.md` escrito; lessons L-002..L-005 registradas
 - **In-progress** (file:line): none
-- **Next step**: dono aprova ou ajusta as linhas `Confirmed? n` de Assumptions na spec; depois executar o lote B1 (T1–T7) em sequência, nunca em paralelo
-- **Blockers**: catálogo real de serviços e grupos de objeção ainda não enviados (seed em rascunho); LLM real roda só em T26 (máx. 2 execuções), sem e-mail
+- **Next step**: rotear os fix tasks de `validation.md` (Ranked Gaps): (1) Major: teto do schema gera 5 páginas de Arsenal, spec diz 3 (ARS-27/ARS-37, `src/lib/report/arsenal-pages.ts`, `ARSENAL_LIMITS`), decisão do dono entre reduzir limites/layout ou emendar a spec; (2) teste do status composto do catálogo (M15, `catalog.ts:94`); (3) teste de pipeline com `bullets` vazio (M20, `analysis-service.ts:128`); depois re-dispatch do Verifier
+- **Blockers**: decisão do dono sobre o gap 1; catálogo real de serviços e objeções ainda não enviado (seed em rascunho)
 - **Uncommitted files**: none
 - **Branch**: feat/arsenal-comercial (commits locais; sem push)
