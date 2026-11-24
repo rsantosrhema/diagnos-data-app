@@ -706,13 +706,13 @@ Page one: `h(Page, { key: "arsenal-1", size: "A4", style: styles.page }, ...chil
 
 **Done when**:
 
-- [ ] Page three text contains `04`, `Perguntas de descoberta (SPIN)`, the numbers `01` to `10` in order, and every `texto` of the fixture questions
-- [ ] The count of `ABERTA` equals the fixture's number of `aberta` (6) and `FECHADA` equals 4; the stage labels count: `SITUAÇÃO` 1, `PROBLEMA` 3, `IMPLICAÇÃO` 3, `NECESSIDADE` 3
-- [ ] Every question shows `Objetivo: <objetivo>` right after its `texto` in the flattened order
-- [ ] A fixture with 7 abertas and 3 fechadas shows `ABERTA` 7 times (counts follow the data, nothing hardcoded)
-- [ ] The color/font token walk passes for page three
-- [ ] Gate check passes: `npx vitest run src/lib/report/arsenal-pages.test.tsx`
-- [ ] Test count: at least 5 new tests, none removed
+- [x] Page three text contains `04`, `Perguntas de descoberta (SPIN)`, the numbers `01` to `10` in order, and every `texto` of the fixture questions
+- [x] The count of `ABERTA` equals the fixture's number of `aberta` (6) and `FECHADA` equals 4; the stage labels count: `SITUAÇÃO` 1, `PROBLEMA` 3, `IMPLICAÇÃO` 3, `NECESSIDADE` 3
+- [x] Every question shows `Objetivo: <objetivo>` right after its `texto` in the flattened order
+- [x] A fixture with 7 abertas and 3 fechadas shows `ABERTA` 7 times (counts follow the data, nothing hardcoded)
+- [x] The color/font token walk passes for page three
+- [x] Gate check passes: `npx vitest run src/lib/report/arsenal-pages.test.tsx`
+- [x] Test count: at least 5 new tests, none removed
 
 **Tests**: unit
 **Gate**: quick

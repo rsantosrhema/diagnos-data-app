@@ -209,3 +209,81 @@ describe("buildArsenalPages - página 2", () => {
     expectOnlyReportTokens(pageTwo());
   });
 });
+
+describe("buildArsenalPages - página 3", () => {
+  function pageThree(arsenal = makeArsenal()) {
+    return buildArsenalPages(arsenal)[2];
+  }
+
+  it("mostra a seção 04, os números 01 a 10 em ordem e todas as perguntas (ARS-34)", () => {
+    const arsenal = makeArsenal();
+    const texts = textOf(pageThree(arsenal));
+
+    expect(texts).toContain("04");
+    expect(texts).toContain("Perguntas de descoberta (SPIN)");
+
+    const questionNumbers = texts
+      .map((text, index) => ({ text, index }))
+      .filter(
+        ({ text, index }) =>
+          /^\d{2}$/.test(text) &&
+          (texts[index + 1] === "ABERTA" || texts[index + 1] === "FECHADA"),
+      )
+      .map(({ text }) => text);
+    expect(questionNumbers).toEqual([
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08",
+      "09",
+      "10",
+    ]);
+
+    for (const question of arsenal.perguntas) {
+      expect(texts).toContain(question.texto);
+    }
+  });
+
+  it("conta os chips de formato e de etapa a partir dos dados (ARS-34)", () => {
+    const arsenal = makeArsenal();
+    const texts = textOf(pageThree(arsenal));
+    const count = (label: string) => texts.filter((text) => text === label).length;
+
+    expect(count("ABERTA")).toBe(6);
+    expect(count("FECHADA")).toBe(4);
+    expect(count("SITUAÇÃO")).toBe(1);
+    expect(count("PROBLEMA")).toBe(3);
+    expect(count("IMPLICAÇÃO")).toBe(3);
+    expect(count("NECESSIDADE")).toBe(3);
+  });
+
+  it("mostra o objetivo imediatamente depois do texto de cada pergunta (ARS-34)", () => {
+    const arsenal = makeArsenal();
+    const texts = textOf(pageThree(arsenal));
+
+    for (const question of arsenal.perguntas) {
+      const position = texts.indexOf(question.texto);
+      expect(texts[position + 1]).toBe(`Objetivo: ${question.objetivo}`);
+    }
+  });
+
+  it("acompanha a quantidade de abertas e fechadas dos dados, sem número fixo (ARS-34)", () => {
+    const arsenal = makeArsenal();
+    const questions = arsenal.perguntas.map((question, index) =>
+      index === 2 ? { ...question, formato: "aberta" as const } : question,
+    );
+    const texts = textOf(pageThree(makeArsenal({ perguntas: questions })));
+    const count = (label: string) => texts.filter((text) => text === label).length;
+
+    expect(count("ABERTA")).toBe(7);
+    expect(count("FECHADA")).toBe(3);
+  });
+
+  it("usa apenas tokens de cor do relatório e as fontes Inter/Poppins (ARS-36)", () => {
+    expectOnlyReportTokens(pageThree());
+  });
+});

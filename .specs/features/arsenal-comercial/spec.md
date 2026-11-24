@@ -227,7 +227,7 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 | ARS-31 | P1: PDF | Tasks | Implementing |
 | ARS-32 | P1: PDF | Tasks | Implementing |
 | ARS-33 | P1: PDF | Tasks | Implementing |
-| ARS-34 | P1: PDF | Tasks | In Tasks |
+| ARS-34 | P1: PDF | Tasks | Implementing |
 | ARS-35 | P1: PDF | Tasks | Implementing |
 | ARS-36 | P1: PDF | Tasks | Implementing |
 | ARS-37 | P1: PDF | Tasks | In Tasks |

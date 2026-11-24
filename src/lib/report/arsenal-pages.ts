@@ -18,6 +18,16 @@ const ARSENAL_RUNNING_HEAD = "ARSENAL COMERCIAL · USO INTERNO · CONFIDENCIAL";
 const PRELIMINARY_CATALOG_NOTE =
   "Catálogo de serviços preliminar: validar antes de ofertar";
 
+const SPIN_LABELS: Record<
+  CommercialArsenal["perguntas"][number]["spin"],
+  string
+> = {
+  situacao: "SITUAÇÃO",
+  problema: "PROBLEMA",
+  implicacao: "IMPLICAÇÃO",
+  necessidade: "NECESSIDADE",
+};
+
 const arsenalStyles = StyleSheet.create({
   pointCard: {
     paddingBottom: p(12),
@@ -26,6 +36,21 @@ const arsenalStyles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.hairline,
     padding: p(10),
+  },
+  questionRow: {
+    flexDirection: "row",
+    gap: p(11),
+    paddingBottom: p(10),
+  },
+  questionChip: {
+    width: p(86),
+  },
+  chipColumn: {
+    gap: p(4),
+  },
+  questionBody: {
+    flex: 1,
+    gap: p(3),
   },
 });
 
@@ -177,11 +202,58 @@ function arsenalPageTwo(arsenal: CommercialArsenal, catalog: Catalog) {
   );
 }
 
-function arsenalPageThree() {
+function questionChip(label: string, markerColor: string, key: string) {
+  return h(
+    View,
+    { key, style: [styles.priorityChip, arsenalStyles.questionChip] },
+    h(View, {
+      style: [styles.priorityMarker, { backgroundColor: markerColor }],
+    }),
+    h(Text, { style: styles.priorityText }, label),
+  );
+}
+
+function questionRow(
+  question: CommercialArsenal["perguntas"][number],
+  index: number,
+) {
+  const formatLabel = question.formato === "aberta" ? "ABERTA" : "FECHADA";
+  const formatColor =
+    question.formato === "aberta" ? COLORS.primary : COLORS.blue;
+
+  return h(
+    View,
+    { key: `arsenal-question-${index}`, style: arsenalStyles.questionRow, wrap: false },
+    h(Text, { style: styles.insightNumber }, String(index + 1).padStart(2, "0")),
+    h(
+      View,
+      { key: "chips", style: arsenalStyles.chipColumn },
+      questionChip(formatLabel, formatColor, "chip-format"),
+      questionChip(SPIN_LABELS[question.spin], COLORS.ink3, "chip-stage"),
+    ),
+    h(
+      View,
+      { key: "body", style: arsenalStyles.questionBody },
+      h(Text, { style: styles.insightBody }, question.texto),
+      h(Text, { style: styles.colArea }, `Objetivo: ${question.objetivo}`),
+    ),
+  );
+}
+
+function arsenalPageThree(arsenal: CommercialArsenal) {
   return h(
     Page,
     { key: "arsenal-3", size: "A4", style: styles.page },
     runningHead(ARSENAL_RUNNING_HEAD, "Perguntas SPIN"),
+    spacer(22, "arsenal-3-space-1"),
+    sectionHeader(
+      "04",
+      "Perguntas de descoberta (SPIN)",
+      "10 perguntas · abertas e fechadas",
+      "section-arsenal-4",
+    ),
+    spacer(12, "arsenal-3-space-2"),
+    ...arsenal.perguntas.map(questionRow),
     footer(),
   );
 }
@@ -190,5 +262,9 @@ export function buildArsenalPages(
   arsenal: CommercialArsenal,
   catalog: Catalog = COMMERCIAL_CATALOG,
 ): ReturnType<typeof h>[] {
-  return [arsenalPageOne(arsenal, catalog), arsenalPageTwo(arsenal, catalog), arsenalPageThree()];
+  return [
+    arsenalPageOne(arsenal, catalog),
+    arsenalPageTwo(arsenal, catalog),
+    arsenalPageThree(arsenal),
+  ];
 }
