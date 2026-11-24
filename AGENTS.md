@@ -55,6 +55,7 @@ diagnos-data-app/
 │   │   ├── validation.md         # Validation rules (Zod patterns, boundaries)
 │   │   ├── architecture.md       # Architecture rules (layers, server/client)
 │   │   └── git-workflow.md       # Dev-first branching, environments, migrations
+│   ├── comercial/                # Catálogo de serviços e grupos de objeção (dados versionados)
 │   ├── snapshot-maturidade-dados.json  # Single source of truth for the questionnaire
 │   ├── architecture.md           # High-level architecture notes
 │   └── data-model.md             # Living schema reference (Supabase)
@@ -74,6 +75,7 @@ diagnos-data-app/
 │   │       └── admin-proxy/      # admin proxy routes
 │   ├── components/               # shared React components (logo, wave divider)
 │   ├── lib/
+│   │   ├── agents/               # LLM agents (research, analyst, writer); commercial*.ts = Arsenal Comercial
 │   │   ├── api/                  # typed client functions (submitLead, submitScreener, ...)
 │   │   ├── auth/                 # internal-key verification, proxy, manager guard
 │   │   ├── dto/                  # safe response shapes
@@ -130,6 +132,7 @@ client → /api/public-proxy/screener → (injects x-internal-api-key) → /api/
 - Manager logs into `/admin` (Supabase Auth) and clicks "Gerar relatório" on a lead row.
 - `POST /api/admin-proxy/analysis/reprocess` → `/api/admin/analysis/reprocess` → `adminService.generateReport` validates the lead (status `concluido`/`analisado`/`falha`/`analise_pendente` + has diagnostic) and enqueues a job in the pgmq queue `analysis_jobs`.
 - The worker (`/api/analysis-worker`, triggered by Vercel cron every 5 min with `CRON_SECRET`) pops the job, runs the agent pipeline (`src/lib/agents/`: researcher via Exa, analyst + writer via LLM), persists to `market_insights`, generates the enriched PDF (`src/lib/report/report-generator.ts`) and emails it to the manager (`src/lib/email/send-report.ts`, Resend).
+- After the writer, the worker also runs the commercial agent (`src/lib/agents/commercial.ts`, skill SPIN + catalog) and persists the result in `market_insights.arsenal`; the PDF carries 3 extra Arsenal Comercial pages after the diagnostic ones. If the commercial agent fails, the report still goes out without the Arsenal pages.
 
 ---
 
@@ -159,6 +162,7 @@ Maturity is assessed across **10 dimensions** defined in `docs/snapshot-maturida
 - **Method positioning** (verbatim, `meta.referencia`): "Índice proprietário da Rhema Data, estruturado sobre as áreas de conhecimento do DAMA-DMBOK2 e sua abordagem de avaliação de maturidade (cap. 15), com pesos ajustados ao segmento e ao porte da empresa. Instrumento de triagem por autoavaliação; não é certificação."
 - **User-facing texts** (index label, scale legend, method note, weight and score formats) come from `src/lib/maturity/methodology.ts`. PDF and portal consume that module and never hardcode the strings.
 - **Reporting rules**: report the band not a precise decimal; highlight the lowest dimension as the top risk; flag imbalance when >3 levels separate max vs min; flag C-level optimism internally.
+- **Arsenal Comercial**: material interno do gerente, gerado pelo agente comercial e entregue só no PDF (download do admin e e-mail ao comercial); nunca aparece no portal `/r` nem em rota pública.
 
 ---
 

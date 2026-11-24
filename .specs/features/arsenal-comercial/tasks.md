@@ -963,10 +963,10 @@ Scenario 1 `real` (timeout 300 000 ms): `commercial = (input) => createCommercia
 
 **Done when**:
 
-- [ ] ADR file exists with the four headings above and mentions `0019_market_insights_arsenal.sql`
-- [ ] `grep -n "arsenal" docs/data-model.md` shows the new column and both steps
-- [ ] `grep -n -i "arsenal" AGENTS.md` shows the three additions
-- [ ] Phase 6 build gate passes: `npm run typecheck && npm run lint && npm run test && npm run build`
+- [x] ADR file exists with the four headings above and mentions `0019_market_insights_arsenal.sql`
+- [x] `grep -n "arsenal" docs/data-model.md` shows the new column and both steps
+- [x] `grep -n -i "arsenal" AGENTS.md` shows the three additions
+- [x] Phase 6 build gate passes: `npm run typecheck && npm run lint && npm run test && npm run build`
 
 **Tests**: none (documentation)
 **Gate**: build
