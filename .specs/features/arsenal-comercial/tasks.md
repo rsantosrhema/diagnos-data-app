@@ -1268,3 +1268,14 @@ Fixes encontrados na evidência e na validação independente (iteração 1), no
 **Conferência**: `grep` por `authorization|cookie|bearer|token|apikey|password` nos dois arquivos de `/tmp` não encontrou nada; nenhum usa credencial. O test-report aponta para os três artefatos (seções 1.4, 1.5, 2 e 4).
 **Gates**: `npm run lint`, `npm run typecheck`, `npm run test` verdes.
 **Commit**: `docs(specs): versiona evidência de ARS-43, ARS-45 e ARS-46` (este commit).
+
+### F6: teto do schema cabe em 3 páginas (gap 1, ARS-27/ARS-37)
+
+**Decisão do dono**: opção A — encurtar os limites de texto para que o teto do schema caiba em exatamente 3 páginas de Arsenal, sem redução de conteúdo no layout.
+**What**: com os limites antigos (ponto 300, contorno 400, pergunta 240, justificativa 500), o pior caso renderizava 5 páginas de Arsenal (9 no total).
+**Limites finais** (`ARSENAL_LIMITS`): `titulo` 60; `texto` do ponto 200; `objecao_provavel` 140; `contorno` 220; `apoio` 120; `justificativa` 300; `texto` da pergunta 160; `objetivo` 120. Texto acima do limite continua truncado na última palavra com "…" (`clampedString`); os limites de itens (3–5, 3–6, 10) não mudaram.
+**Where**: `src/lib/agents/commercial-types.ts`, `src/lib/agents/commercial.ts`, `src/lib/agents/commercial-fixture.ts`, testes, `spec.md`, `design.md`.
+**Teste**: `report-generator.test.ts` › "teto do schema (5 pontos, 6 objeções, 10 perguntas) cabe em exatamente 3 páginas de Arsenal (ARS-27, ARS-37)" com `makeMaxArsenal()` (todos os campos no limite, todas as dimensões, 2 complementares) → `countPdfPages(withArsenal) === basePages + 3`; antes do fix falhava (8 = 3 + 5). Os testes de limite agora usam `ARSENAL_LIMITS` e truncam `max + 1` em cada campo; o fixture típico `makeArsenal` foi encurtado para caber nos novos limites.
+**Evidência** (sem LLM): `evidence/worst-page-05..07.png` e `evidence/real-page-05..07.png` a 80 dpi (661×936). Pior caso: 7 páginas no total (4 do diagnóstico + 3 do Arsenal), antes 9 (4 + 5); nada cortado ou sobreposto, chips SPIN inteiros. O `real-arsenal.json` truncou justificativa e 6 contornos no schema novo, como esperado.
+**Gates**: `npm run lint`, `npm run typecheck`, `npm run test` verdes.
+**Commit**: `fix(report): calibra limites do Arsenal para o teto caber em 3 páginas` (este commit).

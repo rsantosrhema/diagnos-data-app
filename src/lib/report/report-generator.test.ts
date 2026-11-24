@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { generateScreenerPdf, ScreenerReport, buildReportChildren } from "./report-generator";
 import type { GeneratePdfInput } from "@/lib/service/screen-service";
-import { makeArsenal } from "@/lib/agents/commercial-fixture";
+import { makeArsenal, makeMaxArsenal } from "@/lib/agents/commercial-fixture";
 function makeInput(overrides: Partial<GeneratePdfInput> = {}): GeneratePdfInput {
   return {
     respondentName: "João Silva",
@@ -559,6 +559,48 @@ describe("generateScreenerPdf", () => {
     const withArsenal = await generateScreenerPdf({ ...input, arsenal: makeArsenal() });
     expect(withArsenal.pdf.subarray(0, 4).toString("latin1")).toBe("%PDF");
     expect(countPdfPages(withArsenal.pdf)).toBe(6);
+  });
+
+  it("teto do schema (5 pontos, 6 objeções, 10 perguntas) cabe em exatamente 3 páginas de Arsenal (ARS-27, ARS-37)", async () => {
+    const input = makeInput({
+      analysis: {
+        resumo:
+          "Indústria de médio porte investe em plataforma de dados, mas mantém decisões de priorização informais e depende de poucas pessoas para conciliar números entre áreas.",
+        dores: [
+          {
+            dimensao_id: "d04",
+            dimensao: "Qualidade de Dados",
+            dor: "Cadastros e indicadores divergem entre sistemas e a conciliação é manual.",
+            evidencia_mercado: true,
+            confianca: 0.8,
+          },
+        ],
+        contexto_concorrentes: [
+          {
+            nome: "Concorrente A",
+            contexto: "Estruturou governança de dados e comitê de priorização.",
+          },
+        ],
+      },
+      insights: {
+        bullets: [
+          {
+            texto: "Definir dono formal por domínio de dados.",
+            prioridade: "alta",
+            titulo: "Governança com dono",
+          },
+        ],
+      },
+    });
+    const withoutArsenal = await generateScreenerPdf(input);
+    const basePages = countPdfPages(withoutArsenal.pdf);
+    const withMaxArsenal = await generateScreenerPdf({
+      ...input,
+      arsenal: makeMaxArsenal(),
+    });
+
+    expect(withMaxArsenal.pdf.subarray(0, 4).toString("latin1")).toBe("%PDF");
+    expect(countPdfPages(withMaxArsenal.pdf)).toBe(basePages + 3);
   });
 
   it("6 objeções com texto típico não estouram a página de contornos (ARS-27)", async () => {

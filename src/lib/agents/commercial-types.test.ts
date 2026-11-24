@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { commercialArsenalSchema } from "./commercial-types";
+import { ARSENAL_LIMITS, commercialArsenalSchema } from "./commercial-types";
 import { makeArsenal } from "./commercial-fixture";
 
 type ParseResult = ReturnType<typeof commercialArsenalSchema.safeParse>;
@@ -310,14 +310,14 @@ describe("commercialArsenalSchema", () => {
     expect(result.success).toBe(true);
     if (!result.success) return;
     const texto = result.data.pontos_chave[0].texto;
-    expect(texto.length).toBeLessThanOrEqual(300);
+    expect(texto.length).toBeLessThanOrEqual(ARSENAL_LIMITS.pontosChave.texto);
     expect(texto.endsWith("…")).toBe(true);
     expect(texto).not.toMatch(/\s…$/);
   });
 
-  it("mantém título com exatamente 70 caracteres inalterado", () => {
+  it("mantém título com exatamente o limite de caracteres inalterado", () => {
     const arsenal = makeArsenal();
-    const title = "a".repeat(70);
+    const title = "a".repeat(ARSENAL_LIMITS.pontosChave.titulo);
     arsenal.pontos_chave[0].titulo = title;
 
     const result = commercialArsenalSchema.safeParse(arsenal);
@@ -328,7 +328,7 @@ describe("commercialArsenalSchema", () => {
   });
 
   it("trunca cada campo de texto no seu próprio limite (ARS-11)", () => {
-    const longText = Array.from({ length: 400 }, () => "dado").join(" ");
+    let longText = "";
     const fields: Array<{
       name: string;
       max: number;
@@ -337,7 +337,7 @@ describe("commercialArsenalSchema", () => {
     }> = [
       {
         name: "titulo do ponto",
-        max: 70,
+        max: ARSENAL_LIMITS.pontosChave.titulo,
         mutate: (arsenal) => {
           arsenal.pontos_chave[0].titulo = longText;
         },
@@ -345,7 +345,7 @@ describe("commercialArsenalSchema", () => {
       },
       {
         name: "texto do ponto",
-        max: 300,
+        max: ARSENAL_LIMITS.pontosChave.texto,
         mutate: (arsenal) => {
           arsenal.pontos_chave[0].texto = longText;
         },
@@ -353,7 +353,7 @@ describe("commercialArsenalSchema", () => {
       },
       {
         name: "objecao_provavel",
-        max: 200,
+        max: ARSENAL_LIMITS.objecoes.objecaoProvavel,
         mutate: (arsenal) => {
           arsenal.objecoes[0].objecao_provavel = longText;
         },
@@ -361,7 +361,7 @@ describe("commercialArsenalSchema", () => {
       },
       {
         name: "contorno",
-        max: 400,
+        max: ARSENAL_LIMITS.objecoes.contorno,
         mutate: (arsenal) => {
           arsenal.objecoes[0].contorno = longText;
         },
@@ -369,7 +369,7 @@ describe("commercialArsenalSchema", () => {
       },
       {
         name: "apoio",
-        max: 250,
+        max: ARSENAL_LIMITS.objecoes.apoio,
         mutate: (arsenal) => {
           arsenal.objecoes[0].apoio = longText;
         },
@@ -377,7 +377,7 @@ describe("commercialArsenalSchema", () => {
       },
       {
         name: "justificativa",
-        max: 500,
+        max: ARSENAL_LIMITS.servico.justificativa,
         mutate: (arsenal) => {
           arsenal.servico_recomendado.justificativa = longText;
         },
@@ -385,7 +385,7 @@ describe("commercialArsenalSchema", () => {
       },
       {
         name: "texto da pergunta",
-        max: 240,
+        max: ARSENAL_LIMITS.perguntas.texto,
         mutate: (arsenal) => {
           arsenal.perguntas[0].texto = longText;
         },
@@ -393,7 +393,7 @@ describe("commercialArsenalSchema", () => {
       },
       {
         name: "objetivo",
-        max: 160,
+        max: ARSENAL_LIMITS.perguntas.objetivo,
         mutate: (arsenal) => {
           arsenal.perguntas[0].objetivo = longText;
         },
@@ -403,6 +403,7 @@ describe("commercialArsenalSchema", () => {
 
     for (const field of fields) {
       const arsenal = makeArsenal();
+      longText = "a".repeat(field.max + 1);
       field.mutate(arsenal);
       const result = commercialArsenalSchema.safeParse(arsenal);
 

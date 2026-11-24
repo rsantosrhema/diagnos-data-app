@@ -340,6 +340,7 @@ export function buildCommercialPrompt(
     `Gere de ${ARSENAL_LIMITS.objecoes.min} a ${ARSENAL_LIMITS.objecoes.max} objeções de grupos diferentes, cada uma com grupo, objecao_provavel (até ${ARSENAL_LIMITS.objecoes.objecaoProvavel} caracteres), contorno (até ${ARSENAL_LIMITS.objecoes.contorno} caracteres) e apoio (até ${ARSENAL_LIMITS.objecoes.apoio} caracteres).`,
     `Escolha 1 serviço principal com servico_id, justificativa (até ${ARSENAL_LIMITS.servico.justificativa} caracteres) e dimensoes_atacadas, e até ${ARSENAL_LIMITS.servico.complementares} complementares distintos, sem repetir o serviço principal.`,
     `Escreva exatamente ${ARSENAL_LIMITS.perguntas.total} perguntas com texto (até ${ARSENAL_LIMITS.perguntas.texto} caracteres) e objetivo (até ${ARSENAL_LIMITS.perguntas.objetivo} caracteres): no mínimo ${ARSENAL_LIMITS.perguntas.minAbertas} abertas, no mínimo ${ARSENAL_LIMITS.perguntas.minFechadas} fechadas, no máximo ${ARSENAL_LIMITS.perguntas.maxSituacao} de situacao e no mínimo ${ARSENAL_LIMITS.perguntas.minProblema} de problema, ${ARSENAL_LIMITS.perguntas.minImplicacao} de implicacao e ${ARSENAL_LIMITS.perguntas.minNecessidade} de necessidade.`,
+    "Escreva texto enxuto: frases curtas, sem repetir o diagnóstico, respeitando cada limite sem truncamento, porque o Arsenal precisa caber em 3 páginas.",
     "Cada pergunta usa formato aberta|fechada e etapa spin situacao|problema|implicacao|necessidade.",
     "Use apenas ids de serviço e de grupo listados acima.",
     "",

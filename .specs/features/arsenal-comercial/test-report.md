@@ -18,7 +18,7 @@
 | Testes | `npm run test` | exit 0; **77 arquivos passaram, 3 skipped (80); 884 testes passaram, 5 skipped (889)** |
 | Build | `npm run build` | exit 0; rotas compiladas, incluindo `/r/[token]`, `/admin` e as rotas de API |
 
-Contagem antes desta etapa: 874 passed / 5 skipped (879). Depois: **884 passed / 5 skipped (889)**, +10 testes, nenhum removido, enfraquecido ou skipped. Baseline da feature: 768 passed / 1 skipped.
+Contagem antes desta etapa: 874 passed / 5 skipped (879). Depois: **884 passed / 5 skipped (889)**, +10 testes, nenhum removido, enfraquecido ou skipped. Baseline da feature: 768 passed / 1 skipped. Estado final depois da F6: **889 passed / 5 skipped (894)**.
 
 Os 5 skipped são os smokes gated já existentes: `arsenal-sample.smoke.test.ts` (2), `arsenal-smoke-flow.test.ts` (2) e `smoke-e2e-flow.test.ts` (1).
 
@@ -96,7 +96,7 @@ Status: **46/46 cobertos** (44 por testes automatizados + ARS-43/ARS-45/ARS-46 p
 | ARS-08 | `commercial-types.test.ts:145` — `servico_id` inexistente; `:152,174` — complementar igual ao principal e repetido; `:163` — 3 complementares | ✅ |
 | ARS-09 | `commercial-types.test.ts:190` — 9 e 11 perguntas; `:202` — `formato`/`spin` fora do enum | ✅ |
 | ARS-10 | `commercial-types.test.ts:221,231,241,253,264,277` — cada regra com a mensagem exata e a contagem recebida | ✅ |
-| ARS-11 | `commercial-types.test.ts:330` — tabela cobre `titulo` (70), `texto` (300), `objecao_provavel` (200), `contorno` (400), `apoio` (250), `justificativa` (500), `texto` da pergunta (240) e `objetivo` (160), todas ≤ limite e terminando em `…`; `:318` — 70 caracteres inalterados | ✅ |
+| ARS-11 | `commercial-types.test.ts:330` — tabela cobre `titulo` (60), `texto` (200), `objecao_provavel` (140), `contorno` (220), `apoio` (120), `justificativa` (300), `texto` da pergunta (160) e `objetivo` (120); cada campo recebe `max + 1` e sai ≤ limite, terminando em `…`; `:318` — limite exato inalterado | ✅ |
 
 ### P1: Sinais e agente comercial
 
@@ -189,11 +189,14 @@ Os testes novos foram derivados da spec (valores esperados de ARS-01..ARS-36), n
 | `.specs/features/arsenal-comercial/evidence/real-page-05.png` | Arsenal `01` Pontos-chave e `02` Serviço ideal + nota do catálogo |
 | `.specs/features/arsenal-comercial/evidence/real-page-06.png` | Arsenal `03` Contorno de objeções com os 6 grupos |
 | `.specs/features/arsenal-comercial/evidence/real-page-07.png` | Arsenal `04` Perguntas SPIN, `01`–`10`, chips e `Objetivo:` |
+| `.specs/features/arsenal-comercial/evidence/worst-page-05.png` | Pior caso (teto do schema): `01` pontos-chave e `02` serviço ideal |
+| `.specs/features/arsenal-comercial/evidence/worst-page-06.png` | Pior caso: `03` com 6 objeções, todas inteiras |
+| `.specs/features/arsenal-comercial/evidence/worst-page-07.png` | Pior caso: `04` com 10 perguntas e chips SPIN inteiros |
 | `.specs/features/arsenal-comercial/evidence/real-arsenal.json` | Arsenal real da T26 (5 pontos, 6 objeções, 10 perguntas, serviço `qualidade-mestres`) — sustenta ARS-45 |
 | `.specs/features/arsenal-comercial/evidence/admin-headers.txt` | Headers do download autenticado pós-fix: `200`, `application/pdf`, `attachment`; sem `authorization`/cookie — sustenta ARS-46 |
 | `.specs/features/arsenal-comercial/evidence/migration-check.txt` | Saída psql local: `market_insights.arsenal` `jsonb` e constraint de `analysis_job_logs` com `arsenal`/`arsenal_failed` — sustenta ARS-43 |
 
-PNGs a 80 dpi (661×936), gerados do PDF baixado pelo admin **depois** do F1 (`2b7f368`). Os três artefatos de texto/JSON foram copiados de `/tmp` para o repositório na F5; nenhum contém token, cookie ou credencial.
+PNGs a 80 dpi (661×936). `real-page-05..07` foram regerados na F6 com os limites novos (o JSON real trunca justificativa e contornos); `worst-page-05..07` vêm do fixture no teto do schema. F1 gerou os PNGs reais originais; F5 versionou os artefatos de texto/JSON, nenhum com token, cookie ou credencial.
 
 ### 4.2 Fora do repositório (artefatos locais)
 
@@ -206,7 +209,7 @@ PNGs a 80 dpi (661×936), gerados do PDF baixado pelo admin **depois** do F1 (`2
 | `/tmp/arsenal-test/sample-png` + `sample-png-base` | Fixture 7 páginas vs base 4 páginas |
 | `/tmp/arsenal-evidence/real-arsenal.json` | Arsenal real da T26 reutilizado e validado (cópia versionada em `evidence/real-arsenal.json`) |
 | `/tmp/arsenal-postfix/admin-headers.txt` | Headers do download pós-fix (cópia sanitizada em `evidence/admin-headers.txt`) |
-| `/tmp/arsenal-fix/worst.pdf` | Pior caso (todos os campos no máximo) — 9 páginas |
+| `/tmp/arsenal-f6/worst.pdf` | Pior caso com os limites da F6 — 7 páginas (4 do diagnóstico + 3 do Arsenal); o antigo `/tmp/arsenal-fix/worst.pdf` tinha 9 |
 
 ### 4.3 Conferência visual (pós-fix)
 
@@ -214,6 +217,7 @@ PNGs a 80 dpi (661×936), gerados do PDF baixado pelo admin **depois** do F1 (`2
 - Página 5: running head `ARSENAL COMERCIAL · USO INTERNO · CONFIDENCIAL`; `01` com 5 pontos (título, texto, dimensões); `02` com `Qualidade e Dados Mestres`, justificativa, dimensões atacadas e 2 complementares; nota `Catálogo de serviços preliminar: validar antes de ofertar`; `Página 5 de 7`.
 - Página 6: `03` com 6 grupos reais, cada um com `OBJEÇÃO PROVÁVEL`, `CONTORNO` e `APOIO NO DIAGNÓSTICO`; nada cortado ou sobreposto; `Página 6 de 7`.
 - Página 7: `04` com `01`–`10`, chips `ABERTA` (6) / `FECHADA` (4) e `SITUAÇÃO` (1) / `PROBLEMA` (3) / `IMPLICAÇÃO` (3) / `NECESSIDADE` (3); coluna de chips alinhada e `NECESSIDADE` inteiro (F1); `Objetivo:` logo após cada pergunta; `Página 7 de 7`.
+- F6 (limites novos): a justificativa do serviço e os contornos do JSON real terminam em `…` por truncamento de schema, sem corte de layout; o pior caso (`worst-page-05..07.png`) mostra os 5 pontos, 6 objeções e 10 perguntas inteiros nas 3 páginas do Arsenal.
 - Pré-fix (T26/T27): `/tmp/arsenal-evidence/real-png/page-07.png` mostrava `NECESSIDADE` cortado e chips desalinhados; o PDF pós-fix corrige os dois pontos.
 
 Conteúdo do download confere com `real-arsenal.json`: serviço `qualidade-mestres`, 5 pontos, 6 grupos e as 10 perguntas do JSON.
@@ -224,13 +228,12 @@ Conteúdo do download confere com `real-arsenal.json`: serviço `qualidade-mestr
 
 Nenhum bug bloqueante. Duas limitações não bloqueantes, ambas já registradas no `smoke-test.md`:
 
-### BUG-01 (não bloqueante) — pior caso estoura as 3 páginas do Arsenal
+### BUG-01 (resolvido na F6) — pior caso estourava as 3 páginas do Arsenal
 
-- **Onde**: `src/lib/report/arsenal-pages.ts` (as páginas não têm lógica de redução; o schema permite os valores máximos).
-- **Reprodução**: gerar um Arsenal com todos os campos no máximo do schema (5 pontos de 300 caracteres, 6 objeções de 400, 10 perguntas de 240, justificativa de 500) e chamar `generateScreenerPdf`.
-- **Esperado**: `input.arsenal` presente → exatamente 3 páginas de Arsenal (ARS-27).
-- **Obtido**: 5 páginas de Arsenal (9 no total: 4 do diagnóstico + 5). Confirmado em `/tmp/arsenal-fix/worst.pdf` (`pages=9`) e reproduzido em teste temporário com todos os campos no máximo.
-- **Impacto**: com a saída real do agente (5 pontos, 6 objeções, 10 perguntas em tamanho típico), as 3 páginas se mantêm. É limite de layout para conteúdo sintético no teto do schema; não afeta o fluxo real observado.
+- **Onde**: `src/lib/agents/commercial-types.ts` (`ARSENAL_LIMITS`) e `src/lib/report/arsenal-pages.ts`.
+- **Reprodução original**: Arsenal com 5 pontos de 300 caracteres, 6 objeções de 400, 10 perguntas de 240 e justificativa de 500 renderizava 5 páginas de Arsenal (9 no total: 4 do diagnóstico + 5).
+- **Correção**: limites reduzidos para `titulo` 60, `texto` 200, `objecao_provavel` 140, `contorno` 220, `apoio` 120, `justificativa` 300, `texto` da pergunta 160 e `objetivo` 120; truncamento na última palavra mantido. Teste de regressão `report-generator.test.ts:564` gera o teto com `makeMaxArsenal()` e exige `basePages + 3`.
+- **Obtido depois**: 3 páginas de Arsenal (7 no total: 4 do diagnóstico + 3), confirmado em `/tmp/arsenal-f6/worst.pdf` e nos PNGs `evidence/worst-page-05..07.png`.
 
 ### BUG-02 (pré-existente, fora do escopo) — transbordo do diagnóstico
 

@@ -196,7 +196,7 @@ Catálogo (`servicos.json`): `{ versao: "0.1", status, servicos: [{ id, nome, re
 | Falha do Arsenal | Isolada, sem retry de job | O Arsenal é extra; não pode reabrir o pipeline principal nem duplicar e-mail |
 | Enums de serviço/grupo | `z.enum` derivado dos JSON | Trocar o catálogo é mudança de dado; id inválido do LLM vira retry |
 | Sinais | Calculados em código | O LLM não decide o que já é determinístico (risco, desequilíbrio, C-level) |
-| Páginas | 3 `Page` explícitas com cards `wrap: false` | Contagem de páginas previsível (ARS-27, ARS-37); limites de caracteres garantem que cabem |
+| Páginas | 3 `Page` explícitas com cards `wrap: false` | Contagem de páginas previsível (ARS-27, ARS-37); `ARSENAL_LIMITS` calibrado para o teto (5 pontos, 6 objeções, 10 perguntas) caber em 3 páginas |
 | Conferência visual | `scripts/pdf-to-png.swift` (PDFKit do macOS, validado no ambiente) | Não há `pdftoppm`, `mutool` nem `magick`; zero dependência nova |
 | Smokes locais | `describe.skipIf` por env, no padrão do repo | Suíte padrão continua determinística e sem custo de LLM |
 | Entrega local do PDF real | Smoke com `sendEmail` no-op | Chaves de LLM/Exa/Resend são reais; nenhum e-mail pode sair |

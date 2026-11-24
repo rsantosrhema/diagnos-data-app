@@ -6,13 +6,13 @@ export const SPIN_STAGES = ["situacao", "problema", "implicacao", "necessidade"]
 export const QUESTION_FORMATS = ["aberta", "fechada"] as const;
 
 export const ARSENAL_LIMITS = {
-  pontosChave: { min: 3, max: 5, titulo: 70, texto: 300 },
-  objecoes: { min: 3, max: 6, objecaoProvavel: 200, contorno: 400, apoio: 250 },
-  servico: { justificativa: 500, complementares: 2 },
+  pontosChave: { min: 3, max: 5, titulo: 60, texto: 200 },
+  objecoes: { min: 3, max: 6, objecaoProvavel: 140, contorno: 220, apoio: 120 },
+  servico: { justificativa: 300, complementares: 2 },
   perguntas: {
     total: 10,
-    texto: 240,
-    objetivo: 160,
+    texto: 160,
+    objetivo: 120,
     minAbertas: 4,
     minFechadas: 3,
     maxSituacao: 1,

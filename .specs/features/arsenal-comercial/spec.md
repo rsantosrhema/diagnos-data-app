@@ -36,7 +36,7 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 | Nota de catálogo preliminar | O PDF mostra "Catálogo de serviços preliminar: validar antes de ofertar" enquanto `status` for `rascunho` | Evita que um serviço rascunho seja ofertado como oficial | y (usuário, 2026-11-24) |
 | Tamanho do Arsenal | 3 a 5 pontos-chave; 3 a 6 objeções (1 por grupo); 1 serviço + até 2 complementares; 10 perguntas | Cabe em 3 páginas A4 e respeita o pedido (10 perguntas) | y (usuário, 2026-11-24) |
 | Mix das perguntas | ≥4 abertas, ≥3 fechadas, ≤1 Situação, ≥2 de cada Problema/Implicação/Necessidade | O screener já respondeu a Situação; foco SPIN em dor e valor | y (usuário, 2026-11-24) |
-| Limites de texto | Campo acima do limite é truncado na última palavra com "…", como `clampedOptionalString` | Padrão existente; evita rejeitar saída útil do LLM | y (usuário, 2026-11-24) |
+| Limites de texto | `titulo` ≤60, `texto` ≤200; `objecao_provavel` ≤140, `contorno` ≤220, `apoio` ≤120; `justificativa` ≤300; `texto` da pergunta ≤160, `objetivo` ≤120. Campo acima do limite é truncado na última palavra com "…", como `clampedOptionalString` | Calibrado para o teto do schema (5 pontos, 6 objeções, 10 perguntas) caber em exatamente 3 páginas A4; evita rejeitar saída útil do LLM | y (usuário, 2026-11-24, decisão F6) |
 | Guardrail de conteúdo | Prompt proíbe inventar cases, números de clientes, preços, prazos e ROI | Material vai para a mão do vendedor; invenção vira promessa | y (usuário, 2026-11-24) |
 | Retry do Arsenal | Nenhum retry de job; só as 3 tentativas internas de schema | Falha do Arsenal não pode reabrir o pipeline principal | y (usuário, 2026-11-24) |
 | Reprocesso | `arsenal` é sempre sobrescrito, inclusive com `null` | Nunca mistura diagnóstico novo com Arsenal antigo | y (usuário, 2026-11-24) |
@@ -74,10 +74,10 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 **Why P1**: É o núcleo da feature.
 
 **Acceptance Criteria**:
-1. The schema `commercialArsenalSchema` SHALL be strict and require `pontos_chave` with 3 to 5 items, each with `titulo` (≤70), `texto` (≤300) and `dimensao_ids` (non-empty, each in `DIMENSION_IDS`). <!-- ARS-06 -->
-2. The schema SHALL require `objecoes` with 3 to 6 items, each with `grupo` in `OBJECTION_GROUP_IDS`, `objecao_provavel` (≤200), `contorno` (≤400) and `apoio` (≤250), and reject two items with the same `grupo`. <!-- ARS-07 -->
-3. The schema SHALL require `servico_recomendado` with `servico_id` in `SERVICE_IDS`, `justificativa` (≤500), `dimensoes_atacadas` (non-empty, in `DIMENSION_IDS`) and optional `complementares` of at most 2 distinct ids in `SERVICE_IDS`, none equal to `servico_id`. <!-- ARS-08 -->
-4. The schema SHALL require `perguntas` with exactly 10 items, each with `texto` (≤240), `formato` in `aberta|fechada`, `spin` in `situacao|problema|implicacao|necessidade` and `objetivo` (≤160). <!-- ARS-09 -->
+1. The schema `commercialArsenalSchema` SHALL be strict and require `pontos_chave` with 3 to 5 items, each with `titulo` (≤60), `texto` (≤200) and `dimensao_ids` (non-empty, each in `DIMENSION_IDS`). <!-- ARS-06 -->
+2. The schema SHALL require `objecoes` with 3 to 6 items, each with `grupo` in `OBJECTION_GROUP_IDS`, `objecao_provavel` (≤140), `contorno` (≤220) and `apoio` (≤120), and reject two items with the same `grupo`. <!-- ARS-07 -->
+3. The schema SHALL require `servico_recomendado` with `servico_id` in `SERVICE_IDS`, `justificativa` (≤300), `dimensoes_atacadas` (non-empty, in `DIMENSION_IDS`) and optional `complementares` of at most 2 distinct ids in `SERVICE_IDS`, none equal to `servico_id`. <!-- ARS-08 -->
+4. The schema SHALL require `perguntas` with exactly 10 items, each with `texto` (≤160), `formato` in `aberta|fechada`, `spin` in `situacao|problema|implicacao|necessidade` and `objetivo` (≤120). <!-- ARS-09 -->
 5. IF `perguntas` has fewer than 4 `aberta`, fewer than 3 `fechada`, more than 1 `situacao`, or fewer than 2 of any of `problema`, `implicacao`, `necessidade` THEN the schema SHALL reject it with an issue stating the rule broken and the count received. <!-- ARS-10 -->
 6. WHEN a text field exceeds its maximum length THEN the schema SHALL truncate it at the last word boundary and end it with "…" instead of rejecting. <!-- ARS-11 -->
 7. WHEN `buildCommercialSignals(payload)` runs THEN it SHALL return `menorNivel` (every dimension id at the lowest `nivel`), `desequilibrio` (payload flag), `cLevel` (true iff `solicitante.cargo` contains "C-level", case-insensitive), `faixa`, `scoreValor` and `respostaComercial`, with no I/O. <!-- ARS-12 -->
