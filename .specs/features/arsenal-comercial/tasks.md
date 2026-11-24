@@ -473,10 +473,10 @@ Apply ONLY to the local container (never `npm run db:reset`, never a remote): ru
 
 **Done when**:
 
-- [ ] `git diff` of the task touches only `analysis-service.ts` (plus this file's checkbox)
-- [ ] All existing tests in `src/lib/service/analysis-service.test.ts` pass with zero edits (the `buildPdfInput mantém os campos anteriores (regressão)` and MET-26 tests included)
-- [ ] Gate check passes: `npx vitest run src/lib/service/analysis-service.test.ts`
-- [ ] Test count equals the previous count
+- [x] `git diff` of the task touches only `analysis-service.ts` (plus this file's checkbox)
+- [x] All existing tests in `src/lib/service/analysis-service.test.ts` pass with zero edits (the `buildPdfInput mantém os campos anteriores (regressão)` and MET-26 tests included)
+- [x] Gate check passes: `npx vitest run src/lib/service/analysis-service.test.ts`
+- [x] Test count equals the previous count
 
 **Tests**: unit (existing regression suite)
 **Gate**: quick

@@ -14,7 +14,7 @@ import type {
 } from "@/lib/agents/types";
 import type { GeneratePdfInput } from "@/lib/service/screen-service";
 import { stripControlChars } from "@/lib/agents/sanitize";
-import { describeDimension } from "@/lib/maturity/methodology";
+import { buildPdfInput } from "@/lib/report/build-pdf-input";
 
 export class AnalysisServiceError extends Error {
   constructor(message: string) {
@@ -51,32 +51,6 @@ export interface AnalysisServiceDeps {
 }
 
 type PdfLocation = NonNullable<GeneratePdfInput["location"]>;
-
-function buildPdfInput(
-  payload: AgentPayload,
-  output?: AgentOutput,
-  location?: PdfLocation,
-): GeneratePdfInput {
-  const dims = payload.respostas.map((r) => ({
-    name: r.dimensao,
-    nivel: r.nivel,
-    peso: r.peso,
-    ...describeDimension(r.dimensao_id, r.peso),
-  }));
-  const riskDim = payload.respostas.find(
-    (r) => r.dimensao_id === payload.risco.dimensao_id,
-  );
-  return {
-    respondentName: payload.solicitante.nome,
-    band: { rotulo: payload.score.faixa, descricao: payload.score.descricao },
-    dimensionScores: dims,
-    riskDimension: { name: riskDim?.dimensao ?? "Dimensão", nivel: payload.risco.nivel },
-    imbalance: payload.desequilibrio,
-    commercialAnswer: payload.resposta_comercial.resposta,
-    ...(location ? { location } : {}),
-    ...(output ? { analysis: output.analysis, insights: output.insights } : {}),
-  };
-}
 
 interface AgentOutput {
   research: MarketResearch;
@@ -153,7 +127,11 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
     try {
       const pdfStart = Date.now();
       const pdfResult = await generatePdf(
-        buildPdfInput(opts.payload!, opts.output, opts.location),
+        buildPdfInput(
+          opts.payload!,
+          { analysis: opts.output?.analysis, insights: opts.output?.insights },
+          opts.location,
+        ),
       );
       pdfMs = Date.now() - pdfStart;
       pdfOk = true;
