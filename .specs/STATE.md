@@ -23,11 +23,11 @@
 
 ## Handoff
 
-- **Feature**: arsenal-comercial (.specs/features/arsenal-comercial) — **T1–T27 e F1 concluídos; Verifier independente rodou em 2026-11-24: FAIL**
-- **Phase / Task**: validação (iteração 1 de no máximo 3 do fix→re-verify)
-- **Completed**: gates verdes (lint, typecheck, 884 testes passed / 5 skipped); 44/46 ACs Verified; sensor 22/24 mutantes mortos; `validation.md` escrito; lessons L-002..L-005 registradas
+- **Feature**: arsenal-comercial (.specs/features/arsenal-comercial) — **T1–T27 e F1–F6 concluídos; Verifier independente, iteração 2 (2026-11-24): FAIL**
+- **Phase / Task**: validação (iteração 2 de no máximo 3 do fix→re-verify)
+- **Completed**: gates verdes (lint, typecheck, 889 testes passed / 5 skipped); gaps da iteração 1 fechados e reverificados (teto do schema em 3 páginas, M15, M20, duração exata, status composto na spec, evidência versionada); sensor 17/24 mortos; lessons L-002..L-007 candidatas
 - **In-progress** (file:line): none
-- **Next step**: rotear os fix tasks de `validation.md` (Ranked Gaps): (1) Major: teto do schema gera 5 páginas de Arsenal, spec diz 3 (ARS-27/ARS-37, `src/lib/report/arsenal-pages.ts`, `ARSENAL_LIMITS`), decisão do dono entre reduzir limites/layout ou emendar a spec; (2) teste do status composto do catálogo (M15, `catalog.ts:94`); (3) teste de pipeline com `bullets` vazio (M20, `analysis-service.ts:128`); depois re-dispatch do Verifier
-- **Blockers**: decisão do dono sobre o gap 1; catálogo real de serviços e objeções ainda não enviado (seed em rascunho)
-- **Uncommitted files**: none
+- **Next step**: rotear Fix 7 (Major: `commercial-types.test.ts` volta a assertar os limites da spec como literais; N4a, N4b, N4c, N4f, N4h, N4i devem morrer) e Fix 8 (Minor: truncamento em fronteira de palavra; N5 deve morrer) e re-dispatch do Verifier (iteração 3, a última)
+- **Blockers**: catálogo real de serviços e objeções ainda não enviado (seed em rascunho); saída real do LLM ainda não exercitada com os limites da F6
+- **Uncommitted files**: none (após o commit da validação)
 - **Branch**: feat/arsenal-comercial (commits locais; sem push)

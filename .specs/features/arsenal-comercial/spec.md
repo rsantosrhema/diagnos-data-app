@@ -199,12 +199,12 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 | ARS-03 | P1: Catálogo | Tasks | Verified |
 | ARS-04 | P1: Catálogo | Tasks | Verified |
 | ARS-05 | P1: Catálogo | Tasks | Verified |
-| ARS-06 | P1: Agente | Tasks | Verified |
-| ARS-07 | P1: Agente | Tasks | Verified |
-| ARS-08 | P1: Agente | Tasks | Verified |
-| ARS-09 | P1: Agente | Tasks | Verified |
+| ARS-06 | P1: Agente | Tasks | Needs Fix |
+| ARS-07 | P1: Agente | Tasks | Needs Fix |
+| ARS-08 | P1: Agente | Tasks | Needs Fix |
+| ARS-09 | P1: Agente | Tasks | Needs Fix |
 | ARS-10 | P1: Agente | Tasks | Verified |
-| ARS-11 | P1: Agente | Tasks | Verified |
+| ARS-11 | P1: Agente | Tasks | Needs Fix |
 | ARS-12 | P1: Agente | Tasks | Verified |
 | ARS-13 | P1: Agente | Tasks | Verified |
 | ARS-14 | P1: Agente | Tasks | Verified |
@@ -220,7 +220,7 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 | ARS-24 | P1: Pipeline | Tasks | Verified |
 | ARS-25 | P1: Pipeline | Tasks | Verified |
 | ARS-26 | P1: Pipeline | Tasks | Verified |
-| ARS-27 | P1: PDF | Tasks | Needs Fix |
+| ARS-27 | P1: PDF | Tasks | Verified |
 | ARS-28 | P1: PDF | Tasks | Verified |
 | ARS-29 | P1: PDF | Tasks | Verified |
 | ARS-30 | P1: PDF | Tasks | Verified |
@@ -230,7 +230,7 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 | ARS-34 | P1: PDF | Tasks | Verified |
 | ARS-35 | P1: PDF | Tasks | Verified |
 | ARS-36 | P1: PDF | Tasks | Verified |
-| ARS-37 | P1: PDF | Tasks | Needs Fix |
+| ARS-37 | P1: PDF | Tasks | Verified |
 | ARS-38 | P1: Download | Tasks | Verified |
 | ARS-39 | P1: Download | Tasks | Verified |
 | ARS-40 | P1: Download | Tasks | Verified |

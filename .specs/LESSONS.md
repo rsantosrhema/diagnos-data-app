@@ -38,6 +38,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: ARS-19 analysis-service.test.ts:691 (services)
 - last seen: 2026-11-24T21:14:46Z
 
+### L-006 - Assert spec-defined numeric limits as literals in tests, never by importing the constant under test
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `schemas` · harmful: 0
+- features: arsenal-comercial
+- evidence: N4a-N4h .. N4b agents/commercial-types.ts:9-11 (limits changed to old values survive full suite 889 passed) (schemas)
+- last seen: 2026-11-24T21:44:18Z
+
+### L-007 - Assert truncation lands on a word boundary with a multi-word input, not only that length and suffix are right
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `schemas` · harmful: 0
+- features: arsenal-comercial
+- evidence: N5 src/lib/agents/commercial-types.ts:25 (truncation without word boundary survives) (schemas)
+- last seen: 2026-11-24T21:44:18Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
