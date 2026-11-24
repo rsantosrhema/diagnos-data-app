@@ -215,10 +215,10 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 | ARS-19 | P1: Pipeline | Tasks | In Tasks |
 | ARS-20 | P1: Pipeline | Tasks | In Tasks |
 | ARS-21 | P1: Pipeline | Tasks | In Tasks |
-| ARS-22 | P1: Pipeline | Tasks | In Tasks |
+| ARS-22 | P1: Pipeline | Tasks | Implementing |
 | ARS-23 | P1: Pipeline | Tasks | In Tasks |
 | ARS-24 | P1: Pipeline | Tasks | Implementing |
-| ARS-25 | P1: Pipeline | Tasks | In Tasks |
+| ARS-25 | P1: Pipeline | Tasks | Implementing |
 | ARS-26 | P1: Pipeline | Tasks | In Tasks |
 | ARS-27 | P1: PDF | Tasks | In Tasks |
 | ARS-28 | P1: PDF | Tasks | In Tasks |

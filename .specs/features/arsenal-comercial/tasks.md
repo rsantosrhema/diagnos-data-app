@@ -377,12 +377,12 @@ Apply ONLY to the local container (never `npm run db:reset`, never a remote): ru
 
 **Done when**:
 
-- [ ] `upsert` called with `arsenal: <object>` sends that object in the row; called without `arsenal` sends `arsenal: null` (assert the exact row)
-- [ ] `findByLeadId` select string contains `arsenal` and returns the row's `arsenal` value
-- [ ] `logEvent(leadId, "arsenal_failed", "x", 5)` inserts `{ lead_id, step: "arsenal_failed", message: "x", duration_ms: 5 }` (typecheck proves the step type)
-- [ ] Gate check passes: `npx vitest run src/lib/repository/market-insights-repo.test.ts`
-- [ ] Phase 2 build gate passes: `npm run typecheck && npm run lint && npm run test && npm run build`
-- [ ] Test count: at least 3 new tests, none removed
+- [x] `upsert` called with `arsenal: <object>` sends that object in the row; called without `arsenal` sends `arsenal: null` (assert the exact row)
+- [x] `findByLeadId` select string contains `arsenal` and returns the row's `arsenal` value
+- [x] `logEvent(leadId, "arsenal_failed", "x", 5)` inserts `{ lead_id, step: "arsenal_failed", message: "x", duration_ms: 5 }` (typecheck proves the step type)
+- [x] Gate check passes: `npx vitest run src/lib/repository/market-insights-repo.test.ts`
+- [x] Phase 2 build gate passes: `npm run typecheck && npm run lint && npm run test && npm run build`
+- [x] Test count: at least 3 new tests, none removed
 
 **Tests**: unit
 **Gate**: build

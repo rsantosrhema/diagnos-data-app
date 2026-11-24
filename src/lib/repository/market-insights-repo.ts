@@ -6,6 +6,7 @@ export interface MarketInsightsRow {
   research: unknown;
   analysis: unknown;
   insights: unknown;
+  arsenal?: unknown;
   sources: unknown;
   status: string;
   error: string | null;
@@ -22,6 +23,7 @@ export interface UpsertMarketInsightsParams {
   research: unknown;
   analysis: unknown;
   insights: unknown;
+  arsenal?: unknown;
   sources: unknown;
   status: MarketInsightsStatus;
 }
@@ -34,6 +36,8 @@ export type AnalysisJobLogStep =
   | "researcher"
   | "analyst"
   | "writer"
+  | "arsenal"
+  | "arsenal_failed"
   | "pdf"
   | "email"
   | "completed"
@@ -51,6 +55,7 @@ export function createMarketInsightsRepository(supabase: SupabaseClient) {
           research: params.research,
           analysis: params.analysis,
           insights: params.insights,
+          arsenal: params.arsenal ?? null,
           sources: params.sources,
           status: params.status,
         },
@@ -63,7 +68,7 @@ export function createMarketInsightsRepository(supabase: SupabaseClient) {
       const { data, error } = await supabase
         .from("market_insights")
         .select(
-          "id, lead_id, research, analysis, insights, sources, status, error, created_at, updated_at, queued_at, processing_started_at, completed_at, attempts",
+          "id, lead_id, research, analysis, insights, arsenal, sources, status, error, created_at, updated_at, queued_at, processing_started_at, completed_at, attempts",
         )
         .eq("lead_id", leadId)
         .maybeSingle();

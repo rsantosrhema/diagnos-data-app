@@ -25,6 +25,7 @@ function mockSupabase(response: { data?: unknown; error?: unknown }) {
     update: builder.update as ReturnType<typeof vi.fn>,
     updateEq,
     queryEq: builder.eq as ReturnType<typeof vi.fn>,
+    querySelect: builder.select as ReturnType<typeof vi.fn>,
   };
 }
 
@@ -62,14 +63,44 @@ describe("MarketInsightsRepository", () => {
 
       expect(from).toHaveBeenCalledWith("market_insights");
       expect(upsert).toHaveBeenCalledWith(
-        expect.objectContaining({
+        {
           lead_id: "lead-1",
           research: row.research,
           analysis: row.analysis,
           insights: row.insights,
+          arsenal: null,
           sources: row.sources,
           status: "analisado",
-        }),
+        },
+        { onConflict: "lead_id" },
+      );
+    });
+
+    it("grava o arsenal recebido na linha do upsert", async () => {
+      const { sb, upsert } = mockSupabase({ error: null });
+      const repo = createMarketInsightsRepository(sb);
+      const arsenal = { pontos_chave: [], servico_recomendado: {}, objecoes: [], perguntas: [] };
+
+      await repo.upsert({
+        leadId: "lead-1",
+        research: row.research,
+        analysis: row.analysis,
+        insights: row.insights,
+        arsenal,
+        sources: row.sources,
+        status: "analisado",
+      });
+
+      expect(upsert).toHaveBeenCalledWith(
+        {
+          lead_id: "lead-1",
+          research: row.research,
+          analysis: row.analysis,
+          insights: row.insights,
+          arsenal,
+          sources: row.sources,
+          status: "analisado",
+        },
         { onConflict: "lead_id" },
       );
     });
@@ -101,6 +132,21 @@ describe("MarketInsightsRepository", () => {
       expect(from).toHaveBeenCalledWith("market_insights");
       expect(queryEq).toHaveBeenCalledWith("lead_id", "lead-1");
       expect(result).toEqual(row);
+    });
+
+    it("seleciona o arsenal e devolve o valor da linha", async () => {
+      const arsenal = { pontos_chave: [{ titulo: "x" }] };
+      const rowWithArsenal = { ...row, arsenal };
+      const { sb, querySelect } = mockSupabase({ data: rowWithArsenal, error: null });
+      const repo = createMarketInsightsRepository(sb);
+
+      const result = await repo.findByLeadId("lead-1");
+
+      const columns = String(querySelect.mock.calls[0][0])
+        .split(",")
+        .map((column) => column.trim());
+      expect(columns).toContain("arsenal");
+      expect(result?.arsenal).toEqual(arsenal);
     });
 
     it("retorna null quando não existe linha", async () => {
@@ -181,6 +227,22 @@ describe("MarketInsightsRepository", () => {
         duration_ms: 1500,
       });
       expect(insert).toBe("analysis_job_logs");
+    });
+
+    it("aceita o step arsenal_failed com mensagem e duração", async () => {
+      const { sb } = mockSupabase({ error: null });
+      const repo = createMarketInsightsRepository(sb);
+
+      await repo.logEvent("lead-1", "arsenal_failed", "x", 5);
+
+      const builder = sb.from("analysis_job_logs");
+      const inserted = (builder.insert as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(inserted).toEqual({
+        lead_id: "lead-1",
+        step: "arsenal_failed",
+        message: "x",
+        duration_ms: 5,
+      });
     });
 
     it("insere sem mensagem/duração quando ausentes", async () => {
