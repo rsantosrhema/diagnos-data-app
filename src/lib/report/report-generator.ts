@@ -9,6 +9,7 @@ import {
 } from "@react-pdf/renderer";
 import type { GeneratePdfInput } from "@/lib/service/screen-service";
 import { normalizeInsights } from "@/lib/agents/normalize-insights";
+import { INDEX_LABEL, METHOD_NOTE, SCALE_LEGEND } from "@/lib/maturity/methodology";
 import { RadarChart } from "./radar-chart";
 import { shortDimensionLabel } from "./dimension-label";
 import { registerReportFonts } from "./fonts";
@@ -577,9 +578,6 @@ const styles = StyleSheet.create({
   },
 });
 
-const METHOD_NOTE =
-  "Pesos ajustados com base no perfil da empresa (segmento, porte e faturamento). Instrumento de triagem baseado em autoavaliação. Não substitui diagnóstico com evidência documental. Resultado reportado como faixa, não como número exato.";
-
 const h = React.createElement;
 
 function normalizeLabel(value: string): string {
@@ -791,7 +789,7 @@ function stageCard(input: GeneratePdfInput, stage: number) {
     h(
       View,
       { style: styles.stageTop },
-      h(Text, { style: styles.stageEyebrow }, "ESTÁGIO ATUAL"),
+      h(Text, { style: styles.stageEyebrow }, INDEX_LABEL),
       h(Text, { style: styles.stageEyebrow }, `FAIXA ${stage} DE 5`),
     ),
     h(Text, { style: styles.stageName }, input.band.rotulo),
@@ -815,7 +813,7 @@ function radarReading(input: GeneratePdfInput) {
     h(
       Text,
       { style: styles.readingScale },
-      "Escala de níveis: 1 Inicial · 2 Emergente · 3 Definido · 4 Gerenciado · 5 Otimizado",
+      SCALE_LEGEND,
     ),
   );
 }

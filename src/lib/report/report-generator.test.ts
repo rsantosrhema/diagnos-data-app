@@ -331,6 +331,52 @@ describe("generateScreenerPdf", () => {
     expect(result.pdf.length).toBeGreaterThan(0);
   });
 
+  it("card do estágio renderiza o índice DMBOK2 (MET-20)", () => {
+    const children = buildReportChildren(makeInput());
+    expect(
+      hasText(children, "Índice de Maturidade Rhema · base DAMA-DMBOK2"),
+    ).toBe(true);
+  });
+
+  it("leitura do radar renderiza a escala DMBOK2 e não a escala antiga (MET-21)", () => {
+    const children = buildReportChildren(makeInput());
+    expect(
+      hasText(
+        children,
+        "Escala de níveis (DAMA-DMBOK2): 1 Inicial · 2 Repetível · 3 Definido · 4 Gerenciado · 5 Otimizado",
+      ),
+    ).toBe(true);
+    expect(hasText(children, "1 Inicial · 2 Emergente")).toBe(false);
+  });
+
+  it("nota metodológica renderiza a referência do contrato (MET-24)", () => {
+    const children = buildReportChildren(makeInput());
+    expect(hasText(children, "NOTA METODOLÓGICA")).toBe(true);
+    expect(
+      hasText(
+        children,
+        "Índice proprietário da Rhema Data, estruturado sobre as áreas de conhecimento do DAMA-DMBOK2 e sua abordagem de avaliação de maturidade (cap. 15), com pesos ajustados ao segmento e ao porte da empresa. Instrumento de triagem por autoavaliação; não é certificação.",
+      ),
+    ).toBe(true);
+  });
+
+  it("texto renderizado não cita CMMI, DCAM nem DMM (MET-25)", () => {
+    const children = buildReportChildren(
+      makeInput({
+        analysis: {
+          resumo: "r",
+          dores: [],
+          contexto_concorrentes: [{ nome: "Concorrente X", contexto: "c" }],
+        },
+        insights: { bullets: [{ texto: "Insight", prioridade: "alta" }] },
+      }),
+    );
+    const renderedText = collectTexts(children).join("\n");
+    expect(renderedText).not.toContain("CMMI");
+    expect(renderedText).not.toContain("DCAM");
+    expect(renderedText).not.toContain("DMM");
+  });
+
   it("omite a seção Radar quando dimensionScores vazio (RADAR-01 edge)", () => {
     const children = buildReportChildren(makeInput({ dimensionScores: [] }));
     expect(hasText(children, "Radar de maturidade")).toBe(false);

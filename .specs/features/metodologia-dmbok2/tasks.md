@@ -234,9 +234,9 @@ T13 → T14
 
 **Done when**:
 
-- [ ] Tests assert the three exact strings are rendered and that "1 Inicial · 2 Emergente", "CMMI", "DCAM", "DMM" are absent from the rendered tree
-- [ ] Gate check passes: `npx vitest run src/lib/report`
-- [ ] Test count ≥ previous
+- [x] Tests assert the three exact strings are rendered and that "1 Inicial · 2 Emergente", "CMMI", "DCAM", "DMM" are absent from the rendered tree
+- [x] Gate check passes: `npx vitest run src/lib/report`
+- [x] Test count ≥ previous
 
 **Tests**: unit
 **Gate**: quick
