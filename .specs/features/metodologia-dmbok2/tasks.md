@@ -286,10 +286,10 @@ T13 → T14
 
 **Done when**:
 
-- [ ] `portal-service.test.ts` asserts both fields for a known id and the fallback
-- [ ] Existing portal component test fixtures updated with the two new fields where the schema requires them
-- [ ] Gate check passes: `npm run test`
-- [ ] Test count ≥ previous
+- [x] `portal-service.test.ts` asserts both fields for a known id and the fallback
+- [x] Existing portal component test fixtures updated with the two new fields where the schema requires them
+- [x] Gate check passes: `npm run test`
+- [x] Test count ≥ previous
 
 **Tests**: unit
 **Gate**: full
@@ -313,9 +313,9 @@ T13 → T14
 
 **Done when**:
 
-- [ ] `StageHero.test.tsx` asserts `INDEX_LABEL` present, "CMMI" absent, and `"2,3 de 5"` for valor 2.34
-- [ ] Gate check passes: `npx vitest run src/components/portal`
-- [ ] Test count ≥ previous
+- [x] `StageHero.test.tsx` asserts `INDEX_LABEL` present, "CMMI" absent, and `"2,3 de 5"` for valor 2.34
+- [x] Gate check passes: `npx vitest run src/components/portal`
+- [x] Test count ≥ previous
 
 **Tests**: component
 **Gate**: quick
@@ -339,9 +339,9 @@ T13 → T14
 
 **Done when**:
 
-- [ ] `AnswersTable.test.tsx` asserts `"13% (padrão 10%)"`, `"10% (padrão)"` and an area text for fixture rows
-- [ ] Gate check passes: `npx vitest run src/components/portal`
-- [ ] Test count ≥ previous
+- [x] `AnswersTable.test.tsx` asserts `"13% (padrão 10%)"`, `"10% (padrão)"` and an area text for fixture rows
+- [x] Gate check passes: `npx vitest run src/components/portal`
+- [x] Test count ≥ previous
 
 **Tests**: component
 **Gate**: quick
@@ -365,9 +365,9 @@ T13 → T14
 
 **Done when**:
 
-- [ ] `MaturityBars.test.tsx` asserts the exact `SCALE_LEGEND` text
-- [ ] Gate check passes: `npx vitest run src/components/portal`
-- [ ] Test count ≥ previous
+- [x] `MaturityBars.test.tsx` asserts the exact `SCALE_LEGEND` text
+- [x] Gate check passes: `npx vitest run src/components/portal`
+- [x] Test count ≥ previous
 
 **Tests**: component
 **Gate**: quick
@@ -391,9 +391,9 @@ T13 → T14
 
 **Done when**:
 
-- [ ] `DiagnosticPortal.test.tsx` asserts heading "Nota metodológica" and `METHOD_NOTE` text in `mode="public"` and in `mode="manager"`
-- [ ] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build` (last task of Phase 3)
-- [ ] Test count ≥ previous
+- [x] `DiagnosticPortal.test.tsx` asserts heading "Nota metodológica" and `METHOD_NOTE` text in `mode="public"` and in `mode="manager"`
+- [x] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build` (last task of Phase 3)
+- [x] Test count ≥ previous
 
 **Tests**: component
 **Gate**: build

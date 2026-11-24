@@ -1,9 +1,14 @@
+import { formatWeight } from "@/lib/maturity/methodology";
+
 export interface AnswersDimension {
   id: string;
   name: string;
   pergunta: string;
   resposta: string;
   nivel: number;
+  peso: number;
+  pesoPadrao: number;
+  areaDmbok: string;
 }
 
 const LEVEL_COLORS = ["#C0392B", "#D97706", "#B7791F", "#3F7D58", "#2F6B4F"];
@@ -58,10 +63,10 @@ export function AnswersTable({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] border-collapse text-left">
+        <table className="w-full min-w-[860px] border-collapse text-left">
           <thead>
             <tr className="bg-rhema-lavender-light/40">
-              <th className="w-[190px] px-6 py-3 font-poppins text-xs font-medium uppercase tracking-wide text-rhema-dark/60">
+              <th className="w-[210px] px-6 py-3 font-poppins text-xs font-medium uppercase tracking-wide text-rhema-dark/60">
                 Dimensão
               </th>
               <th className="px-4 py-3 font-poppins text-xs font-medium uppercase tracking-wide text-rhema-dark/60">
@@ -69,6 +74,9 @@ export function AnswersTable({
               </th>
               <th className="px-4 py-3 font-poppins text-xs font-medium uppercase tracking-wide text-rhema-dark/60">
                 Resposta
+              </th>
+              <th className="w-[150px] px-4 py-3 text-right font-poppins text-xs font-medium uppercase tracking-wide text-rhema-dark/60">
+                Peso no setor
               </th>
               <th className="w-[110px] px-6 py-3 text-right font-poppins text-xs font-medium uppercase tracking-wide text-rhema-dark/60">
                 Nível
@@ -84,8 +92,11 @@ export function AnswersTable({
                 }`}
               >
                 <td className="px-6 py-4 align-top">
-                  <span className="font-poppins text-sm font-semibold text-rhema-institutional">
+                  <span className="block font-poppins text-sm font-semibold text-rhema-institutional">
                     {dim.name}
+                  </span>
+                  <span className="mt-0.5 block font-inter text-[11px] text-rhema-dark/50">
+                    {dim.areaDmbok}
                   </span>
                 </td>
                 <td className="px-4 py-4 align-top font-inter text-sm leading-relaxed text-rhema-dark/80">
@@ -93,6 +104,9 @@ export function AnswersTable({
                 </td>
                 <td className="px-4 py-4 align-top font-inter text-sm leading-relaxed text-rhema-dark/70">
                   {dim.resposta}
+                </td>
+                <td className="px-4 py-4 text-right align-top font-mono text-xs font-semibold tabular-nums text-rhema-primary">
+                  {formatWeight(dim.peso, dim.pesoPadrao)}
                 </td>
                 <td className="px-6 py-4 text-right align-top">
                   <LevelMeter nivel={dim.nivel} />

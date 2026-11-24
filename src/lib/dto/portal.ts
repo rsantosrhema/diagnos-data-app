@@ -34,6 +34,8 @@ export const portalDTOSchema = z
           name: z.string(),
           nivel: z.number().int().min(1).max(5),
           peso: z.number().positive(),
+          pesoPadrao: z.number().positive(),
+          areaDmbok: z.string(),
           score: z.number(),
           pergunta: z.string(),
           resposta: z.string(),

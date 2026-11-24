@@ -194,6 +194,8 @@ export interface ManagerPortalResponse {
     name: string;
     nivel: number;
     peso: number;
+    pesoPadrao: number;
+    areaDmbok: string;
     score: number;
     pergunta: string;
     resposta: string;

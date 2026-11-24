@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { SCALE_LEGEND } from "@/lib/maturity/methodology";
 
 export interface MaturityBarDimension {
   id: string;
@@ -33,7 +34,7 @@ export function MaturityBars({ dimensions, riskId, highlightIds }: MaturityBarsP
 
   return (
     <div className="flex h-full flex-col">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between">
         <h3 className="font-poppins text-sm font-semibold uppercase tracking-wide text-rhema-dark/60">
           Nível por dimensão
         </h3>
@@ -46,6 +47,10 @@ export function MaturityBars({ dimensions, riskId, highlightIds }: MaturityBarsP
           Risco principal
         </span>
       </div>
+
+      <p className="mb-4 font-inter text-[11px] leading-relaxed text-rhema-dark/50">
+        {SCALE_LEGEND}
+      </p>
 
       <div className="relative flex-1">
         <div

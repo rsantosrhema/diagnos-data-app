@@ -2,6 +2,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { INDEX_LABEL } from "@/lib/maturity/methodology";
 import { StageHero } from "./StageHero";
 
 const STAGE = {
@@ -48,7 +49,14 @@ describe("StageHero", () => {
   });
 
   it("mostra o score e a faixa do diagnóstico", () => {
+    // MET-29: score sai por formatScore ("2,3 de 5"), não mais como decimal cru.
+    render(<StageHero stage={STAGE} score={{ valor: 2.34, faixa: "Estruturado" }} />);
+    expect(screen.getByText("2,3 de 5")).toBeTruthy();
+  });
+
+  it("rotula o índice metodológico DMBOK2 e não cita CMMI (MET-28)", () => {
     render(<StageHero stage={STAGE} score={{ valor: 3.1, faixa: "Estruturado" }} />);
-    expect(screen.getByText("3.1")).toBeTruthy();
+    expect(screen.getByText(INDEX_LABEL)).toBeTruthy();
+    expect(screen.queryByText(/CMMI/)).toBeNull();
   });
 });

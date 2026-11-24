@@ -1,3 +1,5 @@
+import { INDEX_LABEL, formatScore } from "@/lib/maturity/methodology";
+
 interface StageHeroProps {
   stage: {
     rotulo: string;
@@ -22,7 +24,7 @@ export function StageHero({ stage, score }: StageHeroProps) {
       aria-label="Estágio de maturidade"
     >
       <p className="font-poppins text-sm font-medium uppercase tracking-wide text-rhema-dark/50">
-        Estágio atual · CMMI
+        {INDEX_LABEL}
       </p>
       <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
         <h2 className="font-poppins text-4xl font-bold md:text-5xl" style={{ color: stage.cor }}>
@@ -30,7 +32,7 @@ export function StageHero({ stage, score }: StageHeroProps) {
         </h2>
         <div className="text-right">
           <p className="font-poppins text-2xl font-bold tabular-nums text-rhema-institutional">
-            {score.valor.toFixed(1)}
+            {formatScore(score.valor)}
           </p>
           <p className="font-inter text-xs text-rhema-dark/50">Score final</p>
         </div>
