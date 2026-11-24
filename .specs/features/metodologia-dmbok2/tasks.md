@@ -417,8 +417,8 @@ T13 → T14
 
 **Done when**:
 
-- [ ] `grep -c "DCAM\|CMMI-like" AGENTS.md` returns 0 and §5 contains "DAMA-DMBOK2"
-- [ ] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build`
+- [x] `grep -c "DCAM\|CMMI-like" AGENTS.md` returns 0 and §5 contains "DAMA-DMBOK2"
+- [x] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build`
 
 **Tests**: none
 **Gate**: build

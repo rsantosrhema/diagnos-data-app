@@ -11,7 +11,7 @@ This file is the **system prompt** for any code agent (OpenCode, Claude Code, Cu
 The product flow is:
 
 1. **Landing page** - the visitor fills the lead form (name, company, phone, email, role) and is redirected straight to the screener. Duplicate emails reuse the existing pending lead; a completed email is rejected (409).
-2. **Multi-step form** - the lead answers a contract-driven questionnaire (company profile + 10 DAMA-DMBOK dimensions + 1 commercial question + consent). Each dimension has 5 levels (CMMI-like).
+2. **Multi-step form** - the lead answers a contract-driven questionnaire (company profile + 10 DAMA-DMBOK2 dimensions + 1 commercial question + consent). Each dimension has 5 levels (1 Inicial · 2 Repetível · 3 Definido · 4 Gerenciado · 5 Otimizado).
 3. **Deterministic scoring** - the answers are scored with a fixed formula (weighted aggregate), producing a score band and per-dimension levels. No LLM is involved in the screener.
 4. **Persistence** - the lead, the raw answers, and the computed diagnostic are stored in **Supabase**. No PDF is generated at this point.
 5. **On-demand report** - the **commercial manager**, via the admin panel (`/admin`), clicks "Gerar relatório" for a lead; the analysis pipeline (agents + PDF + email via Resend) runs in the background worker.
@@ -128,13 +128,31 @@ client → /api/public-proxy/screener → (injects x-internal-api-key) → /api/
 
 ---
 
-## 5. Domain Model (DAMA-DMBOK)
+## 5. Domain Model (DAMA-DMBOK2)
 
-Maturity is assessed across **10 dimensions** defined in `docs/snapshot-maturidade-dados.json` (mapped to DAMA-DMBOK knowledge areas / DCAM / DMBOK), e.g.: Governança e Responsabilidade, Arquitetura e Integração, Qualidade de Dados, Metadados e Rastreabilidade, Dados Mestres e Cadastros, Segurança e Conformidade (LGPD), Consumo e Autonomia Analítica, IA/Modelos/Analytics Avançado, Time e Capacidade.
+**DAMA-DMBOK2, cap. 15 (Data Management Maturity Assessment) is the single methodological reference** for the diagnostic. Contract, PDF, and portal cite no other maturity model.
 
-- **Levels** per dimension (1–5, CMMI-like): Inexistente → Ad hoc → Definido → Gerenciado → Otimizado (labels defined per question in the JSON).
+Maturity is assessed across **10 dimensions** defined in `docs/snapshot-maturidade-dados.json`, each mapped to a DMBOK2 knowledge area in its `area_dmbok` field:
+
+| Dimension | DMBOK2 knowledge area (`area_dmbok`) |
+| --- | --- |
+| Governança e Responsabilidade | Data Governance |
+| Patrocínio Executivo e Business Case | Data Governance (Data Strategy) |
+| Arquitetura e Integração | Data Architecture / Data Integration |
+| Qualidade de Dados | Data Quality |
+| Metadados e Rastreabilidade | Metadata Management |
+| Dados Mestres e Cadastros | Reference & Master Data |
+| Segurança e Conformidade (LGPD) | Data Security |
+| Consumo e Autonomia Analítica | Data Warehousing & BI |
+| IA, Modelos e Analytics Avançado | Big Data & Data Science |
+| Time e Capacidade | Data Management Organization & Role Expectations |
+
+- **Levels** per dimension (1–5, DMBOK2 cap. 15 scale): 1 Inicial · 2 Repetível · 3 Definido · 4 Gerenciado · 5 Otimizado (labels in `meta.escala_niveis`; the per-question descriptions are in the JSON).
 - **Score**: `score_final = Σ(nivel_dimensão × peso_dimensão) / 100` (weights in the JSON).
-- **Bands** (from `scoring.faixas`): Inicial, Emergente, Estruturado, Gerenciado, Otimizado.
+- **Bands**: always the limits of `scoring.faixas`, the same for every segment - Inicial [1.0,1.8), Emergente [1.8,2.6), Estruturado [2.6,3.4), Gerenciado [3.4,4.2), Otimizado [4.2,5.0]. `recalibrated_bands` limits are never used for classification.
+- **Sector specificity** comes only from the segment/porte weight multipliers in `docs/scoring-calibration.json`. The sector texts stay as the stage descriptions (`descricao` of the band with the same `rotulo`), never as different limits.
+- **Method positioning** (verbatim, `meta.referencia`): "Índice proprietário da Rhema Data, estruturado sobre as áreas de conhecimento do DAMA-DMBOK2 e sua abordagem de avaliação de maturidade (cap. 15), com pesos ajustados ao segmento e ao porte da empresa. Instrumento de triagem por autoavaliação; não é certificação."
+- **User-facing texts** (index label, scale legend, method note, weight and score formats) come from `src/lib/maturity/methodology.ts`. PDF and portal consume that module and never hardcode the strings.
 - **Reporting rules**: report the band not a precise decimal; highlight the lowest dimension as the top risk; flag imbalance when >3 levels separate max vs min; flag C-level optimism internally.
 
 ---
