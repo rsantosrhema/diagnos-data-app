@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.claude
+.opencode
+.specs
+graphify-out
+docs/*
+!docs/*.json
+supabase
+test
+.env*
+!.env.example
+*.tsbuildinfo

@@ -54,6 +54,8 @@ alter table public.analysis_job_logs enable row level security;
 -- Enfileira um job; dedup por lead: se já existe job pendente/processando
 -- para o lead, não re-enfileira (evita custo duplo de LLM).
 -- Retorna { ok, queued } — queued=false indica job já em andamento.
+-- O tipo de retorno mudou de void (0007) para jsonb; CREATE OR REPLACE não permite isso.
+drop function if exists public.analysis_queue_enqueue(uuid);
 create or replace function public.analysis_queue_enqueue(p_lead_id uuid)
 returns jsonb language plpgsql security definer as $$
 declare
