@@ -365,9 +365,9 @@ T13 → T14
 
 **Done when**:
 
-- [ ] `MaturityBars.test.tsx` asserts the exact `SCALE_LEGEND` text
-- [ ] Gate check passes: `npx vitest run src/components/portal`
-- [ ] Test count ≥ previous
+- [x] `MaturityBars.test.tsx` asserts the exact `SCALE_LEGEND` text
+- [x] Gate check passes: `npx vitest run src/components/portal`
+- [x] Test count ≥ previous
 
 **Tests**: component
 **Gate**: quick
