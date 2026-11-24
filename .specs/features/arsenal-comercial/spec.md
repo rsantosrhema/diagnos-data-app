@@ -194,54 +194,54 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| ARS-01 | P1: Catálogo | Tasks | Pending |
-| ARS-02 | P1: Catálogo | Tasks | Pending |
-| ARS-03 | P1: Catálogo | Tasks | Pending |
-| ARS-04 | P1: Catálogo | Tasks | Pending |
-| ARS-05 | P1: Catálogo | Tasks | Pending |
-| ARS-06 | P1: Agente | Tasks | Pending |
-| ARS-07 | P1: Agente | Tasks | Pending |
-| ARS-08 | P1: Agente | Tasks | Pending |
-| ARS-09 | P1: Agente | Tasks | Pending |
-| ARS-10 | P1: Agente | Tasks | Pending |
-| ARS-11 | P1: Agente | Tasks | Pending |
-| ARS-12 | P1: Agente | Tasks | Pending |
-| ARS-13 | P1: Agente | Tasks | Pending |
-| ARS-14 | P1: Agente | Tasks | Pending |
-| ARS-15 | P1: Agente | Tasks | Pending |
-| ARS-16 | P1: Agente | Tasks | Pending |
-| ARS-17 | P1: Agente | Tasks | Pending |
-| ARS-18 | P1: Agente | Tasks | Pending |
-| ARS-19 | P1: Pipeline | Tasks | Pending |
-| ARS-20 | P1: Pipeline | Tasks | Pending |
-| ARS-21 | P1: Pipeline | Tasks | Pending |
-| ARS-22 | P1: Pipeline | Tasks | Pending |
-| ARS-23 | P1: Pipeline | Tasks | Pending |
-| ARS-24 | P1: Pipeline | Tasks | Pending |
-| ARS-25 | P1: Pipeline | Tasks | Pending |
-| ARS-26 | P1: Pipeline | Tasks | Pending |
-| ARS-27 | P1: PDF | Tasks | Pending |
-| ARS-28 | P1: PDF | Tasks | Pending |
-| ARS-29 | P1: PDF | Tasks | Pending |
-| ARS-30 | P1: PDF | Tasks | Pending |
-| ARS-31 | P1: PDF | Tasks | Pending |
-| ARS-32 | P1: PDF | Tasks | Pending |
-| ARS-33 | P1: PDF | Tasks | Pending |
-| ARS-34 | P1: PDF | Tasks | Pending |
-| ARS-35 | P1: PDF | Tasks | Pending |
-| ARS-36 | P1: PDF | Tasks | Pending |
-| ARS-37 | P1: PDF | Tasks | Pending |
-| ARS-38 | P1: Download | Tasks | Pending |
-| ARS-39 | P1: Download | Tasks | Pending |
-| ARS-40 | P1: Download | Tasks | Pending |
-| ARS-41 | P1: Restrito | Tasks | Pending |
-| ARS-42 | P1: Restrito | Tasks | Pending |
-| ARS-43 | P2: Verificação | Tasks | Pending |
-| ARS-44 | P2: Verificação | Tasks | Pending |
-| ARS-45 | P2: Verificação | Tasks | Pending |
-| ARS-46 | P2: Verificação | Tasks | Pending |
+| ARS-01 | P1: Catálogo | Tasks | In Tasks |
+| ARS-02 | P1: Catálogo | Tasks | In Tasks |
+| ARS-03 | P1: Catálogo | Tasks | In Tasks |
+| ARS-04 | P1: Catálogo | Tasks | In Tasks |
+| ARS-05 | P1: Catálogo | Tasks | In Tasks |
+| ARS-06 | P1: Agente | Tasks | In Tasks |
+| ARS-07 | P1: Agente | Tasks | In Tasks |
+| ARS-08 | P1: Agente | Tasks | In Tasks |
+| ARS-09 | P1: Agente | Tasks | In Tasks |
+| ARS-10 | P1: Agente | Tasks | In Tasks |
+| ARS-11 | P1: Agente | Tasks | In Tasks |
+| ARS-12 | P1: Agente | Tasks | In Tasks |
+| ARS-13 | P1: Agente | Tasks | In Tasks |
+| ARS-14 | P1: Agente | Tasks | In Tasks |
+| ARS-15 | P1: Agente | Tasks | In Tasks |
+| ARS-16 | P1: Agente | Tasks | In Tasks |
+| ARS-17 | P1: Agente | Tasks | In Tasks |
+| ARS-18 | P1: Agente | Tasks | In Tasks |
+| ARS-19 | P1: Pipeline | Tasks | In Tasks |
+| ARS-20 | P1: Pipeline | Tasks | In Tasks |
+| ARS-21 | P1: Pipeline | Tasks | In Tasks |
+| ARS-22 | P1: Pipeline | Tasks | In Tasks |
+| ARS-23 | P1: Pipeline | Tasks | In Tasks |
+| ARS-24 | P1: Pipeline | Tasks | In Tasks |
+| ARS-25 | P1: Pipeline | Tasks | In Tasks |
+| ARS-26 | P1: Pipeline | Tasks | In Tasks |
+| ARS-27 | P1: PDF | Tasks | In Tasks |
+| ARS-28 | P1: PDF | Tasks | In Tasks |
+| ARS-29 | P1: PDF | Tasks | In Tasks |
+| ARS-30 | P1: PDF | Tasks | In Tasks |
+| ARS-31 | P1: PDF | Tasks | In Tasks |
+| ARS-32 | P1: PDF | Tasks | In Tasks |
+| ARS-33 | P1: PDF | Tasks | In Tasks |
+| ARS-34 | P1: PDF | Tasks | In Tasks |
+| ARS-35 | P1: PDF | Tasks | In Tasks |
+| ARS-36 | P1: PDF | Tasks | In Tasks |
+| ARS-37 | P1: PDF | Tasks | In Tasks |
+| ARS-38 | P1: Download | Tasks | In Tasks |
+| ARS-39 | P1: Download | Tasks | In Tasks |
+| ARS-40 | P1: Download | Tasks | In Tasks |
+| ARS-41 | P1: Restrito | Tasks | In Tasks |
+| ARS-42 | P1: Restrito | Tasks | In Tasks |
+| ARS-43 | P2: Verificação | Tasks | In Tasks |
+| ARS-44 | P2: Verificação | Tasks | In Tasks |
+| ARS-45 | P2: Verificação | Tasks | In Tasks |
+| ARS-46 | P2: Verificação | Tasks | In Tasks |
 
-**Coverage:** 46 total, 0 mapped to tasks, 46 unmapped ⚠️ (tasks.md será gerado após a aprovação do design)
+**Coverage:** 46 total, 46 mapped to tasks, 0 unmapped (matriz em `tasks.md`, seção Requirement → Task Coverage)
 
 ---
 
