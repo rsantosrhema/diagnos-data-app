@@ -149,13 +149,13 @@ T24 → T25 → T26 → T27
 
 **Done when**:
 
-- [ ] `SERVICE_IDS` equals the 7 ids above in order; `OBJECTION_GROUP_IDS` equals the 6 ids above in order; `COMMERCIAL_CATALOG.status` is `"rascunho"`
-- [ ] A fixture with a duplicate service id is rejected and an issue message contains `id duplicado: governanca`; a fixture with `dimensoes: ["d99"]` is rejected with message `dimensão desconhecida: d99`; same duplicate check for groups
-- [ ] A fixture with an extra unknown key, or an id like `Governança`, is rejected
-- [ ] `getService("governanca")?.nome` is `"Governança de Dados"`; `getService("x")` and `getObjectionGroup("x")` are `undefined`; `getObjectionGroup("preco")?.nome` is `"Preço e orçamento"`
-- [ ] Every seed `resumo`, `quando_indicar` and `descricao` is a non-empty string of at most 160 characters
-- [ ] Gate check passes: `npx vitest run src/lib/comercial`
-- [ ] Test count: at least 9 new tests, none removed
+- [x] `SERVICE_IDS` equals the 7 ids above in order; `OBJECTION_GROUP_IDS` equals the 6 ids above in order; `COMMERCIAL_CATALOG.status` is `"rascunho"`
+- [x] A fixture with a duplicate service id is rejected and an issue message contains `id duplicado: governanca`; a fixture with `dimensoes: ["d99"]` is rejected with message `dimensão desconhecida: d99`; same duplicate check for groups
+- [x] A fixture with an extra unknown key, or an id like `Governança`, is rejected
+- [x] `getService("governanca")?.nome` is `"Governança de Dados"`; `getService("x")` and `getObjectionGroup("x")` are `undefined`; `getObjectionGroup("preco")?.nome` is `"Preço e orçamento"`
+- [x] Every seed `resumo`, `quando_indicar` and `descricao` is a non-empty string of at most 160 characters
+- [x] Gate check passes: `npx vitest run src/lib/comercial`
+- [x] Test count: at least 9 new tests, none removed
 
 **Tests**: unit
 **Gate**: quick

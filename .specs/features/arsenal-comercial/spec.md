@@ -194,11 +194,11 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| ARS-01 | P1: Catálogo | Tasks | In Tasks |
-| ARS-02 | P1: Catálogo | Tasks | In Tasks |
-| ARS-03 | P1: Catálogo | Tasks | In Tasks |
-| ARS-04 | P1: Catálogo | Tasks | In Tasks |
-| ARS-05 | P1: Catálogo | Tasks | In Tasks |
+| ARS-01 | P1: Catálogo | Tasks | Implementing |
+| ARS-02 | P1: Catálogo | Tasks | Implementing |
+| ARS-03 | P1: Catálogo | Tasks | Implementing |
+| ARS-04 | P1: Catálogo | Tasks | Implementing |
+| ARS-05 | P1: Catálogo | Tasks | Implementing |
 | ARS-06 | P1: Agente | Tasks | In Tasks |
 | ARS-07 | P1: Agente | Tasks | In Tasks |
 | ARS-08 | P1: Agente | Tasks | In Tasks |

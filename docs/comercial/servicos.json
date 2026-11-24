@@ -1,0 +1,55 @@
+{
+  "versao": "0.1",
+  "status": "rascunho",
+  "servicos": [
+    {
+      "id": "diagnostico-360",
+      "nome": "Diagnóstico 360 de Dados",
+      "resumo": "Avaliação completa da maturidade de dados nas dez dimensões, com prioridades claras de evolução.",
+      "dimensoes": ["d01", "d02", "d03", "d04", "d05", "d06", "d07", "d08", "d09", "d10"],
+      "quando_indicar": "Quando a empresa precisa de um retrato amplo antes de escolher onde investir em dados."
+    },
+    {
+      "id": "governanca",
+      "nome": "Governança de Dados",
+      "resumo": "Papéis, políticas e fóruns para transformar decisões sobre dados em rotina de gestão.",
+      "dimensoes": ["d01", "d02", "d10"],
+      "quando_indicar": "Quando não há dono claro dos dados, políticas formais ou fórum que decida prioridades."
+    },
+    {
+      "id": "qualidade-mestres",
+      "nome": "Qualidade e Dados Mestres",
+      "resumo": "Regras de qualidade, cadastro mestre e rotinas de correção para dados confiáveis no dia a dia.",
+      "dimensoes": ["d04", "d06"],
+      "quando_indicar": "Quando relatórios divergem, cadastros se repetem e ninguém responde pela correção."
+    },
+    {
+      "id": "arquitetura-integracao",
+      "nome": "Arquitetura e Integração de Dados",
+      "resumo": "Desenho de integrações e camadas de dados que reduz retrabalho e sustenta novos produtos analíticos.",
+      "dimensoes": ["d03", "d05"],
+      "quando_indicar": "Quando os dados vivem em silos e cada nova integração vira um projeto caro e frágil."
+    },
+    {
+      "id": "analytics-bi",
+      "nome": "Analytics e BI com Autonomia",
+      "resumo": "Camada analítica com indicadores confiáveis, autosserviço e cultura de decisão orientada por dados.",
+      "dimensoes": ["d08"],
+      "quando_indicar": "Quando as áreas dependem de planilhas manuais e não respondem perguntas simples sozinhas."
+    },
+    {
+      "id": "seguranca-lgpd",
+      "nome": "Segurança e LGPD Aplicada a Dados",
+      "resumo": "Classificação, controle de acesso e processos de privacidade para usar dados com segurança e conformidade.",
+      "dimensoes": ["d07"],
+      "quando_indicar": "Quando o acesso a dados sensíveis é informal ou a LGPD ainda é tratada apenas no papel."
+    },
+    {
+      "id": "ia-analytics-avancado",
+      "nome": "IA e Analytics Avançado",
+      "resumo": "Casos de IA e modelos avançados conectados a dados tratados, com avaliação de risco e retorno.",
+      "dimensoes": ["d09"],
+      "quando_indicar": "Quando há iniciativa de IA sem base de dados confiável ou sem critério de priorização."
+    }
+  ]
+}

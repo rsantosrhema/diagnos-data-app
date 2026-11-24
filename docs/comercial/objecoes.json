@@ -1,0 +1,36 @@
+{
+  "versao": "0.1",
+  "status": "rascunho",
+  "grupos": [
+    {
+      "id": "preco",
+      "nome": "Preço e orçamento",
+      "descricao": "O cliente questiona o valor do projeto ou diz que o orçamento já está comprometido."
+    },
+    {
+      "id": "timing",
+      "nome": "Timing e prioridade",
+      "descricao": "O cliente reconhece o problema, mas adia a decisão para um momento futuro."
+    },
+    {
+      "id": "ja-temos",
+      "nome": "Já temos time ou ferramenta",
+      "descricao": "O cliente afirma que o time interno ou uma ferramenta já resolve o assunto."
+    },
+    {
+      "id": "confianca",
+      "nome": "Confiança e prova de resultado",
+      "descricao": "O cliente pede evidências de que a entrega funciona em um contexto parecido."
+    },
+    {
+      "id": "risco-dados",
+      "nome": "Risco e segurança dos dados",
+      "descricao": "O cliente teme exposição de dados, acesso indevido ou descumprimento da LGPD."
+    },
+    {
+      "id": "decisao",
+      "nome": "Decisão e alçada",
+      "descricao": "O cliente não é quem decide ou precisa envolver outras áreas para aprovar."
+    }
+  ]
+}
