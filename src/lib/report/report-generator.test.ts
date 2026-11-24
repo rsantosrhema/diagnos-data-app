@@ -501,6 +501,9 @@ describe("generateScreenerPdf", () => {
     expect(withArsenal.slice(0, base.length).map((child) => child.key)).toEqual(
       base.map((child) => child.key),
     );
+    expect(withArsenal.slice(0, base.length).map(collectTexts)).toEqual(
+      base.map(collectTexts),
+    );
     expect(withArsenal.slice(-3).map((child) => child.key)).toEqual([
       "arsenal-1",
       "arsenal-2",

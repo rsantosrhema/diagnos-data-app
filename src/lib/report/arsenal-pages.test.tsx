@@ -140,6 +140,7 @@ describe("buildArsenalPages - página 1", () => {
       "Serviço ideal",
       "Governança de Dados",
       arsenal.servico_recomendado.justificativa,
+      "Dimensões atacadas: Governança, Qualidade",
       "Complementares: Qualidade e Dados Mestres",
     ];
 
@@ -380,5 +381,39 @@ describe("buildArsenalPages - página 3", () => {
 
     expect(longestLabel).toBe("NECESSIDADE");
     expect(columnWidths[0] as number).toBeGreaterThanOrEqual(required);
+  });
+});
+
+describe("buildArsenalPages - transversal", () => {
+  it("repete o running head confidencial e o rodapé do relatório nas três páginas (ARS-29)", () => {
+    const pages = buildArsenalPages(makeArsenal());
+
+    for (const page of pages) {
+      expect(textOf(page)).toContain(
+        "ARSENAL COMERCIAL · USO INTERNO · CONFIDENCIAL",
+      );
+      const children = childrenOf(page);
+      const lastChild = children[children.length - 1] as ElementLike | undefined;
+      expect(lastChild?.key).toBe("footer");
+    }
+  });
+
+  it("apresenta as seções 01 a 04 na ordem em que aparecem no PDF (ARS-30)", () => {
+    const texts = buildArsenalPages(makeArsenal()).flatMap(textOf);
+    const sections = ["01", "02", "03", "04"];
+    const titles = [
+      "Pontos-chave para a reunião",
+      "Serviço ideal",
+      "Contorno de objeções",
+      "Perguntas de descoberta (SPIN)",
+    ];
+
+    const sectionPositions = sections.map((section) => texts.indexOf(section));
+    const titlePositions = titles.map((title) => texts.indexOf(title));
+
+    expect(sectionPositions.every((position) => position >= 0)).toBe(true);
+    expect(sectionPositions).toEqual([...sectionPositions].sort((a, b) => a - b));
+    expect(titlePositions.every((position) => position >= 0)).toBe(true);
+    expect(titlePositions).toEqual([...titlePositions].sort((a, b) => a - b));
   });
 });
