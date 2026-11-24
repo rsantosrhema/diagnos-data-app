@@ -1,8 +1,82 @@
 import { describe, it, expect } from "vitest";
-import { ARSENAL_LIMITS, commercialArsenalSchema } from "./commercial-types";
+import { commercialArsenalSchema, type CommercialArsenal } from "./commercial-types";
 import { makeArsenal } from "./commercial-fixture";
 
 type ParseResult = ReturnType<typeof commercialArsenalSchema.safeParse>;
+
+type TextField = {
+  name: string;
+  max: number;
+  write: (arsenal: CommercialArsenal, value: string) => void;
+  read: (arsenal: CommercialArsenal) => string;
+};
+
+const TEXT_FIELDS: TextField[] = [
+  {
+    name: "titulo do ponto",
+    max: 60,
+    write: (arsenal, value) => {
+      arsenal.pontos_chave[0].titulo = value;
+    },
+    read: (arsenal) => arsenal.pontos_chave[0].titulo,
+  },
+  {
+    name: "texto do ponto",
+    max: 200,
+    write: (arsenal, value) => {
+      arsenal.pontos_chave[0].texto = value;
+    },
+    read: (arsenal) => arsenal.pontos_chave[0].texto,
+  },
+  {
+    name: "objecao_provavel",
+    max: 140,
+    write: (arsenal, value) => {
+      arsenal.objecoes[0].objecao_provavel = value;
+    },
+    read: (arsenal) => arsenal.objecoes[0].objecao_provavel,
+  },
+  {
+    name: "contorno",
+    max: 220,
+    write: (arsenal, value) => {
+      arsenal.objecoes[0].contorno = value;
+    },
+    read: (arsenal) => arsenal.objecoes[0].contorno,
+  },
+  {
+    name: "apoio",
+    max: 120,
+    write: (arsenal, value) => {
+      arsenal.objecoes[0].apoio = value;
+    },
+    read: (arsenal) => arsenal.objecoes[0].apoio,
+  },
+  {
+    name: "justificativa",
+    max: 300,
+    write: (arsenal, value) => {
+      arsenal.servico_recomendado.justificativa = value;
+    },
+    read: (arsenal) => arsenal.servico_recomendado.justificativa,
+  },
+  {
+    name: "texto da pergunta",
+    max: 160,
+    write: (arsenal, value) => {
+      arsenal.perguntas[0].texto = value;
+    },
+    read: (arsenal) => arsenal.perguntas[0].texto,
+  },
+  {
+    name: "objetivo",
+    max: 120,
+    write: (arsenal, value) => {
+      arsenal.perguntas[0].objetivo = value;
+    },
+    read: (arsenal) => arsenal.perguntas[0].objetivo,
+  },
+];
 
 function issueMessages(result: ParseResult): string[] {
   return result.success ? [] : result.error.issues.map((issue) => issue.message);
@@ -310,14 +384,14 @@ describe("commercialArsenalSchema", () => {
     expect(result.success).toBe(true);
     if (!result.success) return;
     const texto = result.data.pontos_chave[0].texto;
-    expect(texto.length).toBeLessThanOrEqual(ARSENAL_LIMITS.pontosChave.texto);
+    expect(texto.length).toBeLessThanOrEqual(200);
     expect(texto.endsWith("…")).toBe(true);
     expect(texto).not.toMatch(/\s…$/);
   });
 
   it("mantém título com exatamente o limite de caracteres inalterado", () => {
     const arsenal = makeArsenal();
-    const title = "a".repeat(ARSENAL_LIMITS.pontosChave.titulo);
+    const title = "a".repeat(60);
     arsenal.pontos_chave[0].titulo = title;
 
     const result = commercialArsenalSchema.safeParse(arsenal);
@@ -327,92 +401,35 @@ describe("commercialArsenalSchema", () => {
     expect(result.data.pontos_chave[0].titulo).toBe(title);
   });
 
-  it("trunca cada campo de texto no seu próprio limite (ARS-11)", () => {
-    let longText = "";
-    const fields: Array<{
-      name: string;
-      max: number;
-      mutate: (arsenal: ReturnType<typeof makeArsenal>) => void;
-      read: (arsenal: ReturnType<typeof makeArsenal>) => string;
-    }> = [
-      {
-        name: "titulo do ponto",
-        max: ARSENAL_LIMITS.pontosChave.titulo,
-        mutate: (arsenal) => {
-          arsenal.pontos_chave[0].titulo = longText;
-        },
-        read: (arsenal) => arsenal.pontos_chave[0].titulo,
-      },
-      {
-        name: "texto do ponto",
-        max: ARSENAL_LIMITS.pontosChave.texto,
-        mutate: (arsenal) => {
-          arsenal.pontos_chave[0].texto = longText;
-        },
-        read: (arsenal) => arsenal.pontos_chave[0].texto,
-      },
-      {
-        name: "objecao_provavel",
-        max: ARSENAL_LIMITS.objecoes.objecaoProvavel,
-        mutate: (arsenal) => {
-          arsenal.objecoes[0].objecao_provavel = longText;
-        },
-        read: (arsenal) => arsenal.objecoes[0].objecao_provavel,
-      },
-      {
-        name: "contorno",
-        max: ARSENAL_LIMITS.objecoes.contorno,
-        mutate: (arsenal) => {
-          arsenal.objecoes[0].contorno = longText;
-        },
-        read: (arsenal) => arsenal.objecoes[0].contorno,
-      },
-      {
-        name: "apoio",
-        max: ARSENAL_LIMITS.objecoes.apoio,
-        mutate: (arsenal) => {
-          arsenal.objecoes[0].apoio = longText;
-        },
-        read: (arsenal) => arsenal.objecoes[0].apoio,
-      },
-      {
-        name: "justificativa",
-        max: ARSENAL_LIMITS.servico.justificativa,
-        mutate: (arsenal) => {
-          arsenal.servico_recomendado.justificativa = longText;
-        },
-        read: (arsenal) => arsenal.servico_recomendado.justificativa,
-      },
-      {
-        name: "texto da pergunta",
-        max: ARSENAL_LIMITS.perguntas.texto,
-        mutate: (arsenal) => {
-          arsenal.perguntas[0].texto = longText;
-        },
-        read: (arsenal) => arsenal.perguntas[0].texto,
-      },
-      {
-        name: "objetivo",
-        max: ARSENAL_LIMITS.perguntas.objetivo,
-        mutate: (arsenal) => {
-          arsenal.perguntas[0].objetivo = longText;
-        },
-        read: (arsenal) => arsenal.perguntas[0].objetivo,
-      },
-    ];
+  describe("limites de texto da spec", () => {
+    it("aceita inalterado cada campo com exatamente o limite literal da spec (ARS-06 a ARS-09)", () => {
+      for (const field of TEXT_FIELDS) {
+        const arsenal = makeArsenal();
+        const text = "a".repeat(field.max);
+        field.write(arsenal, text);
 
-    for (const field of fields) {
-      const arsenal = makeArsenal();
-      longText = "a".repeat(field.max + 1);
-      field.mutate(arsenal);
-      const result = commercialArsenalSchema.safeParse(arsenal);
+        const result = commercialArsenalSchema.safeParse(arsenal);
 
-      expect(result.success, field.name).toBe(true);
-      if (!result.success) continue;
-      const value = field.read(result.data);
-      expect(value.length, field.name).toBeLessThanOrEqual(field.max);
-      expect(value.endsWith("…"), field.name).toBe(true);
-      expect(value, field.name).not.toMatch(/\s…$/);
-    }
+        expect(result.success, field.name).toBe(true);
+        if (!result.success) continue;
+        expect(field.read(result.data), field.name).toBe(text);
+      }
+    });
+
+    it("trunca cada campo um caractere acima do limite literal da spec (ARS-06 a ARS-11)", () => {
+      for (const field of TEXT_FIELDS) {
+        const arsenal = makeArsenal();
+        field.write(arsenal, "a".repeat(field.max + 1));
+
+        const result = commercialArsenalSchema.safeParse(arsenal);
+
+        expect(result.success, field.name).toBe(true);
+        if (!result.success) continue;
+        const value = field.read(result.data);
+        expect(value.length, field.name).toBeLessThanOrEqual(field.max);
+        expect(value.endsWith("…"), field.name).toBe(true);
+        expect(value, field.name).not.toMatch(/\s…$/);
+      }
+    });
   });
 });

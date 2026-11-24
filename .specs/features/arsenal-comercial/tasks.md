@@ -1279,3 +1279,12 @@ Fixes encontrados na evidência e na validação independente (iteração 1), no
 **Evidência** (sem LLM): `evidence/worst-page-05..07.png` e `evidence/real-page-05..07.png` a 80 dpi (661×936). Pior caso: 7 páginas no total (4 do diagnóstico + 3 do Arsenal), antes 9 (4 + 5); nada cortado ou sobreposto, chips SPIN inteiros. O `real-arsenal.json` truncou justificativa e 6 contornos no schema novo, como esperado.
 **Gates**: `npm run lint`, `npm run typecheck`, `npm run test` verdes.
 **Commit**: `fix(report): calibra limites do Arsenal para o teto caber em 3 páginas` (este commit).
+
+### F7: limites de texto assertados como literais da spec (gap 1, N4a/b/c/f/h/i)
+
+**What**: a F6 trocou os literais dos testes de limite pela constante `ARSENAL_LIMITS`, então mudar um limite no código passava despercebido: 6 mutantes de limite sobreviviam à suíte inteira (N4a `titulo` 60→70, N4b `texto` 200→300, N4c `objecaoProvavel` 140→200, N4f `justificativa` 300→500, N4h `objetivo` 120→160, N4i `titulo` 60→61).
+**Where**: `src/lib/agents/commercial-types.test.ts`.
+**Teste**: tabela `TEXT_FIELDS` com os 8 limites da spec como literais (60, 200, 140, 220, 120, 300, 160, 120) e dois casos por campo: texto de exatamente o limite é aceito inalterado e texto de limite + 1 é truncado (`length <= limite`, termina em "…", sem espaço antes das reticências). O arquivo não importa mais `ARSENAL_LIMITS`; os dois testes antigos de truncamento e de título exato também usam literal.
+**Prova dos mutantes**: `git worktree add --detach "$TMPDIR/opencode/f7-proof" HEAD` (árvore real intocada, nenhum `git stash`), teste novo copiado e `node_modules` por symlink; cada limite mutado em `commercial-types.ts` e `npx vitest run src/lib/agents/commercial-types.test.ts` → **1 failed | 26 passed** em N4a, N4c, N4f, N4h e N4i, **2 failed | 25 passed** em N4b; arquivo restaurado entre os passos e worktree descartado depois.
+**Gates**: `npm run lint` exit 0, `npm run typecheck` exit 0, `npm run test` **890 passed / 5 skipped (895)**, 77 arquivos passed.
+**Commit**: `test(agents): afere os limites de texto do Arsenal como literais da spec` (este commit).
