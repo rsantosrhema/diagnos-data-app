@@ -222,13 +222,13 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 | ARS-26 | P1: Pipeline | Tasks | Implementing |
 | ARS-27 | P1: PDF | Tasks | In Tasks |
 | ARS-28 | P1: PDF | Tasks | Implementing |
-| ARS-29 | P1: PDF | Tasks | In Tasks |
-| ARS-30 | P1: PDF | Tasks | In Tasks |
-| ARS-31 | P1: PDF | Tasks | In Tasks |
-| ARS-32 | P1: PDF | Tasks | In Tasks |
+| ARS-29 | P1: PDF | Tasks | Implementing |
+| ARS-30 | P1: PDF | Tasks | Implementing |
+| ARS-31 | P1: PDF | Tasks | Implementing |
+| ARS-32 | P1: PDF | Tasks | Implementing |
 | ARS-33 | P1: PDF | Tasks | In Tasks |
 | ARS-34 | P1: PDF | Tasks | In Tasks |
-| ARS-35 | P1: PDF | Tasks | In Tasks |
+| ARS-35 | P1: PDF | Tasks | Implementing |
 | ARS-36 | P1: PDF | Tasks | Implementing |
 | ARS-37 | P1: PDF | Tasks | In Tasks |
 | ARS-38 | P1: Download | Tasks | Implementing |

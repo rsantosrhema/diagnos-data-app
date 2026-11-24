@@ -639,14 +639,14 @@ Page one: `h(Page, { key: "arsenal-1", size: "A4", style: styles.page }, ...chil
 
 **Done when**:
 
-- [ ] `buildArsenalPages(makeArsenal())` returns exactly 3 elements whose `type` is `Page`
-- [ ] Page one text (via `textOf`) contains, in this order: `ARSENAL COMERCIAL · USO INTERNO · CONFIDENCIAL`, `01`, `Pontos-chave para a reunião`, every `titulo` and `texto` of the fixture, `02`, `Serviço ideal`, `Governança de Dados`, the fixture `justificativa`, `Complementares: Qualidade e Dados Mestres`
-- [ ] Each point shows `Dimensões:` with the short names of its dimension ids
-- [ ] With the real catalog (rascunho) the text contains `Catálogo de serviços preliminar: validar antes de ofertar`; with a catalog copy `{ ...COMMERCIAL_CATALOG, status: "aprovado" }` it does not
-- [ ] With `complementares` undefined there is no text starting `Complementares:`
-- [ ] A walk over all `style` objects of the page finds only `color`/`backgroundColor`/`borderColor` values that are in `Object.values(COLORS)` and only `fontFamily` `Inter` or `Poppins`
-- [ ] Gate check passes: `npx vitest run src/lib/report/arsenal-pages.test.tsx`
-- [ ] Test count: at least 7 new tests, none removed
+- [x] `buildArsenalPages(makeArsenal())` returns exactly 3 elements whose `type` is `Page`
+- [x] Page one text (via `textOf`) contains, in this order: `ARSENAL COMERCIAL · USO INTERNO · CONFIDENCIAL`, `01`, `Pontos-chave para a reunião`, every `titulo` and `texto` of the fixture, `02`, `Serviço ideal`, `Governança de Dados`, the fixture `justificativa`, `Complementares: Qualidade e Dados Mestres`
+- [x] Each point shows `Dimensões:` with the short names of its dimension ids
+- [x] With the real catalog (rascunho) the text contains `Catálogo de serviços preliminar: validar antes de ofertar`; with a catalog copy `{ ...COMMERCIAL_CATALOG, status: "aprovado" }` it does not
+- [x] With `complementares` undefined there is no text starting `Complementares:`
+- [x] A walk over all `style` objects of the page finds only `color`/`backgroundColor`/`borderColor` values that are in `Object.values(COLORS)` and only `fontFamily` `Inter` or `Poppins`
+- [x] Gate check passes: `npx vitest run src/lib/report/arsenal-pages.test.tsx`
+- [x] Test count: at least 7 new tests, none removed
 
 **Tests**: unit
 **Gate**: quick
