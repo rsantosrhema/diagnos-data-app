@@ -10,7 +10,7 @@ export function isManagerEmail(email: string | null | undefined): boolean {
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
-  if (allowlist.length === 0) return true;
+  if (allowlist.length === 0) return false;
   return allowlist.includes(email.toLowerCase());
 }
 
