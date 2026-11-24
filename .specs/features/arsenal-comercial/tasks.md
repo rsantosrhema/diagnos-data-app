@@ -606,11 +606,11 @@ Apply ONLY to the local container (never `npm run db:reset`, never a remote): ru
 
 **Done when**:
 
-- [ ] ALL tests in `src/lib/report/report-generator.test.ts` pass with zero edits
-- [ ] `report-primitives.test.ts` asserts: `COLORS.primary === "#4A2C7D"`; `p(12) === 9`; `PAGE.width === 595`; `runningHead("A", "B")` has key `running-head` and its text children `A` and `B`; `sectionHeader("01", "T", "N", "k")` has key `k`
-- [ ] `git diff --stat` shows `report-generator.ts` only losing definitions and gaining one import line
-- [ ] Gate check passes: `npx vitest run src/lib/report`
-- [ ] Test count: at least 4 new tests, none removed
+- [x] ALL tests in `src/lib/report/report-generator.test.ts` pass with zero edits
+- [x] `report-primitives.test.ts` asserts: `COLORS.primary === "#4A2C7D"`; `p(12) === 9`; `PAGE.width === 595`; `runningHead("A", "B")` has key `running-head` and its text children `A` and `B`; `sectionHeader("01", "T", "N", "k")` has key `k`
+- [x] `git diff --stat` shows `report-generator.ts` only losing definitions and gaining one import line
+- [x] Gate check passes: `npx vitest run src/lib/report`
+- [x] Test count: at least 4 new tests, none removed
 
 **Tests**: unit
 **Gate**: quick
