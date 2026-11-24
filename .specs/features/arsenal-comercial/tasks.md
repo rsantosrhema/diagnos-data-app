@@ -739,13 +739,16 @@ Page one: `h(Page, { key: "arsenal-1", size: "A4", style: styles.page }, ...chil
 
 **Done when**:
 
-- [ ] `buildReportChildren(makeInput())` has length 2; with `analysis` + `insights` has length 3 (unchanged behavior, ARS-28)
-- [ ] With `arsenal: makeArsenal()` the lengths are 5 (no analysis) and 6 (with analysis); the last 3 children are the Arsenal pages with keys `arsenal-1`, `arsenal-2`, `arsenal-3`; the first children are identical (same keys, same order) to the no-Arsenal result (ARS-27)
-- [ ] `generateScreenerPdf` with Arsenal returns a buffer whose first 4 bytes are `%PDF`; its page count (count of `/Type /Page` not followed by `s` in the `latin1` string; first calibrate the same regex on a no-Arsenal PDF and expect 2) is 5 without analysis and 6 with analysis (ARS-37)
-- [ ] The no-Arsenal PDF text assertions already in the file still pass unchanged
-- [ ] Gate check passes: `npx vitest run src/lib/report`
-- [ ] Phase 4 build gate passes: `npm run typecheck && npm run lint && npm run test && npm run build`
-- [ ] Test count: at least 5 new tests, none removed
+- [x] `buildReportChildren(makeInput())` has length 2; with `analysis` + `insights` has length 3 (unchanged behavior, ARS-28)
+- [x] With `arsenal: makeArsenal()` the lengths are 5 (no analysis) and 6 (with analysis); the last 3 children are the Arsenal pages with keys `arsenal-1`, `arsenal-2`, `arsenal-3`; the first children are identical (same keys, same order) to the no-Arsenal result (ARS-27)
+- [x] `generateScreenerPdf` with Arsenal returns a buffer whose first 4 bytes are `%PDF`; its page count equals the diagnostic page count + 3 (calibrated: 3 → 6 without analysis and 3 → 6 with analysis) (ARS-37)
+- [x] The no-Arsenal PDF text assertions already in the file still pass unchanged
+- [x] Gate check passes: `npx vitest run src/lib/report`
+- [x] Phase 4 build gate passes: `npm run typecheck && npm run lint && npm run test && npm run build`
+- [x] Test count: at least 5 new tests, none removed
+
+**SPEC_DEVIATION**: o fixture `makeInput()` já gera 3 páginas sem Arsenal (o `pageTwo` transborda uma página quando inclui a nota metodológica), não 2. O teste usa o invariante da spec ARS-37 (páginas do diagnóstico + 3): 3 → 6 com Arsenal, com e sem analysis; a expectativa de 6 páginas com analysis do T25 segue válida.
+**Reason**: a contagem fixa 5/6 do plano partiu de uma base de 2 páginas que o gerador atual não produz; a spec define a soma, não um total fixo.
 
 **Tests**: unit
 **Gate**: build

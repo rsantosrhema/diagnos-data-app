@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { generateScreenerPdf, ScreenerReport, buildReportChildren } from "./report-generator";
 import type { GeneratePdfInput } from "@/lib/service/screen-service";
+import { makeArsenal } from "@/lib/agents/commercial-fixture";
 function makeInput(overrides: Partial<GeneratePdfInput> = {}): GeneratePdfInput {
   return {
     respondentName: "João Silva",
@@ -170,6 +171,11 @@ function countMetaDots(node: unknown): number {
 
 function hasLocationText(node: unknown): boolean {
   return collectTexts(node).some((text) => /\/[A-Z]{2}$/.test(text));
+}
+
+function countPdfPages(pdf: Buffer): number {
+  const content = pdf.toString("latin1");
+  return (content.match(/\/Type\s*\/Page(?!s)/g) ?? []).length;
 }
 
 describe("generateScreenerPdf", () => {
@@ -473,5 +479,82 @@ describe("generateScreenerPdf", () => {
       makeInput({ location: { city: "São Paulo", state: "SP" } }),
     );
     expect(result.pdf.length).toBeGreaterThan(0);
+  });
+
+  it("sem arsenal mantém 2 páginas, ou 3 com analysis e insights (ARS-28)", () => {
+    expect(buildReportChildren(makeInput())).toHaveLength(2);
+    expect(
+      buildReportChildren(
+        makeInput({
+          analysis: { resumo: "r", dores: [], contexto_concorrentes: [] },
+          insights: { bullets: [{ texto: "I", prioridade: "alta" }] },
+        }),
+      ),
+    ).toHaveLength(3);
+  });
+
+  it("com arsenal acrescenta 3 páginas depois das do diagnóstico (ARS-27)", () => {
+    const base = buildReportChildren(makeInput());
+    const withArsenal = buildReportChildren(makeInput({ arsenal: makeArsenal() }));
+
+    expect(withArsenal).toHaveLength(5);
+    expect(withArsenal.slice(0, base.length).map((child) => child.key)).toEqual(
+      base.map((child) => child.key),
+    );
+    expect(withArsenal.slice(-3).map((child) => child.key)).toEqual([
+      "arsenal-1",
+      "arsenal-2",
+      "arsenal-3",
+    ]);
+  });
+
+  it("com arsenal e analysis + insights mantém as páginas do diagnóstico e chega a 6 (ARS-27, ARS-28)", () => {
+    const base = buildReportChildren(
+      makeInput({
+        analysis: { resumo: "r", dores: [], contexto_concorrentes: [] },
+        insights: { bullets: [{ texto: "I", prioridade: "alta" }] },
+      }),
+    );
+    const withArsenal = buildReportChildren(
+      makeInput({
+        analysis: { resumo: "r", dores: [], contexto_concorrentes: [] },
+        insights: { bullets: [{ texto: "I", prioridade: "alta" }] },
+        arsenal: makeArsenal(),
+      }),
+    );
+
+    expect(base).toHaveLength(3);
+    expect(withArsenal).toHaveLength(6);
+    expect(withArsenal.slice(0, 3).map((child) => child.key)).toEqual(
+      base.map((child) => child.key),
+    );
+    expect(withArsenal.slice(-3).map((child) => child.key)).toEqual([
+      "arsenal-1",
+      "arsenal-2",
+      "arsenal-3",
+    ]);
+  });
+
+  it("gera PDF com arsenal: buffer %PDF e contagem de páginas calibrada (ARS-37)", async () => {
+    const withoutArsenal = await generateScreenerPdf(makeInput());
+    const basePages = countPdfPages(withoutArsenal.pdf);
+    expect(basePages).toBe(3);
+
+    const withArsenal = await generateScreenerPdf(makeInput({ arsenal: makeArsenal() }));
+    expect(withArsenal.pdf.subarray(0, 4).toString("latin1")).toBe("%PDF");
+    expect(countPdfPages(withArsenal.pdf)).toBe(basePages + 3);
+  });
+
+  it("gera PDF com arsenal e analysis + insights com as páginas do diagnóstico + 3 (ARS-37)", async () => {
+    const input = makeInput({
+      analysis: { resumo: "r", dores: [], contexto_concorrentes: [] },
+      insights: { bullets: [{ texto: "I", prioridade: "alta" }] },
+    });
+    const withoutArsenal = await generateScreenerPdf(input);
+    expect(countPdfPages(withoutArsenal.pdf)).toBe(3);
+
+    const withArsenal = await generateScreenerPdf({ ...input, arsenal: makeArsenal() });
+    expect(withArsenal.pdf.subarray(0, 4).toString("latin1")).toBe("%PDF");
+    expect(countPdfPages(withArsenal.pdf)).toBe(6);
   });
 });

@@ -6,6 +6,7 @@ import { INDEX_LABEL, METHOD_NOTE, SCALE_LEGEND } from "@/lib/maturity/methodolo
 import { RadarChart } from "./radar-chart";
 import { shortDimensionLabel } from "./dimension-label";
 import { registerReportFonts } from "./fonts";
+import { buildArsenalPages } from "./arsenal-pages";
 import { COLORS, footer, h, sectionHeader, spacer, styles } from "./report-primitives";
 
 const BAND_LABELS = ["Inicial", "Emergente", "Estruturado", "Gerenciado", "Otimizado"];
@@ -599,6 +600,7 @@ function buildPages(input: GeneratePdfInput): ReturnType<typeof h>[] {
     pageOne(input),
     pageTwo(input, !hasPageThree),
     ...(hasPageThree ? [pageThree(input)] : []),
+    ...(input.arsenal ? buildArsenalPages(input.arsenal) : []),
   ];
 }
 
