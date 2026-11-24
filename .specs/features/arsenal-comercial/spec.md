@@ -127,7 +127,7 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 6. The service section SHALL show the `nome` of the recommended service from the catalog, its `justificativa`, the names of `dimensoes_atacadas` and, when present, the `nome` of each complementary service. <!-- ARS-32 -->
 7. The objections section SHALL group items by the catalog `nome` of their `grupo`, showing `objecao_provavel`, `contorno` and `apoio` for each. <!-- ARS-33 -->
 8. The questions section SHALL number the 10 questions "01" to "10", each with a chip "ABERTA" or "FECHADA", the SPIN stage label ("SITUAÇÃO", "PROBLEMA", "IMPLICAÇÃO", "NECESSIDADE") and the `objetivo`. <!-- ARS-34 -->
-9. WHILE the catalog `status` is `rascunho` the service section SHALL show the note "Catálogo de serviços preliminar: validar antes de ofertar"; WHILE it is `aprovado` the note SHALL NOT appear. <!-- ARS-35 -->
+9. The catalog `status` SHALL be `rascunho` when `docs/comercial/servicos.json` OR `docs/comercial/objecoes.json` has status `rascunho`, and `aprovado` only when both are `aprovado`. WHILE the catalog `status` is `rascunho` the service section SHALL show the note "Catálogo de serviços preliminar: validar antes de ofertar"; WHILE it is `aprovado` the note SHALL NOT appear. <!-- ARS-35 -->
 10. The Arsenal pages SHALL use only colors from the report `COLORS` tokens and the fonts Inter and Poppins. <!-- ARS-36 -->
 11. WHEN `generateScreenerPdf` receives an input with Arsenal THEN it SHALL return a buffer starting with `%PDF` whose page count equals the diagnostic pages plus 3. <!-- ARS-37 -->
 

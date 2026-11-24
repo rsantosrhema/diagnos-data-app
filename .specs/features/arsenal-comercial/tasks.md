@@ -1219,7 +1219,7 @@ Scenario 1 `real` (timeout 300 000 ms): `commercial = (input) => createCommercia
 
 ## Fix Tasks
 
-Fixes visuais encontrados na evidência, no mesmo ciclo da skill (teste → implementação → gate → commit atômico).
+Fixes encontrados na validação independente (iteração 1), no mesmo ciclo da skill (teste → implementação → gate → commit atômico).
 
 ### F1: coluna de chips das perguntas (depois de T27)
 
@@ -1231,3 +1231,13 @@ Fixes visuais encontrados na evidência, no mesmo ciclo da skill (teste → impl
 **Evidência** (sem LLM, render a partir do fixture e do `real-arsenal.json` de T26): `/tmp/arsenal-fix/real-png/page-07.png`, `/tmp/arsenal-fix/fixture-png/page-07.png` e worst case em `/tmp/arsenal-fix/worst-png/page-08.png` e `page-09.png`. Medição das bordas no PNG: coluna de chips sempre em x=126 e texto da pergunta sempre em x=307 (antes: 4 x's distintos para os chips e 3 para o texto). Contagem de páginas inalterada (fixture 7, real 7, worst case 9). Amostra de T25 regenerada em `/tmp/arsenal-evidence/sample-png`.
 **Gates**: `npm run lint`, `npm run typecheck`, `npm run test` verdes (874 testes passaram, 5 skipped).
 **Commit**: `fix(report): alinha a coluna de chips e comporta o rótulo NECESSIDADE` (este commit).
+
+### F2: status composto do catálogo (gap 2, M15, ARS-35)
+
+**What**: `COMMERCIAL_CATALOG.status` era calculado só com o caso "ambos os arquivos em rascunho" coberto; o caso misto (`servicos.json` rascunho + `objecoes.json` aprovado e o inverso) não tinha teste, e o mutante M15 (`||` → `&&`) sobrevivia.
+**Where**: `src/lib/comercial/catalog.ts`, `src/lib/comercial/catalog.test.ts`, `spec.md` (ARS-35).
+**Regra de produto** (confirmada pelo coordenador): se QUALQUER um dos dois arquivos estiver em `rascunho`, o status composto é `rascunho` e a nota preliminar aparece; `aprovado` só quando os dois estiverem aprovados. Registrada na AC ARS-35 e implementada em `composeCatalogStatus`, usada por `COMMERCIAL_CATALOG`.
+**Teste**: `catalog.test.ts` com os três casos mistos/finais: rascunho+aprovado → `rascunho`, aprovado+rascunho → `rascunho`, aprovado+aprovado → `aprovado` (e rascunho+rascunho → `rascunho`).
+**Prova do mutante**: cópia isolada da árvore em `$TMPDIR/opencode/m15-proof` (sem `git stash`, árvore real intocada), mutação `||` → `&&` aplicada em `composeCatalogStatus`, `npx vitest run src/lib/comercial/catalog.test.ts` → **2 failed | 13 passed**; M15 morto.
+**Gates**: `npm run lint`, `npm run typecheck`, `npm run test` verdes.
+**Commit**: `fix(comercial): compõe o status do catálogo por qualquer arquivo em rascunho` (este commit).

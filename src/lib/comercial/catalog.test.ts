@@ -5,6 +5,7 @@ import {
   SERVICE_IDS,
   OBJECTION_GROUP_IDS,
   COMMERCIAL_CATALOG,
+  composeCatalogStatus,
   getService,
   getObjectionGroup,
 } from "./catalog";
@@ -54,6 +55,19 @@ describe("catálogo comercial", () => {
     expect(COMMERCIAL_CATALOG.status).toBe("rascunho");
     expect(servicosJson.status).toBe("rascunho");
     expect(objecoesJson.status).toBe("rascunho");
+  });
+
+  it("mantém rascunho quando só servicos.json está em rascunho (ARS-35)", () => {
+    expect(composeCatalogStatus("rascunho", "aprovado")).toBe("rascunho");
+  });
+
+  it("mantém rascunho quando só objecoes.json está em rascunho (ARS-35)", () => {
+    expect(composeCatalogStatus("aprovado", "rascunho")).toBe("rascunho");
+  });
+
+  it("só aprova o catálogo quando os dois arquivos estão aprovados (ARS-35)", () => {
+    expect(composeCatalogStatus("aprovado", "aprovado")).toBe("aprovado");
+    expect(composeCatalogStatus("rascunho", "rascunho")).toBe("rascunho");
   });
 
   it("rejeita id de serviço duplicado com a mensagem do id ofensor", () => {

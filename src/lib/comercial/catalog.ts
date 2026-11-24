@@ -69,9 +69,19 @@ export const objectionCatalogSchema = z
 
 export type CommercialService = z.infer<typeof serviceItemSchema>;
 export type ObjectionGroup = z.infer<typeof objectionGroupItemSchema>;
+export type CatalogStatus = z.infer<typeof catalogStatusSchema>;
+
+export function composeCatalogStatus(
+  servicosStatus: CatalogStatus,
+  objecoesStatus: CatalogStatus,
+): CatalogStatus {
+  return servicosStatus === "rascunho" || objecoesStatus === "rascunho"
+    ? "rascunho"
+    : "aprovado";
+}
 
 export interface CommercialCatalog {
-  status: "rascunho" | "aprovado";
+  status: CatalogStatus;
   servicos: CommercialService[];
   grupos: ObjectionGroup[];
 }
@@ -90,10 +100,7 @@ export const OBJECTION_GROUP_IDS = objections.grupos.map((group) => group.id) as
 ];
 
 export const COMMERCIAL_CATALOG: CommercialCatalog = {
-  status:
-    services.status === "rascunho" || objections.status === "rascunho"
-      ? "rascunho"
-      : "aprovado",
+  status: composeCatalogStatus(services.status, objections.status),
   servicos: services.servicos,
   grupos: objections.grupos,
 };
