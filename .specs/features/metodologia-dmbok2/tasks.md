@@ -260,9 +260,9 @@ T13 → T14
 
 **Done when**:
 
-- [ ] Tests assert headers `DIMENSÃO`, `NÍVEL`, `PESO NO SETOR`, `PESO PADRÃO`, absence of `SCORE`, and for one row the area text plus `"13%"` / `"10%"` cells
-- [ ] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build` (last task of Phase 2)
-- [ ] Test count ≥ previous
+- [x] Tests assert headers `DIMENSÃO`, `NÍVEL`, `PESO NO SETOR`, `PESO PADRÃO`, absence of `SCORE`, and for one row the area text plus `"13%"` / `"10%"` cells
+- [x] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build` (last task of Phase 2)
+- [x] Test count ≥ previous
 
 **Tests**: unit
 **Gate**: build

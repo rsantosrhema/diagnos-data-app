@@ -356,12 +356,20 @@ const styles = StyleSheet.create({
     color: COLORS.ink3,
   },
   colName: {
-    width: p(321),
     fontFamily: "Inter",
     fontSize: p(12),
     fontWeight: 500,
     lineHeight: 1.4,
     color: COLORS.ink,
+  },
+  nameCell: {
+    gap: p(2),
+  },
+  colArea: {
+    fontFamily: "Inter",
+    fontSize: p(9.5),
+    lineHeight: 1.35,
+    color: COLORS.ink3,
   },
   widthName: {
     width: p(321),
@@ -377,7 +385,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: COLORS.ink2,
   },
-  colScore: {
+  colPesoSetor: {
     width: p(115),
     fontFamily: "Inter",
     fontSize: p(12),
@@ -884,7 +892,14 @@ function dimensionTable(input: GeneratePdfInput) {
     h(
       View,
       { key: `row-${index}`, style: styles.tableRow, wrap: false },
-      h(Text, { style: styles.colName }, dimension.name),
+      h(
+        View,
+        { style: [styles.widthName, styles.nameCell] },
+        h(Text, { style: styles.colName }, dimension.name),
+        dimension.areaDmbok
+          ? h(Text, { style: styles.colArea }, dimension.areaDmbok)
+          : null,
+      ),
       h(
         View,
         { style: styles.levelCell },
@@ -894,8 +909,8 @@ function dimensionTable(input: GeneratePdfInput) {
           h(Text, { style: styles.levelBadgeText }, String(dimension.nivel)),
         ),
       ),
-      h(Text, { style: styles.colPeso }, String(dimension.peso)),
-      h(Text, { style: styles.colScore }, String(dimension.nivel * dimension.peso)),
+      h(Text, { style: styles.colPesoSetor }, `${dimension.peso}%`),
+      h(Text, { style: styles.colPeso }, `${dimension.pesoPadrao}%`),
     ),
   );
 
@@ -907,8 +922,8 @@ function dimensionTable(input: GeneratePdfInput) {
       { style: styles.tableHeader, wrap: false },
       h(Text, { style: [styles.th, styles.widthName] }, "DIMENSÃO"),
       h(Text, { style: [styles.th, styles.widthCenter] }, "NÍVEL"),
-      h(Text, { style: [styles.th, styles.widthCenter] }, "PESO"),
-      h(Text, { style: [styles.th, styles.widthCenter] }, "SCORE"),
+      h(Text, { style: [styles.th, styles.widthCenter] }, "PESO NO SETOR"),
+      h(Text, { style: [styles.th, styles.widthCenter] }, "PESO PADRÃO"),
     ),
     ...rows,
   );

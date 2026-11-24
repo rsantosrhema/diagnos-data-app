@@ -377,6 +377,46 @@ describe("generateScreenerPdf", () => {
     expect(renderedText).not.toContain("DMM");
   });
 
+  it("tabela de dimensões tem os cabeçalhos de peso no setor e peso padrão, sem SCORE (MET-22)", () => {
+    const children = buildReportChildren(makeInput());
+    const texts = collectTexts(children);
+    const headerIndex = texts.indexOf("DIMENSÃO");
+    expect(headerIndex).toBeGreaterThanOrEqual(0);
+    expect(texts.slice(headerIndex, headerIndex + 4)).toEqual([
+      "DIMENSÃO",
+      "NÍVEL",
+      "PESO NO SETOR",
+      "PESO PADRÃO",
+    ]);
+    expect(texts).not.toContain("SCORE");
+  });
+
+  it("linha da dimensão mostra área DMBOK2 e pesos em porcentagem (MET-23)", () => {
+    const children = buildReportChildren(
+      makeInput({
+        dimensionScores: [
+          {
+            name: "Segurança e Conformidade",
+            nivel: 3,
+            peso: 13,
+            pesoPadrao: 10,
+            areaDmbok: "Data Security",
+          },
+        ],
+      }),
+    );
+    const texts = collectTexts(children);
+    const rowIndex = texts.indexOf("Segurança e Conformidade");
+    expect(rowIndex).toBeGreaterThanOrEqual(0);
+    expect(texts.slice(rowIndex, rowIndex + 5)).toEqual([
+      "Segurança e Conformidade",
+      "Data Security",
+      "3",
+      "13%",
+      "10%",
+    ]);
+  });
+
   it("omite a seção Radar quando dimensionScores vazio (RADAR-01 edge)", () => {
     const children = buildReportChildren(makeInput({ dimensionScores: [] }));
     expect(hasText(children, "Radar de maturidade")).toBe(false);
