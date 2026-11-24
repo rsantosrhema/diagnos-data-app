@@ -21,10 +21,10 @@
 
 ## Handoff
 
-- **Feature**: portal-analise (.specs/features/portal-analise) — **DONE**
-- **Phase / Task**: Execute complete — T1–T18 commitados (c286ae3..41ee30e) + Fix 1 PORTAL-09 (middleware.test.ts) + Verifier PASS (14/14 ACs com evidência, sensor 4/4 mutants killed), validation.md atualizado para PASS
-- **Completed**: migration 0016 share_tokens, share-token-repo, schemas de agentes enriquecidos (aditivos), portal service/DTO, rotas admin/public + proxies + rate-limit, componentes UI (StageHero, RadarSpider, MaturityBars, AnswersAccordion, CompetitorsGrid, InsightsBoard, SourcesList, AnalysisPlaceholder), páginas /admin/leads/[leadId] e /r/[token], suite 459 testes
-- **Next step**: feature entregue — deploy Coolify concluído (commit c1da277) e migration 0016 aplicada no Supabase self-hosted (API do portal respondendo 404 genérico, tabela share_tokens ativa)
+- **Feature**: metodologia-dmbok2 (.specs/features/metodologia-dmbok2) — **DONE (local)**
+- **Phase / Task**: Execute complete — T1–T16 commitados no branch `feat/metodologia-dmbok2` (01d16e3..c114e9c); Verifier PASS 35/35 ACs, sensor 35/35 mutantes mortos; smoke local PASS (3 leads + relatório real Saúde)
+- **Completed**: contrato v1.2 DMBOK2, régua única de estágios, módulo `src/lib/maturity/methodology.ts`, PDF e portal com índice/escala/nota/pesos setoriais, payload com peso ajustado (T15/T16), AGENTS.md §5 + ADR 011
+- **Next step**: validação manual do dono em http://localhost:3000/admin; depois push + PR para main (exige autorização)
 - **Blockers**: none
-- **Uncommitted files**: none (fix + specs commitados juntos)
-- **Branch**: main
+- **Uncommitted files**: none
+- **Branch**: feat/metodologia-dmbok2
