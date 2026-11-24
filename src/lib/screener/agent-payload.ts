@@ -61,6 +61,8 @@ export function buildAgentPayload(input: AgentPayloadInput): AgentPayload {
     consent,
   } = input;
 
+  const adjustedWeights = new Map(result.dimensionScores.map((d) => [d.id, d.peso]));
+
   const respostas = dimensionAnswers.map((a) => {
     const dim = contract.dimensoes.find((d) => d.id === a.dimensionId)!;
     const opcao = dim.opcoes.find((o) => o.nivel === a.nivel);
@@ -69,7 +71,7 @@ export function buildAgentPayload(input: AgentPayloadInput): AgentPayload {
       dimensao: dim.nome,
       pergunta: dim.pergunta,
       nivel: a.nivel,
-      peso: dim.peso,
+      peso: adjustedWeights.get(dim.id) ?? dim.peso,
       resposta: opcao?.texto ?? "",
     };
   });

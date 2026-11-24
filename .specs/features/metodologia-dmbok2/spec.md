@@ -200,7 +200,7 @@ O diagnóstico mistura três referências (DAMA-DMBOK, DCAM e uma escala "CMMI-l
 | MET-32 | P1: Portal | Tasks | Implementing |
 | MET-33 | P2: Documentação | Tasks | Implementing |
 | MET-34 | P2: Documentação | Tasks | Implementing |
-| MET-35 | P1: Linguagem única | Tasks | Pending |
+| MET-35 | P1: Linguagem única | Tasks | Implementing |
 
 **Coverage:** 35 total, 35 mapped to tasks, 0 unmapped
 

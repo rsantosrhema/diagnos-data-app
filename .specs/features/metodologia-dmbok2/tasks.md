@@ -473,9 +473,9 @@ T15
 
 **Done when**:
 
-- [ ] `agent-payload.test.ts` asserts that a result whose `dimensionScores` has d07 peso 13 (contract 10) yields `respostas` d07 `peso` 13, and that a dimension absent from the result falls back to the contract peso
-- [ ] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build`
-- [ ] Test count ≥ previous (765)
+- [x] `agent-payload.test.ts` asserts that a result whose `dimensionScores` has d07 peso 13 (contract 10) yields `respostas` d07 `peso` 13, and that a dimension absent from the result falls back to the contract peso
+- [x] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build`
+- [x] Test count ≥ previous (765)
 
 **Tests**: unit
 **Gate**: build
