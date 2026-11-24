@@ -15,6 +15,55 @@ function textOf(node: unknown): string[] {
   return textOf((props as { children?: unknown }).children);
 }
 
+type ElementLike = {
+  key?: unknown;
+  props?: { style?: unknown; children?: unknown };
+};
+
+function childrenOf(node: unknown): unknown[] {
+  const children = (node as ElementLike | null)?.props?.children;
+  if (children === undefined || children === null) return [];
+  return Array.isArray(children) ? children : [children];
+}
+
+function styleOf(node: unknown): unknown {
+  return (node as ElementLike | null)?.props?.style;
+}
+
+function flattenStyle(style: unknown): Record<string, unknown> {
+  if (Array.isArray(style)) {
+    return style.reduce<Record<string, unknown>>(
+      (merged, item) => ({ ...merged, ...flattenStyle(item) }),
+      {},
+    );
+  }
+  if (style && typeof style === "object") {
+    return style as Record<string, unknown>;
+  }
+  return {};
+}
+
+function findElementsByKey(node: unknown, pattern: RegExp): unknown[] {
+  const found: unknown[] = [];
+
+  const walk = (value: unknown): void => {
+    if (value === null || value === undefined) return;
+    if (Array.isArray(value)) {
+      value.forEach(walk);
+      return;
+    }
+    if (typeof value !== "object") return;
+    const element = value as ElementLike;
+    if (typeof element.key === "string" && pattern.test(element.key)) {
+      found.push(value);
+    }
+    childrenOf(value).forEach(walk);
+  };
+
+  walk(node);
+  return found;
+}
+
 function collectStyleObjects(node: unknown): Record<string, unknown>[] {
   const collected: Record<string, unknown>[] = [];
 
@@ -285,5 +334,51 @@ describe("buildArsenalPages - página 3", () => {
 
   it("usa apenas tokens de cor do relatório e as fontes Inter/Poppins (ARS-36)", () => {
     expectOnlyReportTokens(pageThree());
+  });
+
+  it("alinha a coluna de chips e comporta o rótulo de etapa mais longo (ARS-34)", () => {
+    const page = pageThree();
+    const rows = findElementsByKey(page, /^arsenal-question-\d+$/);
+    expect(rows).toHaveLength(10);
+
+    const numberWidths = rows.map((row) =>
+      flattenStyle(styleOf(childrenOf(row)[0])).width,
+    );
+    const columnWidths = rows.map((row) =>
+      flattenStyle(styleOf(childrenOf(row)[1])).width,
+    );
+
+    expect(numberWidths).toEqual(Array(10).fill(numberWidths[0]));
+    expect(columnWidths).toEqual(Array(10).fill(columnWidths[0]));
+    expect(typeof numberWidths[0]).toBe("number");
+    expect(typeof columnWidths[0]).toBe("number");
+
+    const chipWidths = rows.flatMap((row) =>
+      childrenOf(childrenOf(row)[1]).map(
+        (chip) => flattenStyle(styleOf(chip)).width,
+      ),
+    );
+    expect(chipWidths).toHaveLength(20);
+    expect(chipWidths).toEqual(Array(20).fill(columnWidths[0]));
+
+    const firstChip = childrenOf(childrenOf(rows[0])[1])[0];
+    const chipStyle = flattenStyle(styleOf(firstChip));
+    const labelStyle = flattenStyle(styleOf(childrenOf(firstChip)[1]));
+    const longestLabel = ["SITUAÇÃO", "PROBLEMA", "IMPLICAÇÃO", "NECESSIDADE"].reduce(
+      (longest, label) => (label.length > longest.length ? label : longest),
+    );
+    const fontSize = labelStyle.fontSize as number;
+    const letterSpacing = labelStyle.letterSpacing as number;
+    const textWidth =
+      longestLabel.length * (fontSize * 0.66 + letterSpacing);
+    const required =
+      textWidth +
+      (chipStyle.paddingHorizontal as number) * 2 +
+      (chipStyle.gap as number) +
+      (chipStyle.borderWidth as number) * 2 +
+      (flattenStyle(styleOf(childrenOf(firstChip)[0])).width as number);
+
+    expect(longestLabel).toBe("NECESSIDADE");
+    expect(columnWidths[0] as number).toBeGreaterThanOrEqual(required);
   });
 });

@@ -28,6 +28,9 @@ const SPIN_LABELS: Record<
   necessidade: "NECESSIDADE",
 };
 
+const QUESTION_NUMBER_WIDTH = p(20);
+const QUESTION_CHIP_WIDTH = p(110);
+
 const arsenalStyles = StyleSheet.create({
   pointCard: {
     paddingBottom: p(12),
@@ -65,10 +68,14 @@ const arsenalStyles = StyleSheet.create({
     gap: p(11),
     paddingBottom: p(10),
   },
+  questionNumber: {
+    width: QUESTION_NUMBER_WIDTH,
+  },
   questionChip: {
-    width: p(86),
+    width: QUESTION_CHIP_WIDTH,
   },
   chipColumn: {
+    width: QUESTION_CHIP_WIDTH,
     gap: p(4),
   },
   questionBody: {
@@ -253,7 +260,11 @@ function questionRow(
   return h(
     View,
     { key: `arsenal-question-${index}`, style: arsenalStyles.questionRow, wrap: false },
-    h(Text, { style: styles.insightNumber }, String(index + 1).padStart(2, "0")),
+    h(
+      Text,
+      { style: [styles.insightNumber, arsenalStyles.questionNumber] },
+      String(index + 1).padStart(2, "0"),
+    ),
     h(
       View,
       { key: "chips", style: arsenalStyles.chipColumn },

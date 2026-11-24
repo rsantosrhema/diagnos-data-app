@@ -1214,3 +1214,20 @@ Scenario 1 `real` (timeout 300 000 ms): `commercial = (input) => createCommercia
 - Tests come from the spec ACs, never from reading the implementation.
 - One commit per task, with the `[x]` mark and the traceability update inside the same commit.
 - A task that needs a decision not in this file: STOP and ask the orchestrator; do not guess.
+
+---
+
+## Fix Tasks
+
+Fixes visuais encontrados na evidência, no mesmo ciclo da skill (teste → implementação → gate → commit atômico).
+
+### F1: coluna de chips das perguntas (depois de T27)
+
+**What**: o rótulo de etapa `NECESSIDADE` saía cortado na borda direita do chip (perguntas 08, 09 e 10) e a coluna de chips ficava a alguns pixels à esquerda nas perguntas 01 e 10.
+**Where**: `src/lib/report/arsenal-pages.ts`, `src/lib/report/arsenal-pages.test.tsx`
+**Diagnóstico**: o chip media `p(86)` (64,5 pt); descontando padding horizontal (5,25 pt por lado), marcador, gap e bordas sobram 44,5 pt para o texto, e `NECESSIDADE` precisa de ~50 pt. O número da pergunta não tinha largura fixa e o glifo `1` é mais estreito, então 01 e 10 empurravam chips e texto para a esquerda.
+**Correção**: coluna de chips e os dois chips com a mesma largura fixa (`QUESTION_CHIP_WIDTH = p(110)` = 82,5 pt, com folga para o maior rótulo) e número com largura fixa (`QUESTION_NUMBER_WIDTH = p(20)`). Cores e fontes continuam vindo dos tokens de `report-primitives`.
+**Teste**: `arsenal-pages.test.tsx` › "alinha a coluna de chips e comporta o rótulo de etapa mais longo (ARS-34)": as 10 linhas têm a mesma largura de número, de coluna e de chip, e a largura do chip cobre o maior rótulo calculado a partir do estilo do próprio chip (fonte, letter spacing, marcador, gap, padding e borda). Reprovava no layout anterior (largura indefinida) e passa no novo.
+**Evidência** (sem LLM, render a partir do fixture e do `real-arsenal.json` de T26): `/tmp/arsenal-fix/real-png/page-07.png`, `/tmp/arsenal-fix/fixture-png/page-07.png` e worst case em `/tmp/arsenal-fix/worst-png/page-08.png` e `page-09.png`. Medição das bordas no PNG: coluna de chips sempre em x=126 e texto da pergunta sempre em x=307 (antes: 4 x's distintos para os chips e 3 para o texto). Contagem de páginas inalterada (fixture 7, real 7, worst case 9). Amostra de T25 regenerada em `/tmp/arsenal-evidence/sample-png`.
+**Gates**: `npm run lint`, `npm run typecheck`, `npm run test` verdes (874 testes passaram, 5 skipped).
+**Commit**: `fix(report): alinha a coluna de chips e comporta o rótulo NECESSIDADE` (este commit).
