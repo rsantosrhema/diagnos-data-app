@@ -217,7 +217,7 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 | ARS-21 | P1: Pipeline | Tasks | In Tasks |
 | ARS-22 | P1: Pipeline | Tasks | In Tasks |
 | ARS-23 | P1: Pipeline | Tasks | In Tasks |
-| ARS-24 | P1: Pipeline | Tasks | In Tasks |
+| ARS-24 | P1: Pipeline | Tasks | Implementing |
 | ARS-25 | P1: Pipeline | Tasks | In Tasks |
 | ARS-26 | P1: Pipeline | Tasks | In Tasks |
 | ARS-27 | P1: PDF | Tasks | In Tasks |
@@ -236,7 +236,7 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 | ARS-40 | P1: Download | Tasks | In Tasks |
 | ARS-41 | P1: Restrito | Tasks | In Tasks |
 | ARS-42 | P1: Restrito | Tasks | In Tasks |
-| ARS-43 | P2: Verificação | Tasks | In Tasks |
+| ARS-43 | P2: Verificação | Tasks | Implementing |
 | ARS-44 | P2: Verificação | Tasks | In Tasks |
 | ARS-45 | P2: Verificação | Tasks | In Tasks |
 | ARS-46 | P2: Verificação | Tasks | In Tasks |

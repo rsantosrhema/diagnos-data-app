@@ -344,13 +344,13 @@ Apply ONLY to the local container (never `npm run db:reset`, never a remote): ru
 
 **Done when**:
 
-- [ ] The migration file has exactly the statements above (no `drop table`, no data change)
-- [ ] The apply command exits 0 on the first and on the second run
-- [ ] `docker exec -i supabase_db_diagnos-data-app psql -U postgres -d postgres -Atc "select data_type from information_schema.columns where table_name='market_insights' and column_name='arsenal'"` prints `jsonb`
-- [ ] `docker exec -i supabase_db_diagnos-data-app psql -U postgres -d postgres -Atc "select pg_get_constraintdef(oid) from pg_constraint where conname='analysis_job_logs_step_check'"` output contains `arsenal_failed`
-- [ ] Insert and cleanup of a log row with step `arsenal_failed` succeeds in one transaction that is rolled back: `docker exec -i supabase_db_diagnos-data-app psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "begin; insert into public.analysis_job_logs (lead_id, step) select id, 'arsenal_failed' from public.leads limit 1; rollback;"` exits 0 (if `leads` is empty, create a lead row inside the same transaction first, or record that the table was empty and rely on the constraint definition check)
-- [ ] Commands and outputs recorded in the commit body (short)
-- [ ] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build`
+- [x] The migration file has exactly the statements above (no `drop table`, no data change)
+- [x] The apply command exits 0 on the first and on the second run
+- [x] `docker exec -i supabase_db_diagnos-data-app psql -U postgres -d postgres -Atc "select data_type from information_schema.columns where table_name='market_insights' and column_name='arsenal'"` prints `jsonb`
+- [x] `docker exec -i supabase_db_diagnos-data-app psql -U postgres -d postgres -Atc "select pg_get_constraintdef(oid) from pg_constraint where conname='analysis_job_logs_step_check'"` output contains `arsenal_failed`
+- [x] Insert and cleanup of a log row with step `arsenal_failed` succeeds in one transaction that is rolled back: `docker exec -i supabase_db_diagnos-data-app psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "begin; insert into public.analysis_job_logs (lead_id, step) select id, 'arsenal_failed' from public.leads limit 1; rollback;"` exits 0 (if `leads` is empty, create a lead row inside the same transaction first, or record that the table was empty and rely on the constraint definition check)
+- [x] Commands and outputs recorded in the commit body (short)
+- [x] Gate check passes: `npm run typecheck && npm run lint && npm run test && npm run build`
 
 **Tests**: integration (psql against local Supabase, commands above)
 **Gate**: build
