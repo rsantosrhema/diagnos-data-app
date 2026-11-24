@@ -5,6 +5,7 @@ import type { MarketInsightsRepository } from "@/lib/repository/market-insights-
 import type { LeadRepository, LeadRow } from "@/lib/repository/lead-repo";
 import type { AgentPayload } from "@/lib/screener/agent-payload";
 import type { MarketResearch, MarketAnalysis, InsightsBrief } from "@/lib/agents/types";
+import { makeArsenal } from "@/lib/agents/commercial-fixture";
 
 const payload: AgentPayload = {
   versao: "1.0",
@@ -54,6 +55,16 @@ const analysis: MarketAnalysis = { resumo: "resumo", dores: [], contexto_concorr
 
 const insights: InsightsBrief = { bullets: [{ texto: "Insight", prioridade: "alta" }] };
 
+const arsenal = makeArsenal();
+
+const novoArsenal = makeArsenal({
+  servico_recomendado: {
+    servico_id: "analytics-bi",
+    justificativa: "Recorte novo indicado pelo diagnóstico.",
+    dimensoes_atacadas: ["d08"],
+  },
+});
+
 function mockQueueRepo(overrides: Partial<AnalysisQueueRepository> = {}): AnalysisQueueRepository {
   return {
     enqueue: vi.fn(),
@@ -78,11 +89,18 @@ function mockInsightsRepo(overrides: Partial<MarketInsightsRepository> = {}): Ma
   };
 }
 
-function mockOrchestrator() {
+function mockOrchestrator(
+  commercial?: (input: {
+    payload: AgentPayload;
+    analysis: MarketAnalysis;
+    insights: InsightsBrief;
+  }) => Promise<ReturnType<typeof makeArsenal>>,
+) {
   return {
     research: vi.fn().mockResolvedValue(research),
     analyst: vi.fn().mockResolvedValue(analysis),
     writer: vi.fn().mockResolvedValue(insights),
+    ...(commercial ? { commercial: vi.fn(commercial) } : {}),
   };
 }
 
@@ -220,6 +238,7 @@ describe("AnalysisService", () => {
         insights,
         sources: research.sources,
         status: "analisado",
+        arsenal: null,
       });
       expect(logEvent).toHaveBeenCalledWith("lead-1", "researcher", undefined, expect.any(Number));
       expect(logEvent).toHaveBeenCalledWith("lead-1", "analyst", undefined, expect.any(Number));
@@ -667,6 +686,199 @@ describe("AnalysisService", () => {
       expect(logEvent).toHaveBeenCalledWith("lead-1", "pdf_failed", "pdf renderer down", undefined);
       expect(queueRepo.ack).toHaveBeenCalledWith("42", "lead-1", "falha", "Falha ao gerar o PDF do relatório", expect.any(Number));
       expect(updateStatus).toHaveBeenCalledWith("lead-1", "analise_pendente");
+    });
+
+    it("chama o agente comercial com a saída do pipeline e loga arsenal entre writer e pdf (ARS-19)", async () => {
+      const queueRepo = mockQueueRepo({
+        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        ack: vi.fn().mockResolvedValue(undefined),
+      });
+      const commercial = vi.fn().mockResolvedValue(arsenal);
+      const orchestrator = mockOrchestrator(commercial);
+      const logEvent = vi.fn().mockResolvedValue(undefined);
+      const insightsRepo = mockInsightsRepo({ logEvent });
+
+      const service = createService({ queueRepo, insightsRepo, orchestrator });
+
+      const result = await service.processNext();
+
+      expect(result).toEqual({ processed: true });
+      expect(commercial).toHaveBeenCalledTimes(1);
+      expect(commercial).toHaveBeenCalledWith({ payload, analysis, insights });
+      expect(logEvent).toHaveBeenCalledWith("lead-1", "arsenal", undefined, expect.any(Number));
+      const steps = logEvent.mock.calls.map((call) => call[1]);
+      expect(steps.indexOf("arsenal")).toBeGreaterThan(steps.indexOf("writer"));
+      expect(steps.indexOf("arsenal")).toBeLessThan(steps.indexOf("pdf"));
+    });
+
+    it("persiste o arsenal no mesmo upsert e o repassa ao PDF (ARS-20)", async () => {
+      const queueRepo = mockQueueRepo({
+        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        ack: vi.fn().mockResolvedValue(undefined),
+      });
+      const commercial = vi.fn().mockResolvedValue(arsenal);
+      const orchestrator = mockOrchestrator(commercial);
+      const upsert = vi.fn().mockResolvedValue(undefined);
+      const insightsRepo = mockInsightsRepo({ upsert });
+      const generatePdf = mockGeneratePdf();
+
+      const service = createService({
+        queueRepo,
+        insightsRepo,
+        orchestrator,
+        generatePdf,
+      });
+
+      await service.processNext();
+
+      expect(upsert).toHaveBeenCalledWith({
+        leadId: "lead-1",
+        research,
+        analysis,
+        insights,
+        sources: research.sources,
+        status: "analisado",
+        arsenal,
+      });
+      const pdfInput = generatePdf.mock.calls[0]?.[0];
+      expect(pdfInput?.arsenal).toEqual(arsenal);
+    });
+
+    it("falha do agente comercial: loga arsenal_failed, mantém analisado e segue sem Arsenal (ARS-21)", async () => {
+      const queueRepo = mockQueueRepo({
+        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        ack: vi.fn().mockResolvedValue(undefined),
+        requeue: vi.fn().mockResolvedValue(undefined),
+        resetReadCount: vi.fn().mockResolvedValue({ alreadyRetried: false }),
+      });
+      const commercial = vi.fn().mockRejectedValue(new Error("falha simulada"));
+      const orchestrator = mockOrchestrator(commercial);
+      const upsert = vi.fn().mockResolvedValue(undefined);
+      const logEvent = vi.fn().mockResolvedValue(undefined);
+      const insightsRepo = mockInsightsRepo({ upsert, logEvent });
+      const generatePdf = mockGeneratePdf();
+      const sendEmail = mockSendEmail();
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const service = createService({
+        queueRepo,
+        insightsRepo,
+        orchestrator,
+        generatePdf,
+        sendEmail,
+      });
+
+      const result = await service.processNext();
+
+      expect(result).toEqual({ processed: true });
+      expect(logEvent).toHaveBeenCalledWith(
+        "lead-1",
+        "arsenal_failed",
+        "falha simulada",
+        expect.any(Number),
+      );
+      expect(upsert).toHaveBeenCalledWith({
+        leadId: "lead-1",
+        research,
+        analysis,
+        insights,
+        sources: research.sources,
+        status: "analisado",
+        arsenal: null,
+      });
+      const pdfInput = generatePdf.mock.calls[0]?.[0];
+      expect(pdfInput).toBeDefined();
+      expect("arsenal" in pdfInput!).toBe(false);
+      expect(sendEmail).toHaveBeenCalledTimes(1);
+      expect(queueRepo.ack).toHaveBeenCalledWith("42", "lead-1", "analisado", undefined, expect.any(Number));
+      expect(queueRepo.resetReadCount).not.toHaveBeenCalled();
+      expect(queueRepo.requeue).not.toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+
+    it("reprocesso sempre escreve a chave arsenal, com o novo valor ou null (ARS-22)", async () => {
+      const queueRepo = mockQueueRepo({
+        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        ack: vi.fn().mockResolvedValue(undefined),
+      });
+      const commercial = vi
+        .fn()
+        .mockResolvedValueOnce(arsenal)
+        .mockRejectedValueOnce(new Error("falha simulada"))
+        .mockResolvedValueOnce(novoArsenal);
+      const orchestrator = mockOrchestrator(commercial);
+      const upsert = vi.fn().mockResolvedValue(undefined);
+      const insightsRepo = mockInsightsRepo({ upsert });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const service = createService({ queueRepo, insightsRepo, orchestrator });
+
+      await service.processNext();
+      await service.processNext();
+      await service.processNext();
+
+      expect(upsert.mock.calls[0][0]).toEqual(expect.objectContaining({ arsenal }));
+      expect(upsert.mock.calls[1][0]).toEqual(expect.objectContaining({ arsenal: null }));
+      expect(upsert.mock.calls[2][0]).toEqual(
+        expect.objectContaining({ arsenal: novoArsenal }),
+      );
+      expect(upsert.mock.calls[2][0].arsenal.servico_recomendado.servico_id).toBe("analytics-bi");
+      expect(upsert.mock.calls.every(([args]) => "arsenal" in args)).toBe(true);
+      errorSpy.mockRestore();
+    });
+
+    it("falha do pipeline não chama o agente comercial e o PDF de fallback não tem Arsenal (ARS-23)", async () => {
+      const queueRepo = mockQueueRepo({
+        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        ack: vi.fn().mockResolvedValue(undefined),
+      });
+      const commercial = vi.fn().mockResolvedValue(arsenal);
+      const orchestrator = mockOrchestrator(commercial);
+      orchestrator.analyst.mockRejectedValue(new Error("analyst down"));
+      const findByLeadId = vi.fn().mockResolvedValue({ attempts: 2 } as never);
+      const insightsRepo = mockInsightsRepo({ findByLeadId });
+      const generatePdf = mockGeneratePdf();
+      const sendEmail = mockSendEmail();
+
+      const service = createService({
+        queueRepo,
+        insightsRepo,
+        orchestrator,
+        generatePdf,
+        sendEmail,
+      });
+
+      await service.processNext();
+
+      expect(commercial).not.toHaveBeenCalled();
+      expect(sendEmail).toHaveBeenCalledTimes(1);
+      const fallbackInput = generatePdf.mock.calls[0]?.[0];
+      expect(fallbackInput).toBeDefined();
+      expect("arsenal" in fallbackInput!).toBe(false);
+    });
+
+    it("sem agente comercial no orchestrator: nenhum log de arsenal e comportamento atual (ARS-22)", async () => {
+      const queueRepo = mockQueueRepo({
+        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        ack: vi.fn().mockResolvedValue(undefined),
+      });
+      const orchestrator = mockOrchestrator();
+      const upsert = vi.fn().mockResolvedValue(undefined);
+      const logEvent = vi.fn().mockResolvedValue(undefined);
+      const insightsRepo = mockInsightsRepo({ upsert, logEvent });
+      const generatePdf = mockGeneratePdf();
+
+      const service = createService({ queueRepo, insightsRepo, orchestrator, generatePdf });
+
+      const result = await service.processNext();
+
+      expect(result).toEqual({ processed: true });
+      const steps = logEvent.mock.calls.map((call) => call[1]);
+      expect(steps).not.toContain("arsenal");
+      expect(steps).not.toContain("arsenal_failed");
+      expect(upsert.mock.calls[0][0]).toEqual(expect.objectContaining({ arsenal: null }));
+      const pdfInput = generatePdf.mock.calls[0]?.[0];
+      expect("arsenal" in pdfInput!).toBe(false);
     });
   });
 });

@@ -509,14 +509,14 @@ Apply ONLY to the local container (never `npm run db:reset`, never a remote): ru
 
 **Done when**:
 
-- [ ] With `commercial` mocked to resolve `makeArsenal()`: the mock is called once with `{ payload, analysis, insights }` equal to the pipeline outputs (ARS-19); `logEvent` receives `(leadId, "arsenal", undefined, <number>)` after the `writer` log and before `pdf`
-- [ ] The `upsert` call has `arsenal` deep equal to `makeArsenal()` and `status: "analisado"` (ARS-20); the `generatePdf` input has `arsenal` deep equal to it
-- [ ] With `commercial` rejecting `new Error("falha simulada")`: `logEvent` receives `(leadId, "arsenal_failed", "falha simulada", <number>)`; `upsert` has `arsenal: null` and `status: "analisado"`; `generatePdf` input has no `arsenal` key; `sendEmail` is called once; `queueRepo.ack` is called with `"analisado"`; `queueRepo.resetReadCount` and `requeue` are NOT called (ARS-21)
-- [ ] Reprocess (ARS-22): a second `processNext` on the same lead where `commercial` rejects upserts `arsenal: null`; a third where it resolves a new Arsenal upserts that new value (the `arsenal` key is present in every `upsert` call)
-- [ ] When the analyst throws (pipeline failure): `commercial` is called 0 times; with `attempts >= 2` the fallback `generatePdf` input has no `arsenal` key (ARS-23)
-- [ ] When the orchestrator has no `commercial`: behavior identical to today, no `arsenal` or `arsenal_failed` log
-- [ ] Gate check passes: `npx vitest run src/lib/service`
-- [ ] Test count: at least 6 new tests, none removed
+- [x] With `commercial` mocked to resolve `makeArsenal()`: the mock is called once with `{ payload, analysis, insights }` equal to the pipeline outputs (ARS-19); `logEvent` receives `(leadId, "arsenal", undefined, <number>)` after the `writer` log and before `pdf`
+- [x] The `upsert` call has `arsenal` deep equal to `makeArsenal()` and `status: "analisado"` (ARS-20); the `generatePdf` input has `arsenal` deep equal to it
+- [x] With `commercial` rejecting `new Error("falha simulada")`: `logEvent` receives `(leadId, "arsenal_failed", "falha simulada", <number>)`; `upsert` has `arsenal: null` and `status: "analisado"`; `generatePdf` input has no `arsenal` key; `sendEmail` is called once; `queueRepo.ack` is called with `"analisado"`; `queueRepo.resetReadCount` and `requeue` are NOT called (ARS-21)
+- [x] Reprocess (ARS-22): a second `processNext` on the same lead where `commercial` rejects upserts `arsenal: null`; a third where it resolves a new Arsenal upserts that new value (the `arsenal` key is present in every `upsert` call)
+- [x] When the analyst throws (pipeline failure): `commercial` is called 0 times; with `attempts >= 2` the fallback `generatePdf` input has no `arsenal` key (ARS-23)
+- [x] When the orchestrator has no `commercial`: behavior identical to today, no `arsenal` or `arsenal_failed` log
+- [x] Gate check passes: `npx vitest run src/lib/service`
+- [x] Test count: at least 6 new tests, none removed
 
 **Tests**: unit
 **Gate**: quick

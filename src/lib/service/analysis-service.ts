@@ -12,6 +12,7 @@ import type {
   MarketAnalysis,
   InsightsBrief,
 } from "@/lib/agents/types";
+import type { CommercialArsenal } from "@/lib/agents/commercial-types";
 import type { GeneratePdfInput } from "@/lib/service/screen-service";
 import { stripControlChars } from "@/lib/agents/sanitize";
 import { buildPdfInput } from "@/lib/report/build-pdf-input";
@@ -43,6 +44,11 @@ export interface AnalysisServiceDeps {
       analysis: MarketAnalysis;
       payload: AgentPayload;
     }): Promise<InsightsBrief>;
+    commercial?(input: {
+      payload: AgentPayload;
+      analysis: MarketAnalysis;
+      insights: InsightsBrief;
+    }): Promise<CommercialArsenal>;
   };
   payloadLoader: (leadId: string) => Promise<AgentPayload | null>;
   leadRepo: Pick<LeadRepository, "updateStatus" | "findById">;
@@ -56,6 +62,7 @@ interface AgentOutput {
   research: MarketResearch;
   analysis: MarketAnalysis;
   insights: InsightsBrief;
+  arsenal?: CommercialArsenal | null;
 }
 
 function escapeHtml(value: string): string {
@@ -99,8 +106,8 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
 
   async function logEventSafe(
     leadId: string,
-    step: "failed",
-    message: string,
+    step: "failed" | "arsenal" | "arsenal_failed",
+    message?: string,
     durationMs?: number,
   ): Promise<void> {
     try {
@@ -110,6 +117,33 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
         `[analysis-service] falha ao registrar evento ${step} do lead ${leadId}:`,
         logErr,
       );
+    }
+  }
+
+  async function runCommercialStep(
+    payload: AgentPayload,
+    output: AgentOutput,
+    leadId: string,
+  ): Promise<CommercialArsenal | null> {
+    if (!orchestrator.commercial) return null;
+    const startedAt = Date.now();
+    try {
+      const arsenal = await orchestrator.commercial({
+        payload,
+        analysis: output.analysis,
+        insights: output.insights,
+      });
+      await logEventSafe(leadId, "arsenal", undefined, Date.now() - startedAt);
+      return arsenal;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "erro desconhecido no agente comercial";
+      console.error(
+        `[analysis-service] falha no agente comercial do lead ${leadId}:`,
+        message,
+      );
+      await logEventSafe(leadId, "arsenal_failed", message, Date.now() - startedAt);
+      return null;
     }
   }
 
@@ -129,7 +163,11 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
       const pdfResult = await generatePdf(
         buildPdfInput(
           opts.payload!,
-          { analysis: opts.output?.analysis, insights: opts.output?.insights },
+          {
+            analysis: opts.output?.analysis,
+            insights: opts.output?.insights,
+            arsenal: opts.output?.arsenal ?? undefined,
+          },
           opts.location,
         ),
       );
@@ -230,6 +268,7 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
         location = await resolveLocation(leadId);
 
         const output = await runPipelineWithLogs(payload, leadId);
+        const arsenal = await runCommercialStep(payload, output, leadId);
         await insightsRepo.upsert({
           leadId,
           research: output.research,
@@ -237,9 +276,15 @@ export function createAnalysisService(deps: AnalysisServiceDeps) {
           insights: output.insights,
           sources: output.research.sources,
           status: "analisado",
+          arsenal,
         });
 
-        const emailResult = await sendAnalysisEmail({ leadId, payload, output, location });
+        const emailResult = await sendAnalysisEmail({
+          leadId,
+          payload,
+          output: { ...output, arsenal },
+          location,
+        });
 
         const totalMs = Date.now() - pipelineStart;
         if (emailResult.pdf) {
