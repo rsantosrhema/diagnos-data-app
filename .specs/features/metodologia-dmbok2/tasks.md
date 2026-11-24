@@ -339,9 +339,9 @@ T13 → T14
 
 **Done when**:
 
-- [ ] `AnswersTable.test.tsx` asserts `"13% (padrão 10%)"`, `"10% (padrão)"` and an area text for fixture rows
-- [ ] Gate check passes: `npx vitest run src/components/portal`
-- [ ] Test count ≥ previous
+- [x] `AnswersTable.test.tsx` asserts `"13% (padrão 10%)"`, `"10% (padrão)"` and an area text for fixture rows
+- [x] Gate check passes: `npx vitest run src/components/portal`
+- [x] Test count ≥ previous
 
 **Tests**: component
 **Gate**: quick

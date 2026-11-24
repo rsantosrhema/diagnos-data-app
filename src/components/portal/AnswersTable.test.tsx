@@ -10,6 +10,9 @@ const DIMS = Array.from({ length: 10 }, (_, i) => ({
   pergunta: `Pergunta dimensão ${i + 1}?`,
   resposta: `Resposta dimensão ${i + 1}`,
   nivel: (i % 5) + 1,
+  peso: i === 0 ? 13 : 10,
+  pesoPadrao: 10,
+  areaDmbok: i === 0 ? "Data Security" : "Data Governance",
 }));
 
 describe("AnswersTable", () => {
@@ -33,5 +36,17 @@ describe("AnswersTable", () => {
     render(<AnswersTable dimensions={DIMS} />);
     expect(document.querySelector("table")).toBeTruthy();
     expect(document.querySelectorAll("button").length).toBe(0);
+  });
+
+  it("mostra o peso no setor comparado ao padrão (MET-30)", () => {
+    render(<AnswersTable dimensions={DIMS} />);
+    expect(screen.getByText("13% (padrão 10%)")).toBeTruthy();
+    expect(screen.getAllByText("10% (padrão)").length).toBe(9);
+  });
+
+  it("mostra a área DMBOK2 de cada dimensão (MET-30)", () => {
+    render(<AnswersTable dimensions={DIMS} />);
+    expect(screen.getByText("Data Security")).toBeTruthy();
+    expect(screen.getAllByText("Data Governance").length).toBe(9);
   });
 });
