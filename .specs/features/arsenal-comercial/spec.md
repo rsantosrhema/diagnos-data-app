@@ -205,7 +205,7 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 | ARS-09 | P1: Agente | Tasks | Implementing |
 | ARS-10 | P1: Agente | Tasks | Implementing |
 | ARS-11 | P1: Agente | Tasks | Implementing |
-| ARS-12 | P1: Agente | Tasks | In Tasks |
+| ARS-12 | P1: Agente | Tasks | Implementing |
 | ARS-13 | P1: Agente | Tasks | In Tasks |
 | ARS-14 | P1: Agente | Tasks | In Tasks |
 | ARS-15 | P1: Agente | Tasks | In Tasks |

@@ -219,11 +219,11 @@ Field rules: `pontos_chave` array 3..5 of `{ titulo: clampedString(70), texto: c
 
 **Done when**:
 
-- [ ] Payload with niveis d01=2, d02=1, d03=1, d04=3 returns `menorNivel` `["d02","d03"]` (ties kept, payload order)
-- [ ] `cargo` `"C-level (CEO, CTO, CFO, CIO)"` and `"c-LEVEL"` give `cLevel` true; `"Analista, engenheiro ou especialista"` and `""` give false
-- [ ] `desequilibrio`, `faixa`, `scoreValor`, `respostaComercial` copied exactly from the payload
-- [ ] Gate check passes: `npx vitest run src/lib/agents/commercial-signals.test.ts`
-- [ ] Test count: at least 5 new tests, none removed
+- [x] Payload with niveis d01=2, d02=1, d03=1, d04=3 returns `menorNivel` `["d02","d03"]` (ties kept, payload order)
+- [x] `cargo` `"C-level (CEO, CTO, CFO, CIO)"` and `"c-LEVEL"` give `cLevel` true; `"Analista, engenheiro ou especialista"` and `""` give false
+- [x] `desequilibrio`, `faixa`, `scoreValor`, `respostaComercial` copied exactly from the payload
+- [x] Gate check passes: `npx vitest run src/lib/agents/commercial-signals.test.ts`
+- [x] Test count: at least 5 new tests, none removed
 
 **Tests**: unit
 **Gate**: quick
