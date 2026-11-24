@@ -69,6 +69,11 @@ export async function POST(req: Request) {
         const { getLlmModel } = await import("@/lib/agents/llm");
         return createWriterAgent({ llm: getLlmModel() }).run(input as never);
       },
+      commercial: async (input: { payload: AgentPayload; analysis: unknown; insights: unknown }) => {
+        const { createCommercialAgent } = await import("@/lib/agents/commercial");
+        const { getLlmModel } = await import("@/lib/agents/llm");
+        return createCommercialAgent({ llm: getLlmModel() }).run(input as never);
+      },
     },
     payloadLoader: async (leadId: string): Promise<AgentPayload | null> => {
       const row = await assessmentRepo.findByLeadId(leadId);

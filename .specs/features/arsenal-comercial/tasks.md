@@ -543,10 +543,10 @@ Apply ONLY to the local container (never `npm run db:reset`, never a remote): ru
 
 **Done when**:
 
-- [ ] `npm run typecheck` passes (proves the entry matches `AnalysisServiceDeps`)
-- [ ] The diff of the file is the added entry only
-- [ ] Build gate passes: `npm run typecheck && npm run lint && npm run test && npm run build`
-- [ ] Test count equals the previous count
+- [x] `npm run typecheck` passes (proves the entry matches `AnalysisServiceDeps`)
+- [x] The diff of the file is the added entry only
+- [x] Build gate passes: `npm run typecheck && npm run lint && npm run test && npm run build`
+- [x] Test count equals the previous count
 
 **Tests**: none (wiring only; exercised by the T11 service tests and the T23 smoke)
 **Gate**: build
