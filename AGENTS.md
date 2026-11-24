@@ -2,6 +2,8 @@
 
 This file is the **system prompt** for any code agent (OpenCode, Claude Code, Cursor, etc.) working on this repository. Read it fully before making changes. It defines the product, the architecture, and the conventions every agent must follow.
 
+> **Local-first rule:** every feature, fix and migration is branched from `main`, tested on the developer's machine against a local Supabase in Docker, and reaches production only through a pull request into `main`. There is no shared dev environment. Never push directly to `main`. Details in section 13, `docs/rules/git-workflow.md` and `docs/local-development.md`.
+
 ---
 
 ## 1. Project Overview
@@ -41,15 +43,19 @@ The questionnaire content is data-driven: it lives in `docs/snapshot-maturidade-
 ```
 diagnos-data-app/
 ├── AGENTS.md                     # This file - agent system prompt
-├── .opencode/                    # OpenCode configuration
-│   ├── opencode.json             # OpenCode project config
-│   └── command/init.md           # /init command (bootstrap/onboard)
+├── CLAUDE.md                     # Claude Code entry point (imports AGENTS.md)
+├── .claude/settings.json         # Claude Code shared permissions (blocks pushes to main)
+├── .opencode/                    # OpenCode configuration (local-only, git-ignored)
+│   ├── opencode.json             # OpenCode config: permissions + MCP tokens (NEVER commit)
+│   └── command/                  # /init (bootstrap/onboard), /pr (PR into main)
 ├── docs/
+│   ├── local-development.md      # Local Supabase (Docker) + running the app
 │   ├── decisions/                # ADRs (Architecture Decision Records)
 │   ├── rules/                    # Detailed development rules
 │   │   ├── security.md           # Security rules (auth, env vars, Supabase)
 │   │   ├── validation.md         # Validation rules (Zod patterns, boundaries)
-│   │   └── architecture.md       # Architecture rules (layers, server/client)
+│   │   ├── architecture.md       # Architecture rules (layers, server/client)
+│   │   └── git-workflow.md       # Branching, local testing, migrations
 │   ├── snapshot-maturidade-dados.json  # Single source of truth for the questionnaire
 │   ├── architecture.md           # High-level architecture notes
 │   └── data-model.md             # Living schema reference (Supabase)
@@ -81,7 +87,7 @@ diagnos-data-app/
 │   │   ├── service/              # business logic (lead, screen, admin, analysis)
 │   │   └── supabase/             # server/client Supabase clients
 │   └── middleware.ts             # rate limiting for public-proxy endpoints
-├── supabase/                     # SQL migrations + validation scripts
+├── supabase/                     # SQL migrations, validation scripts, config.toml (local stack)
 ├── .env.example                  # Environment variable template
 ├── package.json
 └── tsconfig.json
@@ -329,9 +335,10 @@ Route (thin) → Service (logic) → Repository (data) → DTO (safe shape)
 
 ## 11. Working with OpenCode
 
-- OpenCode config lives in `.opencode/opencode.json`.
+- OpenCode config lives in `.opencode/opencode.json`. It is local-only: it holds MCP tokens, so it is git-ignored and must never be committed.
 - The `/init` command (`.opencode/command/init.md`) bootstraps and onboards the project. Run it when starting fresh.
 - After editing any `.opencode/**` file, **restart OpenCode** for changes to take effect.
+- Claude Code reads `CLAUDE.md` (which imports this file) and `.claude/settings.json`. Orca uses `origin/main` as the default base ref for new worktrees (section 13).
 
 ---
 
@@ -353,3 +360,33 @@ A task is done when:
 - [ ] Tests pass (if tests exist for the touched area).
 - [ ] `npm run lint` and `npm run build` pass.
 - [ ] No secrets are committed; env vars are documented in `.env.example`.
+- [ ] Work was branched from `origin/main`, tested locally against the local Supabase (`npm run db:start`), and delivered as a PR into `main` (section 13).
+- [ ] Nothing was pushed directly to `main`; migrations were validated with `npm run db:reset` and never run against the prod database.
+---
+
+## 13. Git Workflow & Local Testing
+
+> Full details: `docs/rules/git-workflow.md` and `docs/local-development.md`
+
+There is one deployed environment (**prod**, branch `main`, deployed manually by the owner in Coolify). There is **no shared dev/staging environment**: the single Coolify server lacks the RAM for a second Supabase stack, and one attempt took production down. All testing happens locally in Docker.
+
+### 13.1 Rules
+
+- All work (feature, fix, refactor, migration, docs) branches from `origin/main` as `feat/<slug>` or `fix/<slug>`, is tested locally, and is delivered as a PR with base `main`. The owner merges and deploys.
+- Test against the local Supabase (`npm run db:start`), never against prod. `.env.local` must never contain the prod Supabase URL or keys.
+- **Never** commit, push, merge or force-push directly to `main`.
+- **Never** deploy, restart, roll back or change env vars on the prod Coolify app, run SQL/migrations on the prod database, or create extra resources (Supabase stacks, apps, builds) on the prod server, without explicit instruction in the current conversation.
+- Migrations must apply on an empty database; validate with `npm run db:reset` before opening the PR.
+- New env vars go to `.env.example` and `docs/local-development.md`, and are called out in the PR so the owner sets them in Coolify.
+- No tokens or passwords in tracked files; `.opencode/opencode.json` stays local.
+
+### 13.2 Typical sequence
+
+```bash
+git fetch origin && git switch -c feat/<slug> origin/main
+npm run db:start                 # local Supabase in Docker
+# ...work, then
+npm run lint && npm run typecheck && npm run test
+git push -u origin feat/<slug>
+gh pr create --base main
+```

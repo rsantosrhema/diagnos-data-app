@@ -11,6 +11,10 @@
     "test:watch": "vitest",
     "test:smoke": "RUN_SMOKE_E2E=1 vitest run src/lib/service/smoke-e2e-flow.test.ts",
     "typecheck": "tsc --noEmit",
+    "db:start": "npx --yes supabase@3.3.0 start",
+    "db:stop": "npx --yes supabase@3.3.0 stop",
+    "db:reset": "npx --yes supabase@3.3.0 db reset",
+    "db:status": "npx --yes supabase@3.3.0 status",
     "pdf:sample": "node scripts/generate-sample-pdf.js",
     "worker:run": "node scripts/worker-cron.js once",
     "worker:watch": "node scripts/worker-cron.js watch"
