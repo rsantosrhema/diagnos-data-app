@@ -78,7 +78,7 @@ T13 → T14
 ### Phase 5: Fix from smoke
 
 ```
-T15
+T15 → T16
 ```
 
 ---
@@ -481,6 +481,33 @@ T15
 **Gate**: build
 
 **Commit**: `fix(screener): payload do agente grava o peso ajustado ao setor`
+
+---
+
+### T16: End-to-end sector weight in the persisted agent payload
+
+**What**: Add an end-to-end test in `screen-service.test.ts` where `loadActiveCalibration` resolves to the seed calibration and the profile is Saúde, asserting the persisted `agent_payload.respostas` d07 `peso` is 13 (adjusted), not 10 (contract), per MET-35 (kills Verifier mutant S7).
+**Where**: `src/lib/service/screen-service.test.ts`
+**Depends on**: T15
+**Reuses**: `SCORING_CALIBRATION`, `computeAdjustedWeights`, `agentPayloadFrom`
+**Requirement**: MET-35
+
+**Tools**:
+
+- MCP: NONE
+- Skill: `tlc-spec-driven`
+
+**Done when**:
+
+- [x] Test asserts the persisted `agent_payload` d07 `peso` is 13 and not 10, and every dimension peso equals `computeAdjustedWeights` for the Saúde profile
+- [x] Mutant S7 (contextual replaced by `computeScores` in `screen-service.ts`) killed: test fails with 10 vs 13, then reverted
+- [x] Gate check passes: `npm run typecheck && npm run lint && npm run test` in place plus `npm run build` in a temporary worktree
+- [x] Test count ≥ previous (767)
+
+**Tests**: unit
+**Gate**: build
+
+**Commit**: `test(screener): peso ajustado ao setor gravado no payload de ponta a ponta`
 
 ---
 

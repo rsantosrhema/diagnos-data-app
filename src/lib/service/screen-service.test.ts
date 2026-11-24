@@ -4,6 +4,9 @@ import type { LeadRepository, LeadRow } from "@/lib/repository/lead-repo";
 import type { AssessmentRepository } from "@/lib/repository/assessment-repo";
 import { SCREENER_CONTRACT } from "@/lib/screener/contract";
 import { computeScores } from "@/lib/screener/scoring";
+import { SCORING_CALIBRATION } from "@/lib/screener/scoring-calibration";
+import type { ScoringCalibration } from "@/lib/screener/scoring-calibration";
+import { computeAdjustedWeights } from "@/lib/screener/weight-calculator";
 import type { AgentPayload } from "@/lib/screener/agent-payload";
 import type { ScreenerSubmission } from "@/lib/schemas/screener";
 
@@ -69,6 +72,7 @@ function mockAssessmentRepo(overrides: Partial<AssessmentRepository> = {}): Asse
 function createService(deps: {
   leadRepo?: LeadRepository;
   assessmentRepo?: AssessmentRepository;
+  loadActiveCalibration?: () => Promise<ScoringCalibration>;
 } = {}) {
   return createScreenService({
     leadRepo: deps.leadRepo ?? mockLeadRepo({
@@ -77,7 +81,8 @@ function createService(deps: {
     }),
     assessmentRepo: deps.assessmentRepo ?? mockAssessmentRepo(),
     contract: SCREENER_CONTRACT,
-    loadActiveCalibration: vi.fn().mockRejectedValue(new Error("no db")),
+    loadActiveCalibration:
+      deps.loadActiveCalibration ?? vi.fn().mockRejectedValue(new Error("no db")),
   });
 }
 
@@ -404,5 +409,28 @@ describe("ScreenService", () => {
     expect(payload.score.valor).toBe(Number(expected.score.toFixed(2)));
     expect(payload.respostas).toHaveLength(DIMS.length);
     expect(payload.consentimento.aceito).toBe(true);
+  });
+
+  it("agent_payload persistido grava o peso ajustado ao setor de Saúde (MET-35)", async () => {
+    const createAssessmentResponse = vi.fn();
+    const profile = { perfil_01: "Saúde", perfil_02: "", perfil_03: "" };
+    const service = createService({
+      loadActiveCalibration: vi.fn().mockResolvedValue(SCORING_CALIBRATION),
+      assessmentRepo: mockAssessmentRepo({ createAssessmentResponse }),
+    });
+
+    await service.submitScreener(validSubmission({ leadId: "lead-1", profile }));
+
+    const adjusted = computeAdjustedWeights({ calibration: SCORING_CALIBRATION, profile });
+    const expectedPesos = new Map(adjusted.map((w) => [w.dimensionId, w.adjustedWeight]));
+    const payload = agentPayloadFrom(createAssessmentResponse);
+    const d07 = payload.respostas.find((r) => r.dimensao_id === "d07");
+
+    expect(expectedPesos.get("d07")).toBe(13);
+    expect(d07?.peso).toBe(13);
+    expect(d07?.peso).not.toBe(10);
+    for (const resposta of payload.respostas) {
+      expect(resposta.peso).toBe(expectedPesos.get(resposta.dimensao_id));
+    }
   });
 });
