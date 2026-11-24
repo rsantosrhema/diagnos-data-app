@@ -287,16 +287,16 @@ The user prompt, in this order: the skill text; `## Catálogo de serviços` list
 
 **Done when**:
 
-- [ ] With a fake `generate` returning ```` ```json ```` fenced text of `makeArsenal()`, `run` returns an object deeply equal to `makeArsenal()` (ARS-16)
-- [ ] The prompt passed to `generate` contains every service id and every group id of the catalog, the skill text returned by the injected `skillLoader`, and the `<dados_diagnostico>`, `<dados_analise>` and `<dados_insights>` tags (ARS-13)
-- [ ] `system` passed to `generate` contains the 4 required sentences; an `analysis.resumo` containing `​` and `\u0007` reaches the prompt without those characters (ARS-14)
-- [ ] Payload with cargo `C-level (CEO, CTO, CFO, CIO)` and `desequilibrio: true` gives a prompt containing `SINAL C-LEVEL:` and `SINAL DE DESEQUILÍBRIO:`; cargo `Analista, engenheiro ou especialista` with `desequilibrio: false` gives a prompt containing neither (ARS-15)
-- [ ] A fake `generate` that always returns an arsenal with 9 perguntas makes `run` throw `CommercialAgentError` after exactly 3 calls, and the prompt of call 2 contains `ATENÇÃO` and the text `10` from the schema issue feedback (ARS-17); a fake returning non-JSON text 3 times also throws `CommercialAgentError`
-- [ ] A `skillLoader` that throws makes `run` throw `CommercialAgentError` and the fake `generate` is called 0 times (ARS-18)
-- [ ] Edge cases: empty `insights.bullets` prints `(sem insights)` and `run` still succeeds; `empresa.nome` null prints `não informada`; empty `cargo` produces no C-level line
-- [ ] Gate check passes: `npx vitest run src/lib/agents`
-- [ ] Phase 1 build gate passes: `npm run typecheck && npm run lint && npm run test && npm run build`
-- [ ] Test count: at least 10 new tests, none removed
+- [x] With a fake `generate` returning ```` ```json ```` fenced text of `makeArsenal()`, `run` returns an object deeply equal to `makeArsenal()` (ARS-16)
+- [x] The prompt passed to `generate` contains every service id and every group id of the catalog, the skill text returned by the injected `skillLoader`, and the `<dados_diagnostico>`, `<dados_analise>` and `<dados_insights>` tags (ARS-13)
+- [x] `system` passed to `generate` contains the 4 required sentences; an `analysis.resumo` containing `​` and `\u0007` reaches the prompt without those characters (ARS-14)
+- [x] Payload with cargo `C-level (CEO, CTO, CFO, CIO)` and `desequilibrio: true` gives a prompt containing `SINAL C-LEVEL:` and `SINAL DE DESEQUILÍBRIO:`; cargo `Analista, engenheiro ou especialista` with `desequilibrio: false` gives a prompt containing neither (ARS-15)
+- [x] A fake `generate` that always returns an arsenal with 9 perguntas makes `run` throw `CommercialAgentError` after exactly 3 calls, and the prompt of call 2 contains `ATENÇÃO` and the text `10` from the schema issue feedback (ARS-17); a fake returning non-JSON text 3 times also throws `CommercialAgentError`
+- [x] A `skillLoader` that throws makes `run` throw `CommercialAgentError` and the fake `generate` is called 0 times (ARS-18)
+- [x] Edge cases: empty `insights.bullets` prints `(sem insights)` and `run` still succeeds; `empresa.nome` null prints `não informada`; empty `cargo` produces no C-level line
+- [x] Gate check passes: `npx vitest run src/lib/agents`
+- [x] Phase 1 build gate passes: `npm run typecheck && npm run lint && npm run test && npm run build`
+- [x] Test count: at least 10 new tests, none removed
 
 **Tests**: unit
 **Gate**: build

@@ -206,11 +206,11 @@ Nenhuma linha abaixo foi confirmada pelo usuário: o coordenador encerrou sem re
 | ARS-10 | P1: Agente | Tasks | Implementing |
 | ARS-11 | P1: Agente | Tasks | Implementing |
 | ARS-12 | P1: Agente | Tasks | Implementing |
-| ARS-13 | P1: Agente | Tasks | In Tasks |
-| ARS-14 | P1: Agente | Tasks | In Tasks |
-| ARS-15 | P1: Agente | Tasks | In Tasks |
-| ARS-16 | P1: Agente | Tasks | In Tasks |
-| ARS-17 | P1: Agente | Tasks | In Tasks |
+| ARS-13 | P1: Agente | Tasks | Implementing |
+| ARS-14 | P1: Agente | Tasks | Implementing |
+| ARS-15 | P1: Agente | Tasks | Implementing |
+| ARS-16 | P1: Agente | Tasks | Implementing |
+| ARS-17 | P1: Agente | Tasks | Implementing |
 | ARS-18 | P1: Agente | Tasks | Implementing |
 | ARS-19 | P1: Pipeline | Tasks | In Tasks |
 | ARS-20 | P1: Pipeline | Tasks | In Tasks |
