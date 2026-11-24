@@ -1241,3 +1241,12 @@ Fixes encontrados na validação independente (iteração 1), no mesmo ciclo da 
 **Prova do mutante**: cópia isolada da árvore em `$TMPDIR/opencode/m15-proof` (sem `git stash`, árvore real intocada), mutação `||` → `&&` aplicada em `composeCatalogStatus`, `npx vitest run src/lib/comercial/catalog.test.ts` → **2 failed | 13 passed**; M15 morto.
 **Gates**: `npm run lint`, `npm run typecheck`, `npm run test` verdes.
 **Commit**: `fix(comercial): compõe o status do catálogo por qualquer arquivo em rascunho` (este commit).
+
+### F3: pipeline com `insights.bullets` vazio (gap 3, M20)
+
+**What**: nenhum teste do pipeline garantia que `processNext` ainda chama o agente comercial quando `insights.bullets` está vazio; o mutante M20 (pular o agente nesse caso) sobrevivia.
+**Where**: `src/lib/service/analysis-service.test.ts`.
+**Teste**: "chama o agente comercial e persiste o arsenal com insights sem bullets (ARS-19)": writer devolve `{ bullets: [] }`, o teste exige `commercial` 1× com `{ payload, analysis, insights: { bullets: [] } }` e o `upsert` com `insights` vazio, `arsenal` e `status: "analisado"`.
+**Prova do mutante**: cópia isolada em `$TMPDIR/opencode/m20-proof` (árvore real intocada, sem `git stash`), guarda de `runCommercialStep` alterada para `!orchestrator.commercial || output.insights.bullets.length === 0`, `npx vitest run src/lib/service/analysis-service.test.ts` → **1 failed | 24 passed** (`expected "vi.fn()" to be called 1 times, but got 0 times`); M20 morto. Código de produção não mudou.
+**Gates**: `npx vitest run src/lib/service/analysis-service.test.ts` (25 passed), typecheck exit 0.
+**Commit**: `test(service): cobre agente comercial com insights sem bullets` (este commit).

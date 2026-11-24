@@ -711,6 +711,39 @@ describe("AnalysisService", () => {
       expect(steps.indexOf("arsenal")).toBeLessThan(steps.indexOf("pdf"));
     });
 
+    it("chama o agente comercial e persiste o arsenal com insights sem bullets (ARS-19)", async () => {
+      const queueRepo = mockQueueRepo({
+        read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
+        ack: vi.fn().mockResolvedValue(undefined),
+      });
+      const emptyInsights: InsightsBrief = { bullets: [] };
+      const commercial = vi.fn().mockResolvedValue(arsenal);
+      const orchestrator = mockOrchestrator(commercial);
+      orchestrator.writer.mockResolvedValue(emptyInsights);
+      const upsert = vi.fn().mockResolvedValue(undefined);
+      const insightsRepo = mockInsightsRepo({ upsert });
+
+      const service = createService({ queueRepo, insightsRepo, orchestrator });
+
+      const result = await service.processNext();
+
+      expect(result).toEqual({ processed: true });
+      expect(commercial).toHaveBeenCalledTimes(1);
+      expect(commercial).toHaveBeenCalledWith({
+        payload,
+        analysis,
+        insights: emptyInsights,
+      });
+      expect(upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          leadId: "lead-1",
+          insights: emptyInsights,
+          arsenal,
+          status: "analisado",
+        }),
+      );
+    });
+
     it("persiste o arsenal no mesmo upsert e o repassa ao PDF (ARS-20)", async () => {
       const queueRepo = mockQueueRepo({
         read: vi.fn().mockResolvedValue({ msgId: "42", leadId: "lead-1" }),
